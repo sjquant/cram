@@ -1,8 +1,8 @@
 # Fixtures
 
-Hand-written decks used two ways:
+Hand-written decks used two ways. They are development inputs, not part of what a user installs, so they live at the repo root rather than inside `skills/flashcard/`:
 
-- `valid/` — open these directly in `template/player.html` while working on the player, with no Python in the loop.
+- `valid/` — open these directly in `skills/flashcard/template/player.html` while working on the player, with no Python in the loop.
 - `invalid/` — every one of these must be rejected by the validator, each with an error naming the offending card index and field.
 
 ## Valid decks
