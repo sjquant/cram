@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/sjquant/flashcard/blob/main/schema/deck.schema.json",
+  "title": "Flashcard deck",
+  "description": "The contract between Claude's extraction pass and the renderer. All three card types are fixed here from the start so that implementing a type later is never a breaking schema change.",
+  "type": "object",
+  "required": ["id", "title", "cards"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "$ref": "#/$defs/slug",
+      "description": "Stable deck identifier. Keys the browser-side progress store as fc:<id>:v1, so it must stay the same across re-renders of the same deck."
+    },
+    "title": {
+      "$ref": "#/$defs/nonEmptyString",
+      "description": "Human-readable deck title, shown in the player."
+    },
+    "source": {
+      "$ref": "#/$defs/nonEmptyString",
+      "description": "Where the cards were extracted from: a file path, a URL, or a short description."
+    },
+    "created": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+      "description": "Extraction date, ISO 8601 (YYYY-MM-DD)."
+    },
+    "cards": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Card ids must be unique within the deck. Uniqueness is enforced by the validator, not expressible here.",
+      "items": { "$ref": "#/$defs/card" }
+    }
+  },
+
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Lowercase kebab-case. Safe to use as a storage key and a DOM id."
+    },
+
+    "hint": {
+      "$ref": "#/$defs/nonEmptyString",
+      "description": "Optional nudge, hidden until the learner asks for it. Requesting a hint is recorded so the review screen can separate 'knew it' from 'needed a hint'."
+    },
+
+    "explanation": {
+      "$ref": "#/$defs/nonEmptyString",
+      "description": "Optional reasoning shown after the card is answered."
+    },
+
+    "tags": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/nonEmptyString" }
+    },
+
+    "difficulty": {
+      "enum": ["easy", "medium", "hard"]
+    },
+
+    "card": {
+      "description": "Discriminated by the 'type' field. The validator branches on 'type' before checking anything else, so a bad type yields one clear error instead of three failed branches.",
+      "oneOf": [
+        { "$ref": "#/$defs/basicCard" },
+        { "$ref": "#/$defs/mcqCard" },
+        { "$ref": "#/$defs/clozeCard" }
+      ]
+    },
+
+    "basicCard": {
+      "type": "object",
+      "description": "Prompt on the front, answer on the back. The learner reveals the answer and grades themselves.",
+      "required": ["id", "type", "prompt", "answer"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/slug" },
+        "type": { "const": "basic" },
+        "prompt": { "$ref": "#/$defs/nonEmptyString" },
+        "answer": { "$ref": "#/$defs/nonEmptyString" },
+        "hint": { "$ref": "#/$defs/hint" },
+        "explanation": { "$ref": "#/$defs/explanation" },
+        "tags": { "$ref": "#/$defs/tags" },
+        "difficulty": { "$ref": "#/$defs/difficulty" }
+      }
+    },
+
+    "mcqCard": {
+      "type": "object",
+      "description": "Multiple choice. Exactly one choice is correct; that rule is enforced by the validator. Choice order is shuffled at render time, so the position of the correct answer is never learnable.",
+      "required": ["id", "type", "prompt", "choices"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/slug" },
+        "type": { "const": "mcq" },
+        "prompt": { "$ref": "#/$defs/nonEmptyString" },
+        "choices": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 6,
+          "description": "Two choices expresses a true/false card; there is no separate type for it. Three to five is the usual range.",
+          "items": {
+            "type": "object",
+            "required": ["text", "correct"],
+            "additionalProperties": false,
+            "properties": {
+              "text": { "$ref": "#/$defs/nonEmptyString" },
+              "correct": { "type": "boolean" }
+            }
+          }
+        },
+        "hint": { "$ref": "#/$defs/hint" },
+        "explanation": { "$ref": "#/$defs/explanation" },
+        "tags": { "$ref": "#/$defs/tags" },
+        "difficulty": { "$ref": "#/$defs/difficulty" }
+      }
+    },
+
+    "clozeCard": {
+      "type": "object",
+      "description": "Fill in the blank. The prompt carries {{1}}, {{2}} ... placeholders; placeholder {{n}} is answered by blanks[n-1]. The validator checks that every placeholder has a blank and every blank has a placeholder.",
+      "required": ["id", "type", "prompt", "blanks"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/slug" },
+        "type": { "const": "cloze" },
+        "prompt": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\{\\{[0-9]+\\}\\}",
+          "description": "Must contain at least one {{n}} placeholder."
+        },
+        "blanks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["answer"],
+            "additionalProperties": false,
+            "properties": {
+              "answer": { "$ref": "#/$defs/nonEmptyString" },
+              "alternatives": {
+                "type": "array",
+                "uniqueItems": true,
+                "description": "Other spellings accepted as correct, for whichever answering mode the cloze card ends up using.",
+                "items": { "$ref": "#/$defs/nonEmptyString" }
+              }
+            }
+          }
+        },
+        "hint": { "$ref": "#/$defs/hint" },
+        "explanation": { "$ref": "#/$defs/explanation" },
+        "tags": { "$ref": "#/$defs/tags" },
+        "difficulty": { "$ref": "#/$defs/difficulty" }
+      }
+    }
+  }
+}
