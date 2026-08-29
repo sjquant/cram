@@ -1,0 +1,19 @@
+{
+  "name": "flashcard",
+  "version": "0.1.0",
+  "description": "Turn any document into an interactive flashcard quiz in a single self-contained HTML file. Extracts normalized cards — basic, multiple choice and cloze — then renders an offline quiz that remembers your progress and lets you retry only what you missed.",
+  "author": {
+    "name": "sjquant"
+  },
+  "homepage": "https://github.com/sjquant/flashcard",
+  "repository": "https://github.com/sjquant/flashcard",
+  "license": "MIT",
+  "keywords": [
+    "flashcards",
+    "quiz",
+    "learning",
+    "spaced-practice",
+    "html",
+    "study"
+  ]
+}

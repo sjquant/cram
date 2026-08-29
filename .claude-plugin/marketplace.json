@@ -1,0 +1,13 @@
+{
+  "name": "flashcard",
+  "owner": {
+    "name": "sjquant"
+  },
+  "plugins": [
+    {
+      "name": "flashcard",
+      "source": "./",
+      "strict": false
+    }
+  ]
+}
