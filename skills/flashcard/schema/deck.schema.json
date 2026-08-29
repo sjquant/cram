@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/sjquant/flashcard/blob/main/schema/deck.schema.json",
+  "$id": "https://github.com/sjquant/flashcard/blob/main/skills/flashcard/schema/deck.schema.json",
   "title": "Flashcard deck",
   "description": "The contract between Claude's extraction pass and the renderer. All three card types are fixed here from the start so that implementing a type later is never a breaking schema change.",
   "type": "object",
@@ -36,7 +36,9 @@
   "$defs": {
     "nonEmptyString": {
       "type": "string",
-      "minLength": 1
+      "minLength": 1,
+      "pattern": "\\S",
+      "description": "At least one non-whitespace character. A whitespace-only value would render as a blank card face."
     },
 
     "slug": {
@@ -133,8 +135,8 @@
         "prompt": {
           "type": "string",
           "minLength": 1,
-          "pattern": "\\{\\{[0-9]+\\}\\}",
-          "description": "Must contain at least one {{n}} placeholder."
+          "pattern": "\\{\\{[1-9][0-9]*\\}\\}",
+          "description": "Must contain at least one {{n}} placeholder. Numbering starts at 1, because {{n}} is answered by blanks[n-1] and {{0}} would have nothing to map to."
         },
         "blanks": {
           "type": "array",

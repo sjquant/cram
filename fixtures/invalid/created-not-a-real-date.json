@@ -1,0 +1,13 @@
+{
+  "id": "created-not-a-real-date",
+  "title": "Deck stamped with a date that does not exist",
+  "created": "2026-13-99",
+  "cards": [
+    {
+      "id": "some-card",
+      "type": "basic",
+      "prompt": "What is the default HTTP port?",
+      "answer": "80"
+    }
+  ]
+}

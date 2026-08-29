@@ -1,0 +1,15 @@
+{
+  "id": "cloze-orphan-blank",
+  "title": "Cloze card with a blank no placeholder refers to",
+  "cards": [
+    {
+      "id": "one-placeholder-two-blanks",
+      "type": "cloze",
+      "prompt": "A client revalidates by sending {{1}}, and the server answers 304 when the copy is still fresh.",
+      "blanks": [
+        { "answer": "If-None-Match" },
+        { "answer": "304" }
+      ]
+    }
+  ]
+}
