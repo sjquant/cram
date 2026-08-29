@@ -1,0 +1,12 @@
+{
+  "id": "unknown-card-type",
+  "title": "Deck with an unsupported card type",
+  "cards": [
+    {
+      "id": "ordering-card",
+      "type": "ordering",
+      "prompt": "Put these HTTP status classes in ascending order.",
+      "items": ["2xx", "3xx", "4xx"]
+    }
+  ]
+}

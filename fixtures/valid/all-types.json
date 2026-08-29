@@ -1,0 +1,66 @@
+{
+  "id": "http-caching",
+  "title": "HTTP caching headers",
+  "source": "notes/http-caching.md",
+  "created": "2026-08-30",
+  "cards": [
+    {
+      "id": "cache-control-max-age",
+      "type": "basic",
+      "prompt": "What does `Cache-Control: max-age=3600` tell a client?",
+      "answer": "The response may be reused without revalidation for 3600 seconds after it was generated.",
+      "tags": ["cache-control"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "no-store-vs-no-cache",
+      "type": "mcq",
+      "prompt": "Which directive prevents the response from being written to disk or memory at all?",
+      "choices": [
+        { "text": "no-store", "correct": true },
+        { "text": "no-cache", "correct": false },
+        { "text": "must-revalidate", "correct": false },
+        { "text": "private", "correct": false }
+      ],
+      "explanation": "`no-cache` does allow storage; it only requires revalidation before reuse. `no-store` is the one that forbids keeping a copy.",
+      "hint": "One of these is about storing, the other about reusing.",
+      "tags": ["cache-control"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "etag-is-strong-validator",
+      "type": "mcq",
+      "prompt": "An `ETag` gives stronger revalidation than `Last-Modified`.",
+      "choices": [
+        { "text": "True", "correct": true },
+        { "text": "False", "correct": false }
+      ],
+      "explanation": "`Last-Modified` has one-second granularity, so two changes within the same second are indistinguishable. An ETag is derived from the content itself.",
+      "tags": ["validators"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "conditional-request-header",
+      "type": "cloze",
+      "prompt": "A client revalidates a cached entry by sending its stored ETag in the {{1}} request header, and the server answers with status {{2}} when the entry is still fresh.",
+      "blanks": [
+        { "answer": "If-None-Match" },
+        { "answer": "304", "alternatives": ["304 Not Modified"] }
+      ],
+      "explanation": "The 304 carries no body, which is where the bandwidth saving comes from.",
+      "tags": ["validators", "revalidation"],
+      "difficulty": "hard"
+    },
+    {
+      "id": "vary-header",
+      "type": "cloze",
+      "prompt": "The {{1}} response header tells shared caches which request headers must match before a stored response may be reused.",
+      "blanks": [
+        { "answer": "Vary" }
+      ],
+      "hint": "Without it, a cache can serve a gzipped body to a client that never asked for compression.",
+      "tags": ["cache-keys"],
+      "difficulty": "medium"
+    }
+  ]
+}

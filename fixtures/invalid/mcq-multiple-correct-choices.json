@@ -1,0 +1,16 @@
+{
+  "id": "mcq-multiple-correct-choices",
+  "title": "Multiple choice card with two correct answers",
+  "cards": [
+    {
+      "id": "two-correct",
+      "type": "mcq",
+      "prompt": "Which status code indicates a client error?",
+      "choices": [
+        { "text": "400", "correct": true },
+        { "text": "404", "correct": true },
+        { "text": "500", "correct": false }
+      ]
+    }
+  ]
+}

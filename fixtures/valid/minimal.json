@@ -1,0 +1,12 @@
+{
+  "id": "minimal-deck",
+  "title": "Minimal deck",
+  "cards": [
+    {
+      "id": "only-required-fields",
+      "type": "basic",
+      "prompt": "Which card fields are required?",
+      "answer": "id, type, prompt, and the field belonging to the card's own type."
+    }
+  ]
+}
