@@ -17,6 +17,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = ROOT / "fixtures"
 RENDERER = ROOT / "skills" / "cram" / "scripts" / "render.py"
+TEMPLATE = ROOT / "skills" / "cram" / "template" / "player.html"
 
 
 def fixture_paths(kind: str) -> list[Path]:
