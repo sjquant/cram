@@ -1,0 +1,17 @@
+{
+  "id": "missing-required-field",
+  "title": "Deck whose second card has no answer",
+  "cards": [
+    {
+      "id": "well-formed",
+      "type": "basic",
+      "prompt": "What is the default HTTP port?",
+      "answer": "80"
+    },
+    {
+      "id": "no-answer",
+      "type": "basic",
+      "prompt": "What is the default HTTPS port?"
+    }
+  ]
+}

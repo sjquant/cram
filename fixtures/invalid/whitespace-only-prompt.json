@@ -1,0 +1,12 @@
+{
+  "id": "whitespace-only-prompt",
+  "title": "Card whose prompt is only whitespace",
+  "cards": [
+    {
+      "id": "blank-face",
+      "type": "basic",
+      "prompt": "   ",
+      "answer": "The front of this card renders empty."
+    }
+  ]
+}

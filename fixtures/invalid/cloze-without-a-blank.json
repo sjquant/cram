@@ -1,0 +1,11 @@
+{
+  "id": "cloze-without-a-blank",
+  "title": "Cloze card with nothing blanked out",
+  "cards": [
+    {
+      "id": "no-blank",
+      "type": "cloze",
+      "prompt": "The Vary response header tells shared caches which request headers must match."
+    }
+  ]
+}

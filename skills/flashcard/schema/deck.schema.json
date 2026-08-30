@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/sjquant/flashcard/blob/main/skills/flashcard/schema/deck.schema.json",
+  "title": "Flashcard deck",
+  "description": "The contract between Claude's extraction pass and the renderer. All three card types are fixed here from the start so that implementing a type later is never a breaking schema change.",
+  "type": "object",
+  "required": ["id", "title", "cards"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "$ref": "#/$defs/slug",
+      "description": "Stable, unique name for this deck. Must stay the same across re-renders, because the player uses it to find a learner's earlier progress."
+    },
+    "title": {
+      "$ref": "#/$defs/nonEmptyString",
+      "description": "Human-readable deck title, shown in the player."
+    },
+    "source": {
+      "$ref": "#/$defs/nonEmptyString",
+      "description": "Where the cards were extracted from: a file path, a URL, or a short description."
+    },
+    "cards": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Card ids must be unique within the deck. Uniqueness is enforced by the validator, not expressible here.",
+      "items": { "$ref": "#/$defs/card" }
+    }
+  },
+
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S",
+      "description": "At least one non-whitespace character. A whitespace-only value would render as a blank card face."
+    },
+
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Lowercase kebab-case, so it is safe to use as a storage key."
+    },
+
+    "hint": {
+      "$ref": "#/$defs/nonEmptyString",
+      "description": "Optional nudge, hidden until the learner asks for it. Requesting a hint is recorded so the review screen can separate 'knew it' from 'needed a hint'."
+    },
+
+    "explanation": {
+      "$ref": "#/$defs/nonEmptyString",
+      "description": "Optional reasoning shown after the card is answered."
+    },
+
+    "card": {
+      "description": "Discriminated by the 'type' field. The validator branches on 'type' before checking anything else.",
+      "oneOf": [
+        { "$ref": "#/$defs/basicCard" },
+        { "$ref": "#/$defs/mcqCard" },
+        { "$ref": "#/$defs/clozeCard" }
+      ]
+    },
+
+    "basicCard": {
+      "type": "object",
+      "description": "Prompt on the front, answer on the back. The learner reveals the answer and grades themselves.",
+      "required": ["id", "type", "prompt", "answer"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/nonEmptyString" },
+        "type": { "const": "basic" },
+        "prompt": { "$ref": "#/$defs/nonEmptyString" },
+        "answer": { "$ref": "#/$defs/nonEmptyString" },
+        "hint": { "$ref": "#/$defs/hint" },
+        "explanation": { "$ref": "#/$defs/explanation" }
+      }
+    },
+
+    "mcqCard": {
+      "type": "object",
+      "description": "Multiple choice. The correct answer and the wrong options are separate fields, so a card cannot have zero or two correct answers. The renderer combines and shuffles them, so the position of the answer is never learnable.",
+      "required": ["id", "type", "prompt", "answer", "distractors"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/nonEmptyString" },
+        "type": { "const": "mcq" },
+        "prompt": { "$ref": "#/$defs/nonEmptyString" },
+        "answer": {
+          "$ref": "#/$defs/nonEmptyString",
+          "description": "The one correct option."
+        },
+        "distractors": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 5,
+          "uniqueItems": true,
+          "description": "Wrong options. One distractor expresses a true/false card; two to four is the usual range.",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "hint": { "$ref": "#/$defs/hint" },
+        "explanation": { "$ref": "#/$defs/explanation" }
+      }
+    },
+
+    "clozeCard": {
+      "type": "object",
+      "description": "Fill in the blank. Answers are written inline in the prompt as {{answer}}, in the position they belong, so the text and its answers cannot fall out of step. Write {{answer|also accepted|also this}} to accept more than one spelling.",
+      "required": ["id", "type", "prompt"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/nonEmptyString" },
+        "type": { "const": "cloze" },
+        "prompt": {
+          "type": "string",
+          "pattern": "\\{\\{[^{}]*\\S[^{}]*\\}\\}",
+          "description": "Must contain at least one {{answer}} blank."
+        },
+        "hint": { "$ref": "#/$defs/hint" },
+        "explanation": { "$ref": "#/$defs/explanation" }
+      }
+    }
+  }
+}

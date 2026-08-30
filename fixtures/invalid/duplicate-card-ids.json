@@ -1,0 +1,18 @@
+{
+  "id": "duplicate-card-ids",
+  "title": "Deck reusing one card id",
+  "cards": [
+    {
+      "id": "repeated",
+      "type": "basic",
+      "prompt": "What is the default HTTP port?",
+      "answer": "80"
+    },
+    {
+      "id": "repeated",
+      "type": "basic",
+      "prompt": "What is the default HTTPS port?",
+      "answer": "443"
+    }
+  ]
+}

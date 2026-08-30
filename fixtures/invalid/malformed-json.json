@@ -1,0 +1,12 @@
+{
+  "id": "malformed-json",
+  "title": "Not parseable at all",
+  "cards": [
+    {
+      "id": "trailing-comma",
+      "type": "basic",
+      "prompt": "Does this file parse?",
+      "answer": "No.",
+    }
+  ]
+}
