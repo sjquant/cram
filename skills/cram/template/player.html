@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cram player</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --paper: #f4efe4;
+      --ink: #1f1c18;
+      --ink-soft: #6a6357;
+      --rule: #ddd5c4;
+      --rule-strong: #c4bAa4;
+      --accent: #b5342b;
+      --serif: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino,
+        Georgia, AppleMyungjo, "Nanum Myeongjo", Batang, "Hiragino Mincho ProN",
+        "Yu Mincho", serif;
+      --sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.5;
+
+      --s1: 0.5rem;
+      --s2: 1rem;
+      --s3: 1.5rem;
+      --s4: 2.5rem;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper: #151310;
+        --ink: #ece5d8;
+        --ink-soft: #98907f;
+        --rule: #302b23;
+        --rule-strong: #473f33;
+        --accent: #e0645a;
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-width: 18rem;
+      color: var(--ink);
+      background: var(--paper);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      border-radius: 0.25rem;
+      padding: 0.55rem 0.9rem;
+      color: var(--ink-soft);
+      background: none;
+      font-size: 0.92rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: color 120ms ease, background 120ms ease;
+    }
+
+    button:hover:not(:disabled) { color: var(--ink); }
+
+    button:focus-visible,
+    input:focus-visible,
+    a:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.4;
+    }
+
+    /* One filled element on the page, so the primary action is unmistakable
+       without a colour or a shadow doing the work. */
+    .next-button:not(:disabled) {
+      color: var(--paper);
+      background: var(--ink);
+      padding-inline: 1.1rem;
+    }
+
+    .next-button:not(:disabled):hover {
+      color: var(--paper);
+      background: var(--accent);
+    }
+
+    a { color: var(--accent); }
+
+    .app-shell {
+      width: min(100% - 3rem, 46rem);
+      margin: 0 auto;
+      padding: clamp(2.5rem, 12vh, 7rem) 0 4rem;
+    }
+
+    .deck-header {
+      margin-bottom: var(--s3);
+    }
+
+    h1 {
+      max-width: 24ch;
+      margin: 0;
+      font-family: var(--serif);
+      font-variant-numeric: oldstyle-nums;
+      font-size: clamp(1.7rem, 4.5vw, 2.35rem);
+      font-weight: 500;
+      line-height: 1.2;
+      overflow-wrap: anywhere;
+    }
+
+    .progress-panel { margin: 0; }
+
+    /* The bar is the page rule: a hairline that fills as the deck advances,
+       instead of a bar plus a label plus a percentage all saying the same thing. */
+    progress {
+      display: block;
+      width: 100%;
+      height: 9px;
+      border: 0;
+      background: var(--rule);
+      -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27 viewBox%3D%270 0 1000 16%27 preserveAspectRatio%3D%27none%27%3E%3Cfilter id%3D%27b%27 x%3D%27-6%25%27 y%3D%27-60%25%27 width%3D%27112%25%27 height%3D%27220%25%27%3E%3CfeTurbulence type%3D%27fractalNoise%27 baseFrequency%3D%270.6 1.1%27 numOctaves%3D%273%27 seed%3D%274%27 result%3D%27t%27%2F%3E%3CfeDisplacementMap in%3D%27SourceGraphic%27 in2%3D%27t%27 scale%3D%273%27 xChannelSelector%3D%27R%27 yChannelSelector%3D%27G%27%2F%3E%3CfeGaussianBlur stdDeviation%3D%270.45%27%2F%3E%3C%2Ffilter%3E%3Cpath filter%3D%27url%28%23b%29%27 d%3D%27M1 8.4C36 5 84 2.9 148 2.2c112-1.2 232 1.4 352 .5 120-.9 236 1.9 344 1.160-.5 108 .4 154 2.6l0 3.4c-46 2.6-94 3.7-154 3.2-108-.9-224 1.9-344 1-120-.9-240 1.7-352 .5C84 13.4 36 11.4 1 8.4Z%27%2F%3E%3C%2Fsvg%3E");
+      mask-image: url("data:image/svg+xml,%3Csvg xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27 viewBox%3D%270 0 1000 16%27 preserveAspectRatio%3D%27none%27%3E%3Cfilter id%3D%27b%27 x%3D%27-6%25%27 y%3D%27-60%25%27 width%3D%27112%25%27 height%3D%27220%25%27%3E%3CfeTurbulence type%3D%27fractalNoise%27 baseFrequency%3D%270.6 1.1%27 numOctaves%3D%273%27 seed%3D%274%27 result%3D%27t%27%2F%3E%3CfeDisplacementMap in%3D%27SourceGraphic%27 in2%3D%27t%27 scale%3D%273%27 xChannelSelector%3D%27R%27 yChannelSelector%3D%27G%27%2F%3E%3CfeGaussianBlur stdDeviation%3D%270.45%27%2F%3E%3C%2Ffilter%3E%3Cpath filter%3D%27url%28%23b%29%27 d%3D%27M1 8.4C36 5 84 2.9 148 2.2c112-1.2 232 1.4 352 .5 120-.9 236 1.9 344 1.160-.5 108 .4 154 2.6l0 3.4c-46 2.6-94 3.7-154 3.2-108-.9-224 1.9-344 1-120-.9-240 1.7-352 .5C84 13.4 36 11.4 1 8.4Z%27%2F%3E%3C%2Fsvg%3E");
+      -webkit-mask-size: 100% 100%;
+      mask-size: 100% 100%;
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+    }
+
+    progress::-webkit-progress-bar { background: var(--rule); }
+
+    progress::-webkit-progress-value {
+      background: var(--accent);
+      box-shadow: 1px 0 2px -0.5px var(--accent);
+      transition: width 260ms cubic-bezier(0.2, 0.7, 0.3, 1);
+    }
+
+    progress::-moz-progress-bar { background: var(--accent); }
+
+    .card-frame {
+      position: relative;
+      min-height: clamp(9rem, 22vh, 13rem);
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+      padding: var(--s4) 0;
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--s2);
+      margin-bottom: var(--s3);
+    }
+
+    .card-type {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 0.92rem;
+      letter-spacing: 0.06em;
+      color: var(--ink-soft);
+    }
+
+    /* 낙관: the reader's seal, stamped in the corner of the page. */
+    .card-position {
+      display: flex;
+      flex: none;
+      align-items: center;
+      justify-content: center;
+      width: 2.3rem;
+      height: 2.3rem;
+      background: var(--accent);
+      color: var(--paper);
+      -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27 viewBox%3D%270 0 100 170%27 preserveAspectRatio%3D%27none%27%3E%3Cfilter id%3D%27s%27 x%3D%27-12%25%27 y%3D%27-8%25%27 width%3D%27124%25%27 height%3D%27116%25%27%3E%3CfeTurbulence type%3D%27fractalNoise%27 baseFrequency%3D%270.09%27 numOctaves%3D%273%27 seed%3D%273%27 result%3D%27t%27%2F%3E%3CfeDisplacementMap in%3D%27SourceGraphic%27 in2%3D%27t%27 scale%3D%275%27 xChannelSelector%3D%27R%27 yChannelSelector%3D%27G%27%2F%3E%3CfeGaussianBlur stdDeviation%3D%270.8%27%2F%3E%3C%2Ffilter%3E%3Cpath filter%3D%27url%28%23s%29%27 d%3D%27M6 5.5 22 3l24 1.4L70 2.6l22 2.2 3.4 20-1.2 30 1.6 34-1.1 32-2.4 22-22 2.4-26-1.6-22 1.2-16-2.6-2.6-24 1.4-32L4 62 5.2 28Z%27%2F%3E%3C%2Fsvg%3E");
+      mask-image: url("data:image/svg+xml,%3Csvg xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27 viewBox%3D%270 0 100 170%27 preserveAspectRatio%3D%27none%27%3E%3Cfilter id%3D%27s%27 x%3D%27-12%25%27 y%3D%27-8%25%27 width%3D%27124%25%27 height%3D%27116%25%27%3E%3CfeTurbulence type%3D%27fractalNoise%27 baseFrequency%3D%270.09%27 numOctaves%3D%273%27 seed%3D%273%27 result%3D%27t%27%2F%3E%3CfeDisplacementMap in%3D%27SourceGraphic%27 in2%3D%27t%27 scale%3D%275%27 xChannelSelector%3D%27R%27 yChannelSelector%3D%27G%27%2F%3E%3CfeGaussianBlur stdDeviation%3D%270.8%27%2F%3E%3C%2Ffilter%3E%3Cpath filter%3D%27url%28%23s%29%27 d%3D%27M6 5.5 22 3l24 1.4L70 2.6l22 2.2 3.4 20-1.2 30 1.6 34-1.1 32-2.4 22-22 2.4-26-1.6-22 1.2-16-2.6-2.6-24 1.4-32L4 62 5.2 28Z%27%2F%3E%3C%2Fsvg%3E");
+      -webkit-mask-size: 100% 100%;
+      mask-size: 100% 100%;
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.02em;
+      transform: rotate(-1.5deg);
+    }
+
+    .card-content {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      justify-content: flex-start;
+      min-width: 0;
+    }
+
+    .card-prompt {
+      max-width: 34ch;
+      margin: 0;
+      font-family: var(--serif);
+      font-variant-numeric: oldstyle-nums;
+      font-size: clamp(1.35rem, 2.6vw, 1.9rem);
+      font-weight: 400;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .unsupported-card {
+      margin: 1.25rem 0 0;
+      color: var(--ink-soft);
+      font-size: 0.86rem;
+    }
+
+    .navigation {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding-top: var(--s2);
+    }
+
+    /* A ghost button aligns to the column by its label, a filled one by its box. */
+    .navigation button:first-child {
+      margin-left: -0.9rem;
+    }
+
+    .player-status {
+      min-height: 1.5em;
+      margin: var(--s2) 0 0;
+      color: var(--ink-soft);
+      font-size: 0.8rem;
+    }
+
+    .player-status.error { color: var(--accent); }
+
+    .empty-state .card-type,
+    .empty-state .card-position { display: none; }
+
+    .empty-state {
+      align-items: center;
+      justify-content: center;
+      min-height: 11rem;
+      text-align: center;
+    }
+
+    .empty-state .card-prompt {
+      max-width: 32ch;
+      margin-inline: auto;
+      color: var(--ink-soft);
+      font-size: clamp(1.05rem, 2vw, 1.25rem);
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* Paper grain, painted behind the text so it adds tactility without
+       touching contrast. */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27 width%3D%27300%27 height%3D%27300%27%3E%3Cfilter id%3D%27f%27%3E%3CfeTurbulence type%3D%27fractalNoise%27 baseFrequency%3D%270.014 0.7%27 numOctaves%3D%273%27 stitchTiles%3D%27stitch%27%2F%3E%3C%2Ffilter%3E%3Crect width%3D%27300%27 height%3D%27300%27 filter%3D%27url%28%23f%29%27%2F%3E%3C%2Fsvg%3E"), url("data:image/svg+xml,%3Csvg xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27 width%3D%27180%27 height%3D%27180%27%3E%3Cfilter id%3D%27g%27%3E%3CfeTurbulence type%3D%27fractalNoise%27 baseFrequency%3D%270.85%27 numOctaves%3D%274%27 stitchTiles%3D%27stitch%27%2F%3E%3C%2Ffilter%3E%3Crect width%3D%27180%27 height%3D%27180%27 filter%3D%27url%28%23g%29%27%2F%3E%3C%2Fsvg%3E");
+      background-size: 300px 300px, 180px 180px;
+      mix-blend-mode: multiply;
+      opacity: 0.16;
+      pointer-events: none;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body::before {
+        mix-blend-mode: screen;
+        opacity: 0.05;
+      }
+
+    }
+
+    .app-shell {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Each card arrives the way ink meets paper: a moment to soak in and sharpen. */
+    @keyframes ink-settle {
+      from { opacity: 0; transform: translateY(0.4rem); filter: blur(2px); }
+      to { opacity: 1; transform: none; filter: none; }
+    }
+
+    .card-content > * {
+      animation: ink-settle 340ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+    }
+
+    @media (max-width: 30rem) {
+      .app-shell { width: min(100% - 2rem, 38rem); }
+      .card-frame { min-height: 12rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell" id="player" data-testid="player" data-state="loading">
+    <header class="deck-header">
+      <h1 id="deck-title" data-testid="deck-title">Loading deck…</h1>
+    </header>
+
+    <section class="progress-panel" aria-label="Deck progress">
+      <div class="progress-row visually-hidden">
+        <span id="progress-label" data-testid="progress-label">Card 0 of 0</span>
+        <span class="progress-percent" id="progress-percent">0%</span>
+      </div>
+      <progress id="progress" data-testid="progress" max="1" value="0">0%</progress>
+    </section>
+
+    <main>
+      <article class="card-frame" id="card-frame" data-testid="card" tabindex="-1" aria-labelledby="card-prompt">
+        <div class="card-meta">
+          <span class="card-type" id="card-type" data-testid="card-type">Preparing card</span>
+          <span class="card-position" id="card-position" data-testid="card-position">—</span>
+        </div>
+        <div class="card-content" id="card-content" data-testid="card-content">
+          <p class="card-prompt" id="card-prompt" data-testid="card-prompt">Preparing your deck…</p>
+        </div>
+      </article>
+
+      <nav class="navigation" aria-label="Card navigation">
+        <button type="button" id="previous-card" data-testid="previous-card" data-action="previous" aria-label="Previous card">← Previous</button>
+        <button type="button" id="next-card" data-testid="next-card" class="next-button" data-action="next" aria-label="Next card">Next →</button>
+      </nav>
+      <p class="player-status" id="player-status" role="status" aria-live="polite"></p>
+
+      <!-- Swapping card content in place is silent for a screen reader, so each card is
+           announced here instead. Kept separate from the visible status line, which
+           carries hints and errors rather than the card itself. -->
+      <p class="visually-hidden" id="card-announcer" role="status" aria-live="polite"></p>
+    </main>
+  </div>
+
+  <!--
+    A3 replaces only the value after the /*INJECT*/ marker with the deck JSON. Keep this
+    exact line. Every "<" in the JSON must be escaped as \u003C, so that a card whose text
+    contains a closing script tag cannot end this element early and break the page.
+  -->
+  <script>window.__DECK__ = /*INJECT*/ null;</script>
+  <script>
+    (() => {
+      "use strict";
+
+      // This small copy of fixtures/valid/minimal.json makes the template useful when
+      // opened as file:// during development. A rendered deck always takes precedence.
+      const previewDeck = {
+        id: "minimal-deck",
+        title: "Minimal deck",
+        cards: [{
+          id: "only-required-fields",
+          type: "basic",
+          prompt: "Which card fields are required?",
+          answer: "id, type, prompt, and the field belonging to the card's own type."
+        }]
+      };
+
+      const refs = {
+        player: document.getElementById("player"),
+        title: document.getElementById("deck-title"),
+        progress: document.getElementById("progress"),
+        progressLabel: document.getElementById("progress-label"),
+        progressPercent: document.getElementById("progress-percent"),
+        cardFrame: document.getElementById("card-frame"),
+        cardType: document.getElementById("card-type"),
+        cardPosition: document.getElementById("card-position"),
+        cardContent: document.getElementById("card-content"),
+        previous: document.getElementById("previous-card"),
+        next: document.getElementById("next-card"),
+        status: document.getElementById("player-status"),
+        announcer: document.getElementById("card-announcer")
+      };
+
+      const NAVIGATION_HINT = "Use the buttons or your left and right arrow keys to move through the deck.";
+      const PROMPT_ID = "card-prompt";
+
+      const renderers = Object.create(null);
+      const state = {
+        deck: null,
+        index: 0,
+        cleanup: () => {}
+      };
+
+      function registerCardRenderer(type, renderer) {
+        if (typeof type !== "string" || !type.trim()) {
+          throw new TypeError("A card renderer needs a non-empty type.");
+        }
+        if (typeof renderer !== "function") {
+          throw new TypeError(`The renderer for ${type} must be a function.`);
+        }
+        renderers[type] = renderer;
+
+        // A card type may be registered by a later, self-contained module. Repaint
+        // immediately if that module is loaded after the player has started.
+        if (state.deck && state.deck.cards[state.index]?.type === type) {
+          renderCurrentCard();
+        }
+      }
+
+      function setDeck(deck) {
+        if (!isRenderableDeck(deck)) {
+          showDeckError("The page needs a deck with a title and at least one card.");
+          return;
+        }
+        state.deck = deck;
+        state.index = 0;
+        refs.player.dataset.state = "ready";
+        refs.title.textContent = deck.title;
+        renderCurrentCard();
+      }
+
+      function moveCard(delta) {
+        if (!state.deck) return;
+        const nextIndex = Math.max(0, Math.min(state.deck.cards.length - 1, state.index + delta));
+        if (nextIndex === state.index) return;
+        state.index = nextIndex;
+        renderCurrentCard();
+      }
+
+      function renderCurrentCard() {
+        if (!state.deck) return;
+        state.cleanup();
+        state.cleanup = () => {};
+        const card = state.deck.cards[state.index];
+        const type = typeof card.type === "string" && card.type.trim() ? card.type : "unknown";
+        const renderer = renderers[type] || renderUnsupportedCard;
+
+        refs.cardFrame.classList.remove("empty-state");
+        refs.cardType.textContent = type;
+        refs.cardContent.replaceChildren();
+        // Drops any error left by the card we navigated away from. Set before the
+        // renderer runs, so a renderer that writes its own status keeps it.
+        setStatus(NAVIGATION_HINT);
+        try {
+          const result = renderer(rendererContext(card));
+          const node = result && result.node ? result.node : result;
+          if (!(node instanceof Node)) {
+            throw new TypeError(`The ${type} renderer did not return a DOM node.`);
+          }
+          refs.cardContent.replaceChildren(node);
+          if (result && typeof result.onMount === "function") {
+            const cleanup = result.onMount(rendererContext(card));
+            if (typeof cleanup === "function") state.cleanup = cleanup;
+          }
+        } catch (error) {
+          refs.cardContent.replaceChildren(createPromptElement("This card could not be rendered."));
+          setStatus(error instanceof Error ? error.message : "The card renderer failed.", true);
+        }
+        updateProgress();
+        announceCard();
+      }
+
+      function rendererContext(card) {
+        return {
+          card,
+          index: state.index,
+          total: state.deck.cards.length,
+          createElement,
+          createPromptElement,
+          setStatus,
+          player: api
+        };
+      }
+
+      function renderPromptCard({ card }) {
+        const fragment = document.createDocumentFragment();
+        fragment.append(createPromptElement(card.prompt || "This card has no prompt."));
+        return fragment;
+      }
+
+      function renderUnsupportedCard({ card }) {
+        const fragment = document.createDocumentFragment();
+        fragment.append(createPromptElement(card.prompt || "This card has no prompt."));
+        fragment.append(createElement(
+          "p",
+          "unsupported-card",
+          `The “${card.type || "unknown"}” card renderer is not installed yet.`
+        ));
+        return fragment;
+      }
+
+      function showDeckError(message) {
+        state.cleanup();
+        state.cleanup = () => {};
+        state.deck = null;
+        refs.player.dataset.state = "error";
+        refs.title.textContent = "Unable to load deck";
+        refs.progress.max = 1;
+        refs.progress.value = 0;
+        refs.progress.setAttribute("aria-label", "No cards loaded");
+        refs.progressLabel.textContent = "No cards loaded";
+        refs.progressPercent.textContent = "0%";
+        refs.cardType.textContent = "Deck error";
+        refs.cardPosition.textContent = "—";
+        refs.cardContent.replaceChildren(createPromptElement(message));
+        refs.cardFrame.classList.add("empty-state");
+        const focused = document.activeElement;
+        refs.previous.disabled = true;
+        refs.next.disabled = true;
+        restoreNavigationFocus(focused);
+        setStatus(message, true);
+      }
+
+      function setStatus(message, isError = false) {
+        const text = message || "";
+        // Rewriting a live region re-announces it, so an unchanged hint stays untouched
+        // rather than repeating itself on every card change.
+        if (refs.status.textContent !== text) refs.status.textContent = text;
+        refs.status.classList.toggle("error", Boolean(isError));
+      }
+
+      function updateProgress() {
+        const total = state.deck.cards.length;
+        const position = state.index + 1;
+        const percent = Math.round((position / total) * 100);
+        refs.progress.max = total;
+        refs.progress.value = position;
+        refs.progress.setAttribute("aria-label", `Card ${position} of ${total}`);
+        refs.progressLabel.textContent = `Card ${position} of ${total}`;
+        refs.progressPercent.textContent = `${percent}%`;
+        const width = String(total).length;
+        refs.cardPosition.textContent =
+          `${String(position).padStart(width, "0")}/${total}`;
+        const focused = document.activeElement;
+        refs.previous.disabled = state.index === 0;
+        refs.next.disabled = state.index === total - 1;
+        restoreNavigationFocus(focused);
+      }
+
+      // Reaching the first or last card disables the button that got you there, which
+      // would otherwise drop focus to the body and lose a keyboard user's place. The
+      // caller has to capture the focused element first: disabling it blurs it at once.
+      function restoreNavigationFocus(focused) {
+        if (focused !== refs.previous && focused !== refs.next) return;
+        if (!focused.disabled) return;
+        const sibling = focused === refs.next ? refs.previous : refs.next;
+        (sibling.disabled ? refs.cardFrame : sibling).focus();
+      }
+
+      function announceCard() {
+        const position = state.index + 1;
+        const total = state.deck.cards.length;
+        refs.announcer.textContent = `Card ${position} of ${total}. ${refs.cardContent.textContent}`;
+      }
+
+      // Deliberately lenient: the deck validator owns the strict contract, and the shell
+      // only needs enough structure to paint something rather than throw.
+      function isRenderableDeck(candidate) {
+        if (!candidate || typeof candidate !== "object") return false;
+        if (typeof candidate.title !== "string" || !candidate.title.trim()) return false;
+        if (!Array.isArray(candidate.cards) || candidate.cards.length === 0) return false;
+        return candidate.cards.every((card) => card && typeof card === "object");
+      }
+
+      // Every renderer should build its prompt with this: the card frame is labelled by
+      // the element's id, so a renderer that rolls its own leaves the card unnamed.
+      function createPromptElement(text) {
+        const prompt = createElement("p", "card-prompt", text);
+        prompt.id = PROMPT_ID;
+        prompt.dataset.testid = PROMPT_ID;
+        return prompt;
+      }
+
+      function createElement(tagName, className, text) {
+        const element = document.createElement(tagName);
+        if (className) element.className = className;
+        if (text !== undefined && text !== null) element.textContent = String(text);
+        return element;
+      }
+
+      const api = {
+        registerCardRenderer,
+        setDeck,
+        getState: () => ({
+          deck: state.deck,
+          index: state.index,
+          total: state.deck ? state.deck.cards.length : 0
+        })
+      };
+
+      // The shell owns this registry and navigation. Each card-type issue can add
+      // or replace exactly one renderer without changing the shell or other types.
+      registerCardRenderer("basic", renderPromptCard);
+      registerCardRenderer("mcq", renderPromptCard);
+      registerCardRenderer("cloze", renderPromptCard);
+      window.CRAM_PLAYER = api;
+
+      refs.player.addEventListener("click", (event) => {
+        const button = event.target instanceof Element
+          ? event.target.closest("button[data-action]")
+          : null;
+        if (!button) return;
+        if (button.dataset.action === "previous") moveCard(-1);
+        if (button.dataset.action === "next") moveCard(1);
+      });
+
+      document.addEventListener("keydown", (event) => {
+        const target = event.target;
+        if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target.isContentEditable) {
+          return;
+        }
+        if (event.key === "ArrowLeft") {
+          event.preventDefault();
+          moveCard(-1);
+        } else if (event.key === "ArrowRight") {
+          event.preventDefault();
+          moveCard(1);
+        }
+      });
+
+      const injectedDeck = window.__DECK__;
+      setDeck(injectedDeck === null || injectedDeck === undefined ? previewDeck : injectedDeck);
+    })();
+  </script>
+</body>
+</html>
