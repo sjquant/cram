@@ -218,6 +218,37 @@
       font-size: 0.86rem;
     }
 
+    .card-answer {
+      max-width: 34ch;
+      margin: var(--s3) 0 0;
+      padding-top: var(--s2);
+      border-top: 1px solid var(--rule);
+      font-family: var(--serif);
+      font-size: clamp(1.05rem, 2vw, 1.3rem);
+      line-height: 1.5;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .reveal-button {
+      align-self: flex-start;
+      margin: var(--s3) -0.9rem 0;
+    }
+
+    .grading-buttons {
+      display: flex;
+      gap: var(--s2);
+      margin: var(--s3) -0.9rem 0;
+    }
+
+    .grading-buttons[hidden] {
+      display: none;
+    }
+
+    .grade-button[aria-pressed="true"] {
+      color: var(--accent);
+    }
+
     .navigation {
       display: flex;
       align-items: center;
@@ -404,7 +435,8 @@
       const state = {
         deck: null,
         index: 0,
-        cleanup: () => {}
+        cleanup: () => {},
+        grades: Object.create(null)
       };
 
       function registerCardRenderer(type, renderer) {
@@ -430,6 +462,7 @@
         }
         state.deck = deck;
         state.index = 0;
+        state.grades = Object.create(null);
         refs.player.dataset.state = "ready";
         refs.title.textContent = deck.title;
         renderCurrentCard();
@@ -488,6 +521,82 @@
         };
       }
 
+      // This card type's own grade vocabulary — opaque to the shell (see
+      // recordGrade above), meaningful only within this renderer.
+      const BASIC_GRADES = Object.freeze({ KNOWN: "known", MISSED: "missed" });
+
+      function renderBasicCard({ card, player, createElement, createPromptElement, setStatus }) {
+        const fragment = document.createDocumentFragment();
+        fragment.append(createPromptElement(card.prompt || "This card has no prompt."));
+
+        const answer = createElement("p", "card-answer", card.answer || "This card has no answer.");
+        answer.dataset.testid = "card-answer";
+        answer.hidden = true;
+
+        const reveal = createElement("button", "reveal-button", "Show answer");
+        reveal.type = "button";
+        reveal.dataset.testid = "reveal-answer";
+        reveal.setAttribute("aria-expanded", "false");
+
+        function createGradeButton(grade, label) {
+          const button = createElement("button", "grade-button", label);
+          button.type = "button";
+          button.dataset.testid = `grade-${grade}`;
+          button.setAttribute("aria-pressed", "false");
+          return button;
+        }
+
+        const missed = createGradeButton(BASIC_GRADES.MISSED, "Missed it");
+        const known = createGradeButton(BASIC_GRADES.KNOWN, "Knew it");
+
+        const grading = createElement("div", "grading-buttons");
+        grading.dataset.testid = "grading-buttons";
+        grading.setAttribute("role", "group");
+        grading.setAttribute("aria-label", "Grade your recall");
+        grading.hidden = true;
+        grading.append(missed, known);
+
+        fragment.append(answer, reveal, grading);
+
+        function revealAnswer() {
+          answer.hidden = false;
+          reveal.hidden = true;
+          reveal.setAttribute("aria-expanded", "true");
+          grading.hidden = false;
+        }
+
+        // Pure UI update, safe to call while restoring a prior grade on mount
+        // (unlike handleGradeClick, it never re-records or touches setStatus,
+        // so revisiting a graded card doesn't stomp the navigation hint).
+        function applyGradeUI(grade) {
+          known.setAttribute("aria-pressed", String(grade === BASIC_GRADES.KNOWN));
+          missed.setAttribute("aria-pressed", String(grade === BASIC_GRADES.MISSED));
+        }
+
+        function handleGradeClick(grade) {
+          try {
+            player.recordGrade(card.id, grade);
+          } catch (error) {
+            setStatus(error instanceof Error ? error.message : "The grade could not be recorded.", true);
+            return;
+          }
+          applyGradeUI(grade);
+          setStatus(grade === BASIC_GRADES.KNOWN ? "Marked as known." : "Marked as missed.");
+        }
+
+        reveal.addEventListener("click", revealAnswer);
+        missed.addEventListener("click", () => handleGradeClick(BASIC_GRADES.MISSED));
+        known.addEventListener("click", () => handleGradeClick(BASIC_GRADES.KNOWN));
+
+        const existingGrade = player.getGrade(card.id);
+        if (existingGrade) {
+          revealAnswer();
+          applyGradeUI(existingGrade);
+        }
+
+        return fragment;
+      }
+
       function renderPromptCard({ card }) {
         const fragment = document.createDocumentFragment();
         fragment.append(createPromptElement(card.prompt || "This card has no prompt."));
@@ -503,6 +612,26 @@
           `The “${card.type || "unknown"}” card renderer is not installed yet.`
         ));
         return fragment;
+      }
+
+      // Grades are keyed by card id rather than index, so they survive deck
+      // navigation and stay meaningful to a later score screen (B3) even if
+      // cards are ever reordered. The value itself is opaque to the shell:
+      // each card type defines and interprets its own grade vocabulary
+      // (the basic renderer below uses "known"/"missed"; mcq or cloze are
+      // free to use something else, e.g. "correct"/"incorrect").
+      function recordGrade(cardId, grade) {
+        if (typeof cardId !== "string" || !cardId) {
+          throw new TypeError("A grade needs a card id.");
+        }
+        if (typeof grade !== "string" || !grade) {
+          throw new TypeError("A grade needs a non-empty value.");
+        }
+        state.grades[cardId] = grade;
+      }
+
+      function getGrade(cardId) {
+        return state.grades[cardId];
       }
 
       function showDeckError(message) {
@@ -597,16 +726,19 @@
       const api = {
         registerCardRenderer,
         setDeck,
+        recordGrade,
+        getGrade,
         getState: () => ({
           deck: state.deck,
           index: state.index,
-          total: state.deck ? state.deck.cards.length : 0
+          total: state.deck ? state.deck.cards.length : 0,
+          grades: { ...state.grades }
         })
       };
 
       // The shell owns this registry and navigation. Each card-type issue can add
       // or replace exactly one renderer without changing the shell or other types.
-      registerCardRenderer("basic", renderPromptCard);
+      registerCardRenderer("basic", renderBasicCard);
       registerCardRenderer("mcq", renderPromptCard);
       registerCardRenderer("cloze", renderPromptCard);
       window.CRAM_PLAYER = api;
