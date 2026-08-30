@@ -9,7 +9,7 @@
   "properties": {
     "id": {
       "$ref": "#/$defs/slug",
-      "description": "Stable deck identifier. Keys the browser-side progress store as fc:<id>:v1, so it must stay the same across re-renders of the same deck."
+      "description": "Stable, unique name for this deck. Must stay the same across re-renders, because the player uses it to find a learner's earlier progress."
     },
     "title": {
       "$ref": "#/$defs/nonEmptyString",
@@ -18,12 +18,6 @@
     "source": {
       "$ref": "#/$defs/nonEmptyString",
       "description": "Where the cards were extracted from: a file path, a URL, or a short description."
-    },
-    "created": {
-      "type": "string",
-      "format": "date",
-      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
-      "description": "Extraction date, ISO 8601 (YYYY-MM-DD)."
     },
     "cards": {
       "type": "array",
@@ -44,7 +38,7 @@
     "slug": {
       "type": "string",
       "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
-      "description": "Lowercase kebab-case. Safe to use as a storage key and a DOM id."
+      "description": "Lowercase kebab-case, so it is safe to use as a storage key."
     },
 
     "hint": {
@@ -57,18 +51,8 @@
       "description": "Optional reasoning shown after the card is answered."
     },
 
-    "tags": {
-      "type": "array",
-      "uniqueItems": true,
-      "items": { "$ref": "#/$defs/nonEmptyString" }
-    },
-
-    "difficulty": {
-      "enum": ["easy", "medium", "hard"]
-    },
-
     "card": {
-      "description": "Discriminated by the 'type' field. The validator branches on 'type' before checking anything else, so a bad type yields one clear error instead of three failed branches.",
+      "description": "Discriminated by the 'type' field. The validator branches on 'type' before checking anything else.",
       "oneOf": [
         { "$ref": "#/$defs/basicCard" },
         { "$ref": "#/$defs/mcqCard" },
@@ -82,84 +66,56 @@
       "required": ["id", "type", "prompt", "answer"],
       "additionalProperties": false,
       "properties": {
-        "id": { "$ref": "#/$defs/slug" },
+        "id": { "$ref": "#/$defs/nonEmptyString" },
         "type": { "const": "basic" },
         "prompt": { "$ref": "#/$defs/nonEmptyString" },
         "answer": { "$ref": "#/$defs/nonEmptyString" },
         "hint": { "$ref": "#/$defs/hint" },
-        "explanation": { "$ref": "#/$defs/explanation" },
-        "tags": { "$ref": "#/$defs/tags" },
-        "difficulty": { "$ref": "#/$defs/difficulty" }
+        "explanation": { "$ref": "#/$defs/explanation" }
       }
     },
 
     "mcqCard": {
       "type": "object",
-      "description": "Multiple choice. Exactly one choice is correct; that rule is enforced by the validator. Choice order is shuffled at render time, so the position of the correct answer is never learnable.",
-      "required": ["id", "type", "prompt", "choices"],
+      "description": "Multiple choice. The correct answer and the wrong options are separate fields, so a card cannot have zero or two correct answers. The renderer combines and shuffles them, so the position of the answer is never learnable.",
+      "required": ["id", "type", "prompt", "answer", "distractors"],
       "additionalProperties": false,
       "properties": {
-        "id": { "$ref": "#/$defs/slug" },
+        "id": { "$ref": "#/$defs/nonEmptyString" },
         "type": { "const": "mcq" },
         "prompt": { "$ref": "#/$defs/nonEmptyString" },
-        "choices": {
+        "answer": {
+          "$ref": "#/$defs/nonEmptyString",
+          "description": "The one correct option."
+        },
+        "distractors": {
           "type": "array",
-          "minItems": 2,
-          "maxItems": 6,
-          "description": "Two choices expresses a true/false card; there is no separate type for it. Three to five is the usual range.",
-          "items": {
-            "type": "object",
-            "required": ["text", "correct"],
-            "additionalProperties": false,
-            "properties": {
-              "text": { "$ref": "#/$defs/nonEmptyString" },
-              "correct": { "type": "boolean" }
-            }
-          }
+          "minItems": 1,
+          "maxItems": 5,
+          "uniqueItems": true,
+          "description": "Wrong options. One distractor expresses a true/false card; two to four is the usual range.",
+          "items": { "$ref": "#/$defs/nonEmptyString" }
         },
         "hint": { "$ref": "#/$defs/hint" },
-        "explanation": { "$ref": "#/$defs/explanation" },
-        "tags": { "$ref": "#/$defs/tags" },
-        "difficulty": { "$ref": "#/$defs/difficulty" }
+        "explanation": { "$ref": "#/$defs/explanation" }
       }
     },
 
     "clozeCard": {
       "type": "object",
-      "description": "Fill in the blank. The prompt carries {{1}}, {{2}} ... placeholders; placeholder {{n}} is answered by blanks[n-1]. The validator checks that every placeholder has a blank and every blank has a placeholder.",
-      "required": ["id", "type", "prompt", "blanks"],
+      "description": "Fill in the blank. Answers are written inline in the prompt as {{answer}}, in the position they belong, so the text and its answers cannot fall out of step. Write {{answer|also accepted|also this}} to accept more than one spelling.",
+      "required": ["id", "type", "prompt"],
       "additionalProperties": false,
       "properties": {
-        "id": { "$ref": "#/$defs/slug" },
+        "id": { "$ref": "#/$defs/nonEmptyString" },
         "type": { "const": "cloze" },
         "prompt": {
           "type": "string",
-          "minLength": 1,
-          "pattern": "\\{\\{[1-9][0-9]*\\}\\}",
-          "description": "Must contain at least one {{n}} placeholder. Numbering starts at 1, because {{n}} is answered by blanks[n-1] and {{0}} would have nothing to map to."
-        },
-        "blanks": {
-          "type": "array",
-          "minItems": 1,
-          "items": {
-            "type": "object",
-            "required": ["answer"],
-            "additionalProperties": false,
-            "properties": {
-              "answer": { "$ref": "#/$defs/nonEmptyString" },
-              "alternatives": {
-                "type": "array",
-                "uniqueItems": true,
-                "description": "Other spellings accepted as correct, for whichever answering mode the cloze card ends up using.",
-                "items": { "$ref": "#/$defs/nonEmptyString" }
-              }
-            }
-          }
+          "pattern": "\\{\\{[^{}]*\\S[^{}]*\\}\\}",
+          "description": "Must contain at least one {{answer}} blank."
         },
         "hint": { "$ref": "#/$defs/hint" },
-        "explanation": { "$ref": "#/$defs/explanation" },
-        "tags": { "$ref": "#/$defs/tags" },
-        "difficulty": { "$ref": "#/$defs/difficulty" }
+        "explanation": { "$ref": "#/$defs/explanation" }
       }
     }
   }

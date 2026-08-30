@@ -1,0 +1,13 @@
+{
+  "id": "mcq-without-distractors",
+  "title": "Multiple choice card offering only the answer",
+  "cards": [
+    {
+      "id": "nothing-to-choose-between",
+      "type": "mcq",
+      "prompt": "Which status code means Not Modified?",
+      "answer": "304",
+      "distractors": []
+    }
+  ]
+}

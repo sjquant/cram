@@ -2,50 +2,39 @@
   "id": "python-asyncio-basics",
   "title": "Python asyncio basics",
   "source": "https://docs.python.org/3/library/asyncio-task.html",
-  "created": "2026-08-30",
   "cards": [
     {
       "id": "coroutine-definition",
       "type": "basic",
       "prompt": "What does calling an async function return?",
       "answer": "A coroutine object. The body does not run until the coroutine is awaited or scheduled on the event loop.",
-      "hint": "Nothing in the function body has run yet.",
-      "tags": ["coroutines"],
-      "difficulty": "easy"
+      "hint": "Nothing in the function body has run yet."
     },
     {
       "id": "await-semantics",
       "type": "basic",
       "prompt": "What does `await` do to the surrounding coroutine?",
       "answer": "It suspends the coroutine and yields control back to the event loop until the awaited object completes.",
-      "explanation": "Suspension is what lets other tasks run. A blocking call that never yields starves the whole loop, which is why blocking I/O has to be pushed to an executor.",
-      "tags": ["coroutines", "event-loop"],
-      "difficulty": "medium"
+      "explanation": "Suspension is what lets other tasks run. A blocking call that never yields starves the whole loop, which is why blocking I/O has to be pushed to an executor."
     },
     {
       "id": "gather-vs-sequential-await",
       "type": "basic",
       "prompt": "Why is `await a(); await b()` slower than `asyncio.gather(a(), b())`?",
-      "answer": "Sequential awaits do not start `b()` until `a()` has finished. `gather` schedules both immediately, so their wait time overlaps.",
-      "tags": ["concurrency"],
-      "difficulty": "medium"
+      "answer": "Sequential awaits do not start `b()` until `a()` has finished. `gather` schedules both immediately, so their wait time overlaps."
     },
     {
       "id": "task-vs-coroutine",
       "type": "basic",
       "prompt": "What is the difference between a coroutine and a Task?",
       "answer": "A coroutine is inert until awaited. A Task wraps a coroutine and schedules it on the event loop, so it starts running without anyone awaiting it.",
-      "explanation": "This is why `asyncio.create_task` is how you get fire-and-forget concurrency, and why dropping the returned reference can let the task be garbage collected mid-flight.",
-      "tags": ["tasks"],
-      "difficulty": "hard"
+      "explanation": "This is why `asyncio.create_task` is how you get fire-and-forget concurrency, and why dropping the returned reference can let the task be garbage collected mid-flight."
     },
     {
       "id": "run-blocking-call",
       "type": "basic",
       "prompt": "How do you call a blocking function from async code without stalling the event loop?",
-      "answer": "`await asyncio.to_thread(fn, *args)`, which runs it in a worker thread and awaits the result.",
-      "tags": ["event-loop", "blocking"],
-      "difficulty": "medium"
+      "answer": "`await asyncio.to_thread(fn, *args)`, which runs it in a worker thread and awaits the result."
     }
   ]
 }
