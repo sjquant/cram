@@ -1,17 +1,9 @@
 ---
 name: cram
-description: Creates validated, self-contained flashcard quiz decks from pasted, attached, local, or provided web source material. Use when the user asks for flashcards, study cards, a quiz, or an interactive deck.
+description: Creates validated, self-contained flashcard quiz decks from pasted, attached, local, or web source material. Use when the user asks for flashcards, study cards, a quiz, or an interactive deck; not for general summaries or rewrites without a deck request.
 ---
 
 # Cram
-
-## When to use this skill
-
-Use Cram when the user wants to learn from source material by turning it into
-an interactive flashcard deck: for example, a pasted passage, an attached
-document, a local text file, or a URL the user has provided. Do not trigger it
-for a general summary, rewriting, or questions that do not ask for a deck or
-quiz.
 
 ## Create the deck JSON
 
