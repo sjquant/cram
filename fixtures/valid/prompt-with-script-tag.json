@@ -1,0 +1,12 @@
+{
+  "id": "escaping-review",
+  "title": "Escaping user text for the browser",
+  "cards": [
+    {
+      "id": "closing-script-tag",
+      "type": "basic",
+      "prompt": "Why can't a `<script>` block safely contain the literal text `</script>` inside a string?",
+      "answer": "The HTML parser ends the script element the moment it sees `</script>`, even inside a quoted string, so embedding it verbatim would break the page."
+    }
+  ]
+}
