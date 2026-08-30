@@ -27,8 +27,6 @@
       --s2: 1rem;
       --s3: 1.5rem;
       --s4: 2.5rem;
-      --cell: 2.5rem;
-      --grid: rgba(31, 28, 24, 0.055);
     }
 
     @media (prefers-color-scheme: dark) {
@@ -39,7 +37,6 @@
         --rule: #302b23;
         --rule-strong: #473f33;
         --accent: #e0645a;
-        --grid: rgba(236, 229, 216, 0.07);
       }
     }
 
@@ -304,22 +301,6 @@
     .app-shell {
       position: relative;
       z-index: 1;
-    }
-
-    /* 원고지: a ruled sheet the size of the text column, so the grid reads as the
-       paper being written on rather than as wallpaper. Geometry survives being
-       this faint; a blurred organic shape at the same opacity reads as a stain. */
-    .app-shell::before {
-      content: "";
-      position: absolute;
-      inset: -1.5rem -1rem;
-      z-index: -1;
-      pointer-events: none;
-      background-image:
-        repeating-linear-gradient(to right,
-          var(--grid) 0, var(--grid) 1px, transparent 1px, transparent var(--cell)),
-        repeating-linear-gradient(to bottom,
-          var(--grid) 0, var(--grid) 1px, transparent 1px, transparent var(--cell));
     }
 
     /* Each card arrives the way ink meets paper: a moment to soak in and sharpen. */
