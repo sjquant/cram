@@ -521,6 +521,10 @@
         };
       }
 
+      // This card type's own grade vocabulary — opaque to the shell (see
+      // recordGrade above), meaningful only within this renderer.
+      const BASIC_GRADES = Object.freeze({ KNOWN: "known", MISSED: "missed" });
+
       function renderBasicCard({ card, player, createElement, createPromptElement, setStatus }) {
         const fragment = document.createDocumentFragment();
         fragment.append(createPromptElement(card.prompt || "This card has no prompt."));
@@ -534,23 +538,24 @@
         reveal.dataset.testid = "reveal-answer";
         reveal.setAttribute("aria-expanded", "false");
 
+        function createGradeButton(grade, label) {
+          const button = createElement("button", "grade-button", label);
+          button.type = "button";
+          button.dataset.testid = `grade-${grade}`;
+          button.setAttribute("aria-pressed", "false");
+          return button;
+        }
+
+        const missed = createGradeButton(BASIC_GRADES.MISSED, "Missed it");
+        const known = createGradeButton(BASIC_GRADES.KNOWN, "Knew it");
+
         const grading = createElement("div", "grading-buttons");
         grading.dataset.testid = "grading-buttons";
         grading.setAttribute("role", "group");
         grading.setAttribute("aria-label", "Grade your recall");
         grading.hidden = true;
-
-        const missed = createElement("button", "grade-button", "Missed it");
-        missed.type = "button";
-        missed.dataset.testid = "grade-missed";
-        missed.setAttribute("aria-pressed", "false");
-
-        const known = createElement("button", "grade-button", "Knew it");
-        known.type = "button";
-        known.dataset.testid = "grade-known";
-        known.setAttribute("aria-pressed", "false");
-
         grading.append(missed, known);
+
         fragment.append(answer, reveal, grading);
 
         function revealAnswer() {
@@ -560,21 +565,33 @@
           grading.hidden = false;
         }
 
-        function selectGrade(grade) {
-          player.recordGrade(card.id, grade);
-          known.setAttribute("aria-pressed", String(grade === "known"));
-          missed.setAttribute("aria-pressed", String(grade === "missed"));
-          setStatus(grade === "known" ? "Marked as known." : "Marked as missed.");
+        // Pure UI update, safe to call while restoring a prior grade on mount
+        // (unlike handleGradeClick, it never re-records or touches setStatus,
+        // so revisiting a graded card doesn't stomp the navigation hint).
+        function applyGradeUI(grade) {
+          known.setAttribute("aria-pressed", String(grade === BASIC_GRADES.KNOWN));
+          missed.setAttribute("aria-pressed", String(grade === BASIC_GRADES.MISSED));
+        }
+
+        function handleGradeClick(grade) {
+          try {
+            player.recordGrade(card.id, grade);
+          } catch (error) {
+            setStatus(error instanceof Error ? error.message : "The grade could not be recorded.", true);
+            return;
+          }
+          applyGradeUI(grade);
+          setStatus(grade === BASIC_GRADES.KNOWN ? "Marked as known." : "Marked as missed.");
         }
 
         reveal.addEventListener("click", revealAnswer);
-        missed.addEventListener("click", () => selectGrade("missed"));
-        known.addEventListener("click", () => selectGrade("known"));
+        missed.addEventListener("click", () => handleGradeClick(BASIC_GRADES.MISSED));
+        known.addEventListener("click", () => handleGradeClick(BASIC_GRADES.KNOWN));
 
         const existingGrade = player.getGrade(card.id);
         if (existingGrade) {
           revealAnswer();
-          selectGrade(existingGrade);
+          applyGradeUI(existingGrade);
         }
 
         return fragment;
@@ -599,13 +616,16 @@
 
       // Grades are keyed by card id rather than index, so they survive deck
       // navigation and stay meaningful to a later score screen (B3) even if
-      // cards are ever reordered.
+      // cards are ever reordered. The value itself is opaque to the shell:
+      // each card type defines and interprets its own grade vocabulary
+      // (the basic renderer below uses "known"/"missed"; mcq or cloze are
+      // free to use something else, e.g. "correct"/"incorrect").
       function recordGrade(cardId, grade) {
         if (typeof cardId !== "string" || !cardId) {
           throw new TypeError("A grade needs a card id.");
         }
-        if (grade !== "known" && grade !== "missed") {
-          throw new TypeError('A grade must be "known" or "missed".');
+        if (typeof grade !== "string" || !grade) {
+          throw new TypeError("A grade needs a non-empty value.");
         }
         state.grades[cardId] = grade;
       }
