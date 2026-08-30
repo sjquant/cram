@@ -117,13 +117,6 @@
       overflow-wrap: anywhere;
     }
 
-    .deck-source {
-      margin: var(--s1) 0 0;
-      color: var(--ink-soft);
-      font-size: 0.86rem;
-      overflow-wrap: anywhere;
-    }
-
     .progress-panel { margin: 0; }
 
     /* The bar is the page rule: a hairline that fills as the deck advances,
@@ -331,7 +324,6 @@
   <div class="app-shell" id="player" data-testid="player" data-state="loading">
     <header class="deck-header">
       <h1 id="deck-title" data-testid="deck-title">Loading deck…</h1>
-      <p class="deck-source" id="deck-source" hidden></p>
     </header>
 
     <section class="progress-panel" aria-label="Deck progress">
@@ -392,7 +384,6 @@
       const refs = {
         player: document.getElementById("player"),
         title: document.getElementById("deck-title"),
-        source: document.getElementById("deck-source"),
         progress: document.getElementById("progress"),
         progressLabel: document.getElementById("progress-label"),
         progressPercent: document.getElementById("progress-percent"),
@@ -441,13 +432,6 @@
         state.index = 0;
         refs.player.dataset.state = "ready";
         refs.title.textContent = deck.title;
-        if (typeof deck.source === "string" && deck.source.trim()) {
-          refs.source.hidden = false;
-          refs.source.textContent = `Source: ${deck.source}`;
-        } else {
-          refs.source.hidden = true;
-          refs.source.textContent = "";
-        }
         renderCurrentCard();
       }
 
@@ -527,7 +511,6 @@
         state.deck = null;
         refs.player.dataset.state = "error";
         refs.title.textContent = "Unable to load deck";
-        refs.source.hidden = true;
         refs.progress.max = 1;
         refs.progress.value = 0;
         refs.progress.setAttribute("aria-label", "No cards loaded");
