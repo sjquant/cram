@@ -13,7 +13,7 @@ const UNSUPPORTED_DECK = JSON.parse(
 );
 
 test.describe("basic cards", () => {
-  test("Given a basic card, when its answer is revealed and graded, then the grade is shown", async ({ page }) => {
+  test("reveals a basic-card answer and records the selected grade", async ({ page }) => {
     await openPlayer(page, BASIC_DECK);
 
     // Given: the first basic card starts with its answer and grades hidden.
@@ -34,7 +34,7 @@ test.describe("basic cards", () => {
     await expect(page.locator("#player-status")).toHaveText("Marked as known.");
   });
 
-  test("Given a graded card, when navigating Next then Previous, then its grade persists", async ({ page }) => {
+  test("restores a basic-card grade after Next and Previous navigation", async ({ page }) => {
     await openPlayer(page, BASIC_DECK);
 
     // Given: the learner reveals and marks the first card as missed.
@@ -55,7 +55,7 @@ test.describe("basic cards", () => {
   });
 });
 
-test("Given an unsupported card type, when the player loads it, then a fallback is shown", async ({ page }) => {
+test("renders a fallback for unsupported card types", async ({ page }) => {
   await openPlayer(page, UNSUPPORTED_DECK);
 
   // Given/When: the shell receives the unsupported ordering card.
