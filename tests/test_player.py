@@ -74,6 +74,43 @@ class PlayerBrowserTests(unittest.TestCase):
                     ).map((button) => button.textContent);
                     const deck = window.CRAM_PLAYER.getState().deck;
                     checks.options = optionTexts();
+                    const shell = document.querySelector('.app-shell');
+                    const shellBounds = shell.getBoundingClientRect();
+                    const shellStyles = getComputedStyle(shell);
+                    checks.shellFillsViewport = Math.abs(shellBounds.height - window.innerHeight) < 1
+                      && Math.abs(shellBounds.bottom - window.innerHeight) < 1;
+                    checks.shellGuttersBalanced = Math.abs(
+                      parseFloat(shellStyles.paddingTop) - parseFloat(shellStyles.paddingBottom)
+                    ) < 1;
+                    checks.cardAreaScrolls = getComputedStyle(document.querySelector('.card-frame')).overflowY === 'auto';
+                    checks.navigationHintMarked = document.querySelector('#player-status')
+                      .classList.contains('is-navigation-hint');
+                    checks.navigationButtonsActiveAfterLoad = !document.querySelector('#next-card').disabled
+                      && document.querySelector('#previous-card').disabled;
+                    checks.navigationVisibleAfterLoad = getComputedStyle(
+                      document.querySelector('.navigation')
+                    ).visibility !== 'hidden';
+                    const footerBounds = document.querySelector('.player-footer').getBoundingClientRect();
+                    checks.footerMatchesShellGutter = Math.abs(
+                      window.innerHeight - footerBounds.bottom - parseFloat(shellStyles.paddingBottom)
+                    ) < 1;
+                    const previousPaddingLeft = parseFloat(
+                      getComputedStyle(document.querySelector('#previous-card')).paddingLeft
+                    );
+                    const previousPaddingRight = parseFloat(
+                      getComputedStyle(document.querySelector('#previous-card')).paddingRight
+                    );
+                    const skipPaddingLeft = parseFloat(
+                      getComputedStyle(document.querySelector('#next-card')).paddingLeft
+                    );
+                    const skipPaddingRight = parseFloat(
+                      getComputedStyle(document.querySelector('#next-card')).paddingRight
+                    );
+                    checks.previousMatchesSkipPadding = Math.abs(
+                      previousPaddingLeft - skipPaddingLeft
+                    ) < 1 && Math.abs(
+                      previousPaddingRight - skipPaddingRight
+                    ) < 1;
                     checks.explanationHiddenBeforeAnswer = document.querySelector(
                       '[data-testid="mcq-explanation"]'
                     ).hidden;
@@ -174,6 +211,39 @@ class PlayerBrowserTests(unittest.TestCase):
                     right.click();
                     document.querySelector('[data-testid="mcq-check-answer"]').click();
                     checks.correctGrade = window.CRAM_PLAYER.getGrade('mcq-card');
+                    checks.navigationHintClearedAfterFeedback = !document.querySelector('#player-status')
+                      .classList.contains('is-navigation-hint');
+                    window.CRAM_PLAYER.setDeck({
+                      id: 'layout-check',
+                      title: 'Layout check',
+                      cards: [
+                        {
+                          id: 'long-card',
+                          type: 'basic',
+                          prompt: 'Long prompt '.repeat(80),
+                          answer: 'Long answer '.repeat(120)
+                        },
+                        {
+                          id: 'next-card',
+                          type: 'basic',
+                          prompt: 'Next prompt',
+                          answer: 'Next answer'
+                        }
+                      ]
+                    });
+                    const frame = document.querySelector('.card-frame');
+                    const navigation = document.querySelector('.navigation');
+                    const navigationBeforeScroll = navigation.getBoundingClientRect();
+                    frame.scrollTop = frame.scrollHeight;
+                    const navigationAfterScroll = navigation.getBoundingClientRect();
+                    checks.navigationStableDuringCardScroll = Math.abs(
+                      navigationBeforeScroll.top - navigationAfterScroll.top
+                    ) < 1;
+                    document.querySelector('#next-card').click();
+                    checks.cardScrollResetsOnNext = frame.scrollTop === 0;
+                    const revealBounds = document.querySelector('.reveal-button').getBoundingClientRect();
+                    const frameBounds = frame.getBoundingClientRect();
+                    checks.revealAlignedToCardRight = Math.abs(revealBounds.right - frameBounds.right) < 1;
                     JSON.stringify(checks);
                     """
                 )
@@ -183,6 +253,14 @@ class PlayerBrowserTests(unittest.TestCase):
         # Then
         self.assertEqual(set(result["options"]), {"Right", "Wrong one", "Wrong two"})
         self.assertEqual(len(result["options"]), 3)
+        self.assertTrue(result["shellFillsViewport"])
+        self.assertTrue(result["cardAreaScrolls"])
+        self.assertTrue(result["navigationHintMarked"])
+        self.assertTrue(result["navigationButtonsActiveAfterLoad"])
+        self.assertTrue(result["navigationVisibleAfterLoad"])
+        self.assertTrue(result["shellGuttersBalanced"])
+        self.assertTrue(result["footerMatchesShellGutter"])
+        self.assertTrue(result["previousMatchesSkipPadding"])
         self.assertTrue(result["explanationHiddenBeforeAnswer"])
         self.assertTrue(result["checkAlignedToOptionRight"])
         self.assertTrue(result["nextAlignedToOptionRight"])
@@ -208,6 +286,10 @@ class PlayerBrowserTests(unittest.TestCase):
         self.assertEqual(result["restoredGrade"], "incorrect")
         self.assertTrue(result["restoredOptionsDisabled"])
         self.assertEqual(result["correctGrade"], "correct")
+        self.assertTrue(result["navigationHintClearedAfterFeedback"])
+        self.assertTrue(result["navigationStableDuringCardScroll"])
+        self.assertTrue(result["cardScrollResetsOnNext"])
+        self.assertTrue(result["revealAlignedToCardRight"])
 
     @classmethod
     def _browser(cls, *arguments: str, input_text: str | None = None) -> subprocess.CompletedProcess[str]:
