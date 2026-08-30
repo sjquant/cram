@@ -27,6 +27,7 @@
       --s2: 1rem;
       --s3: 1.5rem;
       --s4: 2.5rem;
+      --reading-width: 34rem;
     }
 
     @media (prefers-color-scheme: dark) {
@@ -48,6 +49,7 @@
       color: var(--ink);
       background: var(--paper);
       -webkit-font-smoothing: antialiased;
+      position: relative;
     }
 
     button,
@@ -81,8 +83,8 @@
       opacity: 0.4;
     }
 
-    /* One filled element on the page, so the primary action is unmistakable
-       without a colour or a shadow doing the work. */
+    /* Keep the current card action prominent while making an unanswered card's
+       optional navigation visibly secondary. */
     .next-button:not(:disabled) {
       color: var(--paper);
       background: var(--ink);
@@ -92,6 +94,19 @@
     .next-button:not(:disabled):hover {
       color: var(--paper);
       background: var(--accent);
+    }
+
+    .next-button.is-skip:not(:disabled) {
+      color: var(--ink-soft);
+      background: none;
+      padding-inline: 0;
+      font-size: 0.84rem;
+      font-weight: 500;
+    }
+
+    .next-button.is-skip:not(:disabled):hover {
+      color: var(--accent);
+      background: none;
     }
 
     a { color: var(--accent); }
@@ -147,6 +162,8 @@
 
     .card-frame {
       position: relative;
+      width: 100%;
+      max-width: var(--reading-width);
       min-height: clamp(9rem, 22vh, 13rem);
       display: flex;
       flex-direction: column;
@@ -218,6 +235,84 @@
       font-size: 0.86rem;
     }
 
+    .mcq-options {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.35rem;
+      margin: 0;
+    }
+
+    .mcq-response {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      max-width: var(--reading-width);
+      margin: var(--s3) 0 0;
+    }
+
+    .mcq-option {
+      border: 1px solid var(--rule);
+      color: var(--ink);
+      text-align: left;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .mcq-option:hover:not(:disabled) {
+      background: var(--rule);
+    }
+
+    .mcq-option[aria-pressed="true"] {
+      background: var(--rule);
+      color: var(--ink);
+    }
+
+    .mcq-option.mcq-correct {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .mcq-option.mcq-incorrect {
+      text-decoration: line-through;
+    }
+
+    .mcq-feedback,
+    .mcq-explanation {
+      max-width: 34ch;
+      margin: var(--s3) 0 0;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .mcq-feedback[data-result="correct"] {
+      color: var(--accent);
+    }
+
+    .mcq-feedback[data-result="incorrect"] {
+      color: var(--ink-soft);
+    }
+
+    .mcq-explanation {
+      padding-top: var(--s2);
+      border-top: 1px solid var(--rule);
+      font-family: var(--serif);
+      font-size: clamp(1.05rem, 2vw, 1.3rem);
+      line-height: 1.5;
+    }
+
+    .mcq-check-button {
+      align-self: flex-end;
+      margin: var(--s3) 0 0;
+      color: var(--paper);
+      background: var(--ink);
+    }
+
+    .mcq-check-button:hover:not(:disabled) {
+      color: var(--paper);
+      background: var(--accent);
+    }
+
     .card-answer {
       max-width: 34ch;
       margin: var(--s3) 0 0;
@@ -232,13 +327,13 @@
 
     .reveal-button {
       align-self: flex-start;
-      margin: var(--s3) -0.9rem 0;
+      margin: var(--s3) 0 0;
     }
 
     .grading-buttons {
       display: flex;
       gap: var(--s2);
-      margin: var(--s3) -0.9rem 0;
+      margin: var(--s3) 0 0;
     }
 
     .grading-buttons[hidden] {
@@ -254,12 +349,11 @@
       align-items: center;
       justify-content: space-between;
       gap: 0.75rem;
+      width: 100%;
+      max-width: var(--reading-width);
+      margin-top: var(--s4);
+      border-top: 1px solid var(--rule);
       padding-top: var(--s2);
-    }
-
-    /* A ghost button aligns to the column by its label, a filled one by its box. */
-    .navigation button:first-child {
-      margin-left: -0.9rem;
     }
 
     .player-status {
@@ -304,8 +398,9 @@
        touching contrast. */
     body::before {
       content: "";
-      position: fixed;
+      position: absolute;
       inset: 0;
+      min-height: 100%;
       z-index: 0;
       background-image: url("data:image/svg+xml,%3Csvg xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27 width%3D%27300%27 height%3D%27300%27%3E%3Cfilter id%3D%27f%27%3E%3CfeTurbulence type%3D%27fractalNoise%27 baseFrequency%3D%270.014 0.7%27 numOctaves%3D%273%27 stitchTiles%3D%27stitch%27%2F%3E%3C%2Ffilter%3E%3Crect width%3D%27300%27 height%3D%27300%27 filter%3D%27url%28%23f%29%27%2F%3E%3C%2Fsvg%3E"), url("data:image/svg+xml,%3Csvg xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27 width%3D%27180%27 height%3D%27180%27%3E%3Cfilter id%3D%27g%27%3E%3CfeTurbulence type%3D%27fractalNoise%27 baseFrequency%3D%270.85%27 numOctaves%3D%274%27 stitchTiles%3D%27stitch%27%2F%3E%3C%2Ffilter%3E%3Crect width%3D%27180%27 height%3D%27180%27 filter%3D%27url%28%23g%29%27%2F%3E%3C%2Fsvg%3E");
       background-size: 300px 300px, 180px 180px;
@@ -597,6 +692,124 @@
         return fragment;
       }
 
+      const MCQ_GRADES = Object.freeze({ CORRECT: "correct", INCORRECT: "incorrect" });
+
+      function renderMcqCard({ card, player, createElement, createPromptElement, setStatus }) {
+        const fragment = document.createDocumentFragment();
+        fragment.append(createPromptElement(card.prompt || "This card has no prompt."));
+
+        const answer = typeof card.answer === "string" && card.answer
+          ? card.answer
+          : "This card has no answer.";
+        const choices = [answer, ...(Array.isArray(card.distractors) ? card.distractors : [])];
+
+        // Fisher-Yates makes every option equally likely to occupy each position.
+        for (let index = choices.length - 1; index > 0; index -= 1) {
+          const swapIndex = Math.floor(Math.random() * (index + 1));
+          [choices[index], choices[swapIndex]] = [choices[swapIndex], choices[index]];
+        }
+
+        const options = createElement("div", "mcq-options");
+        options.dataset.testid = "mcq-options";
+        options.setAttribute("role", "group");
+        options.setAttribute("aria-label", "Choose an answer");
+        const optionButtons = [];
+
+        choices.forEach((choice) => {
+          const button = createElement("button", "mcq-option", choice || "This option has no text.");
+          button.type = "button";
+          button.dataset.testid = "mcq-option";
+          button.setAttribute("aria-pressed", "false");
+          optionButtons.push({ button, choice });
+          options.append(button);
+        });
+
+        const checkAnswer = createElement("button", "mcq-check-button", "Check answer");
+        checkAnswer.type = "button";
+        checkAnswer.dataset.testid = "mcq-check-answer";
+        checkAnswer.disabled = true;
+
+        const feedback = createElement("p", "mcq-feedback");
+        feedback.dataset.testid = "mcq-feedback";
+        feedback.setAttribute("role", "status");
+        feedback.hidden = true;
+
+        const explanationText = typeof card.explanation === "string" ? card.explanation : "";
+        const explanation = explanationText
+          ? createElement("p", "mcq-explanation")
+          : null;
+        if (explanation) {
+          explanation.dataset.testid = "mcq-explanation";
+          explanation.hidden = true;
+        }
+
+        const response = createElement("div", "mcq-response");
+        response.append(options, checkAnswer);
+        fragment.append(response, feedback);
+        if (explanation) fragment.append(explanation);
+
+        let selected = null;
+
+        function applySelection(selection) {
+          selected = selection;
+          optionButtons.forEach(({ button }) => {
+            button.setAttribute("aria-pressed", String(selection !== null && button === selection.button));
+          });
+          checkAnswer.disabled = selection === null;
+        }
+
+        function applyAnsweredUI(grade, selectedButton = null) {
+          const isCorrect = grade === MCQ_GRADES.CORRECT;
+          optionButtons.forEach(({ button, choice }) => {
+            button.disabled = true;
+            button.setAttribute("aria-pressed", String(button === selectedButton));
+            button.classList.toggle("mcq-correct", choice === answer);
+            button.classList.toggle("mcq-incorrect", button === selectedButton && !isCorrect);
+          });
+          feedback.dataset.result = grade;
+          feedback.textContent = isCorrect
+            ? "Correct."
+            : `Incorrect. The correct answer is: ${answer}`;
+          feedback.hidden = false;
+          if (explanation) {
+            explanation.textContent = explanationText;
+            explanation.hidden = false;
+          }
+          checkAnswer.hidden = true;
+          checkAnswer.disabled = true;
+        }
+
+        function handleOptionClick(selectedButton, selectedChoice) {
+          applySelection({ button: selectedButton, choice: selectedChoice });
+          setStatus("Answer selected. Check it when ready.");
+        }
+
+        function handleCheckAnswer() {
+          if (!selected) return;
+          const grade = selected.choice === answer ? MCQ_GRADES.CORRECT : MCQ_GRADES.INCORRECT;
+          try {
+            player.recordGrade(card.id, grade);
+          } catch (error) {
+            setStatus(error instanceof Error ? error.message : "The grade could not be recorded.", true);
+            return;
+          }
+          applyAnsweredUI(grade, selected.button);
+          setStatus(grade === MCQ_GRADES.CORRECT ? "Correct." : "Incorrect.");
+        }
+
+        optionButtons.forEach(({ button, choice }) => {
+          button.addEventListener("click", () => handleOptionClick(button, choice));
+        });
+        checkAnswer.addEventListener("click", handleCheckAnswer);
+
+        const existingGrade = player.getGrade(card.id);
+        if (existingGrade === MCQ_GRADES.CORRECT || existingGrade === MCQ_GRADES.INCORRECT) {
+          applyAnsweredUI(existingGrade);
+        }
+
+        return fragment;
+      }
+
       function renderPromptCard({ card }) {
         const fragment = document.createDocumentFragment();
         fragment.append(createPromptElement(card.prompt || "This card has no prompt."));
@@ -628,6 +841,7 @@
           throw new TypeError("A grade needs a non-empty value.");
         }
         state.grades[cardId] = grade;
+        if (state.deck) updateProgress();
       }
 
       function getGrade(cardId) {
@@ -652,6 +866,9 @@
         const focused = document.activeElement;
         refs.previous.disabled = true;
         refs.next.disabled = true;
+        refs.next.classList.remove("is-skip");
+        refs.next.textContent = "Next →";
+        refs.next.setAttribute("aria-label", "Next card");
         restoreNavigationFocus(focused);
         setStatus(message, true);
       }
@@ -678,8 +895,17 @@
           `${String(position).padStart(width, "0")}/${total}`;
         const focused = document.activeElement;
         refs.previous.disabled = state.index === 0;
+        const card = state.deck.cards[state.index];
+        const isSkip = isAnswerRequiredCard(card) && !state.grades[card.id];
         refs.next.disabled = state.index === total - 1;
+        refs.next.classList.toggle("is-skip", isSkip);
+        refs.next.textContent = isSkip ? "Skip →" : "Next →";
+        refs.next.setAttribute("aria-label", isSkip ? "Skip to next card" : "Next card");
         restoreNavigationFocus(focused);
+      }
+
+      function isAnswerRequiredCard(card) {
+        return card.type === "basic" || card.type === "mcq";
       }
 
       // Reaching the first or last card disables the button that got you there, which
@@ -739,7 +965,7 @@
       // The shell owns this registry and navigation. Each card-type issue can add
       // or replace exactly one renderer without changing the shell or other types.
       registerCardRenderer("basic", renderBasicCard);
-      registerCardRenderer("mcq", renderPromptCard);
+      registerCardRenderer("mcq", renderMcqCard);
       registerCardRenderer("cloze", renderPromptCard);
       window.CRAM_PLAYER = api;
 

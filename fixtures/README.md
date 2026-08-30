@@ -16,7 +16,7 @@ Hand-written decks used two ways. They are development inputs, not part of what 
 
 ## Invalid decks
 
-Almost everything is caught by the schema itself. Only one semantic rule is left for the validator to implement by hand, plus reporting parse failures readably.
+Almost everything is caught by the schema itself. The validator implements the remaining cross-field and cross-card semantic rules by hand, plus reporting parse failures readably.
 
 | File | Violation | Caught by |
 | --- | --- | --- |
@@ -30,6 +30,6 @@ Almost everything is caught by the schema itself. Only one semantic rule is left
 | `duplicate-card-ids.json` | two cards share the id `repeated` | validator |
 | `malformed-json.json` | trailing comma — the file does not parse | validator |
 
-The representation does most of this work. A cloze card writes its answers inline as `{{answer}}`, so the text and its answers cannot disagree; an mcq card names `answer` and `distractors` separately, so it cannot have zero or two correct options. Neither invariant needs a rule because neither can be expressed wrongly.
+The representation does most of this work. A cloze card writes its answers inline as `{{answer}}`, so the text and its answers cannot disagree. An mcq card names `answer` and `distractors` separately; the validator also rejects a distractor that repeats the answer, because that cross-field invariant cannot be expressed in the schema.
 
 `malformed-json.json` is deliberately not loadable. Any helper that walks this directory has to special-case it, and the validator's parse error should say which file failed and where, rather than surfacing a raw traceback.

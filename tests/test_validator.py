@@ -160,6 +160,31 @@ class DeckValidatorTests(unittest.TestCase):
         # Then
         self.assertIn("card 0 field 'distractors'", str(context.exception))
 
+    def test_given_an_mcq_answer_when_it_appears_in_distractors_then_validation_fails(self):
+        """Given an MCQ answer repeated in distractors, when validated, then it is rejected."""
+        # Given
+        deck = {
+            "id": "duplicate-mcq-option",
+            "title": "Duplicate MCQ option",
+            "cards": [
+                {
+                    "id": "duplicate-answer",
+                    "type": "mcq",
+                    "prompt": "Which option is correct?",
+                    "answer": "A",
+                    "distractors": ["A", "B"],
+                }
+            ],
+        }
+
+        # When
+        with self.assertRaises(DeckValidationError) as context:
+            validate_deck(deck)
+
+        # Then
+        self.assertIn("card 0 field 'distractors'", str(context.exception))
+        self.assertIn("must not contain the answer", str(context.exception))
+
     def test_unknown_or_unhashable_card_type_is_reported_at_type(self):
         """Report only the type field for an unsupported unhashable card type."""
         # Given
