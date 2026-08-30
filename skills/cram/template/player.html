@@ -48,6 +48,7 @@
       color: var(--ink);
       background: var(--paper);
       -webkit-font-smoothing: antialiased;
+      position: relative;
     }
 
     button,
@@ -239,6 +240,11 @@
       background: var(--rule);
     }
 
+    .mcq-option[aria-pressed="true"] {
+      background: var(--rule);
+      color: var(--ink);
+    }
+
     .mcq-option.mcq-correct {
       border-color: var(--accent);
       color: var(--accent);
@@ -270,6 +276,18 @@
       font-family: var(--serif);
       font-size: clamp(1.05rem, 2vw, 1.3rem);
       line-height: 1.5;
+    }
+
+    .mcq-check-button {
+      align-self: flex-start;
+      margin: var(--s3) -0.9rem 0;
+      color: var(--paper);
+      background: var(--ink);
+    }
+
+    .mcq-check-button:hover:not(:disabled) {
+      color: var(--paper);
+      background: var(--accent);
     }
 
     .card-answer {
@@ -358,8 +376,9 @@
        touching contrast. */
     body::before {
       content: "";
-      position: fixed;
+      position: absolute;
       inset: 0;
+      min-height: 100%;
       z-index: 0;
       background-image: url("data:image/svg+xml,%3Csvg xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27 width%3D%27300%27 height%3D%27300%27%3E%3Cfilter id%3D%27f%27%3E%3CfeTurbulence type%3D%27fractalNoise%27 baseFrequency%3D%270.014 0.7%27 numOctaves%3D%273%27 stitchTiles%3D%27stitch%27%2F%3E%3C%2Ffilter%3E%3Crect width%3D%27300%27 height%3D%27300%27 filter%3D%27url%28%23f%29%27%2F%3E%3C%2Fsvg%3E"), url("data:image/svg+xml,%3Csvg xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27 width%3D%27180%27 height%3D%27180%27%3E%3Cfilter id%3D%27g%27%3E%3CfeTurbulence type%3D%27fractalNoise%27 baseFrequency%3D%270.85%27 numOctaves%3D%274%27 stitchTiles%3D%27stitch%27%2F%3E%3C%2Ffilter%3E%3Crect width%3D%27180%27 height%3D%27180%27 filter%3D%27url%28%23g%29%27%2F%3E%3C%2Fsvg%3E");
       background-size: 300px 300px, 180px 180px;
@@ -683,6 +702,11 @@
           options.append(button);
         });
 
+        const checkAnswer = createElement("button", "mcq-check-button", "Check answer");
+        checkAnswer.type = "button";
+        checkAnswer.dataset.testid = "mcq-check-answer";
+        checkAnswer.disabled = true;
+
         const feedback = createElement("p", "mcq-feedback");
         feedback.dataset.testid = "mcq-feedback";
         feedback.setAttribute("role", "status");
@@ -697,8 +721,18 @@
           explanation.hidden = true;
         }
 
-        fragment.append(options, feedback);
+        fragment.append(options, checkAnswer, feedback);
         if (explanation) fragment.append(explanation);
+
+        let selected = null;
+
+        function applySelection(selection) {
+          selected = selection;
+          optionButtons.forEach(({ button }) => {
+            button.setAttribute("aria-pressed", String(selection !== null && button === selection.button));
+          });
+          checkAnswer.disabled = selection === null;
+        }
 
         function applyAnsweredUI(grade, selectedButton = null) {
           const isCorrect = grade === MCQ_GRADES.CORRECT;
@@ -717,23 +751,32 @@
             explanation.textContent = explanationText;
             explanation.hidden = false;
           }
+          checkAnswer.hidden = true;
+          checkAnswer.disabled = true;
         }
 
         function handleOptionClick(selectedButton, selectedChoice) {
-          const grade = selectedChoice === answer ? MCQ_GRADES.CORRECT : MCQ_GRADES.INCORRECT;
+          applySelection({ button: selectedButton, choice: selectedChoice });
+          setStatus("Answer selected. Check it when ready.");
+        }
+
+        function handleCheckAnswer() {
+          if (!selected) return;
+          const grade = selected.choice === answer ? MCQ_GRADES.CORRECT : MCQ_GRADES.INCORRECT;
           try {
             player.recordGrade(card.id, grade);
           } catch (error) {
             setStatus(error instanceof Error ? error.message : "The grade could not be recorded.", true);
             return;
           }
-          applyAnsweredUI(grade, selectedButton);
+          applyAnsweredUI(grade, selected.button);
           setStatus(grade === MCQ_GRADES.CORRECT ? "Correct." : "Incorrect.");
         }
 
         optionButtons.forEach(({ button, choice }) => {
           button.addEventListener("click", () => handleOptionClick(button, choice));
         });
+        checkAnswer.addEventListener("click", handleCheckAnswer);
 
         const existingGrade = player.getGrade(card.id);
         if (existingGrade === MCQ_GRADES.CORRECT || existingGrade === MCQ_GRADES.INCORRECT) {

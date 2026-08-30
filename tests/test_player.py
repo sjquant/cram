@@ -88,10 +88,30 @@ class PlayerBrowserTests(unittest.TestCase):
                       document.querySelectorAll('[data-testid="mcq-option"]')
                     ).find((button) => button.textContent !== deck.cards[0].answer);
                     wrong.click();
+                    checks.gradeBeforeCheck = window.CRAM_PLAYER.getGrade('mcq-card') === undefined;
+                    checks.explanationHiddenAfterSelection = document.querySelector(
+                      '[data-testid="mcq-explanation"]'
+                    ).hidden;
+                    checks.checkEnabledAfterSelection = !document.querySelector(
+                      '[data-testid="mcq-check-answer"]'
+                    ).disabled;
+                    const rightAfterSelection = Array.from(
+                      document.querySelectorAll('[data-testid="mcq-option"]')
+                    ).find((button) => button.textContent === deck.cards[0].answer);
+                    rightAfterSelection.click();
+                    checks.selectionCanChange = rightAfterSelection.getAttribute('aria-pressed') === 'true'
+                      && wrong.getAttribute('aria-pressed') === 'false'
+                      && Array.from(document.querySelectorAll('[data-testid="mcq-option"]'))
+                        .every((button) => !button.disabled);
+                    wrong.click();
+                    document.querySelector('[data-testid="mcq-check-answer"]').click();
                     checks.incorrectFeedback = document.querySelector(
                       '[data-testid="mcq-feedback"]'
                     ).textContent;
-                    checks.explanationHiddenAfterAnswer = document.querySelector(
+                    checks.answerPageVisible = document.querySelector(
+                      '[data-testid="mcq-check-answer"]'
+                    ).hidden && !document.querySelector('[data-testid="mcq-feedback"]').hidden;
+                    checks.explanationVisibleAfterCheck = !document.querySelector(
                       '[data-testid="mcq-explanation"]'
                     ).hidden;
                     checks.incorrectGrade = window.CRAM_PLAYER.getGrade('mcq-card');
@@ -106,6 +126,7 @@ class PlayerBrowserTests(unittest.TestCase):
                       document.querySelectorAll('[data-testid="mcq-option"]')
                     ).find((button) => button.textContent === deck.cards[0].answer);
                     right.click();
+                    document.querySelector('[data-testid="mcq-check-answer"]').click();
                     checks.correctGrade = window.CRAM_PLAYER.getGrade('mcq-card');
                     JSON.stringify(checks);
                     """
@@ -119,8 +140,13 @@ class PlayerBrowserTests(unittest.TestCase):
         self.assertTrue(result["explanationHiddenBeforeAnswer"])
         self.assertFalse(result["announcementLeaksExplanation"])
         self.assertTrue(result["shuffledOrderChanged"])
+        self.assertTrue(result["gradeBeforeCheck"])
+        self.assertTrue(result["explanationHiddenAfterSelection"])
+        self.assertTrue(result["checkEnabledAfterSelection"])
+        self.assertTrue(result["selectionCanChange"])
         self.assertIn("Incorrect.", result["incorrectFeedback"])
-        self.assertFalse(result["explanationHiddenAfterAnswer"])
+        self.assertTrue(result["answerPageVisible"])
+        self.assertTrue(result["explanationVisibleAfterCheck"])
         self.assertEqual(result["incorrectGrade"], "incorrect")
         self.assertEqual(result["restoredGrade"], "incorrect")
         self.assertTrue(result["restoredOptionsDisabled"])
