@@ -104,6 +104,7 @@
       max-width: 24ch;
       margin: 0;
       font-family: var(--serif);
+      font-variant-numeric: oldstyle-nums;
       font-size: clamp(1.7rem, 4.5vw, 2.35rem);
       font-weight: 500;
       line-height: 1.2;
@@ -133,7 +134,8 @@
 
     progress::-webkit-progress-value {
       background: var(--ink);
-      transition: width 200ms ease;
+      box-shadow: 1px 0 2px -0.5px var(--ink);
+      transition: width 260ms cubic-bezier(0.2, 0.7, 0.3, 1);
     }
 
     progress::-moz-progress-bar { background: var(--ink); }
@@ -156,7 +158,11 @@
       font-size: 0.78rem;
     }
 
-    .card-type { letter-spacing: 0.02em; }
+    .card-type {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 0.92rem;
+    }
 
     .card-position {
       font-family: var(--mono);
@@ -176,6 +182,7 @@
       max-width: 40ch;
       margin: 0;
       font-family: var(--serif);
+      font-variant-numeric: oldstyle-nums;
       font-size: clamp(1.35rem, 2.6vw, 1.9rem);
       font-weight: 400;
       line-height: 1.5;
@@ -233,8 +240,68 @@
       border: 0;
     }
 
+    /* Paper grain and a flick of ink, both painted behind the text so they add
+       tactility without touching contrast. */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27 width%3D%27180%27 height%3D%27180%27%3E%3Cfilter id%3D%27g%27%3E%3CfeTurbulence type%3D%27fractalNoise%27 baseFrequency%3D%270.85%27 numOctaves%3D%274%27 stitchTiles%3D%27stitch%27%2F%3E%3C%2Ffilter%3E%3Crect width%3D%27180%27 height%3D%27180%27 filter%3D%27url%28%23g%29%27%2F%3E%3C%2Fsvg%3E");
+      background-size: 180px 180px;
+      mix-blend-mode: multiply;
+      opacity: 0.13;
+      pointer-events: none;
+    }
+
+    .app-shell::after {
+      content: "";
+      position: absolute;
+      right: auto;
+      left: -1.75rem;
+      bottom: -0.75rem;
+      z-index: -1;
+      width: 6rem;
+      height: 6rem;
+      background: var(--ink);
+      -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27 viewBox%3D%270 0 200 200%27%3E%3Cellipse cx%3D%2768%27 cy%3D%2778%27 rx%3D%2733%27 ry%3D%2726%27 transform%3D%27rotate%28-22 68 78%29%27%2F%3E%3Cellipse cx%3D%27104%27 cy%3D%27104%27 rx%3D%2713%27 ry%3D%279%27 transform%3D%27rotate%2828 104 104%29%27%2F%3E%3Cellipse cx%3D%27126%27 cy%3D%2756%27 rx%3D%277%27 ry%3D%275%27 transform%3D%27rotate%28-10 126 56%29%27%2F%3E%3Ccircle cx%3D%27146%27 cy%3D%27112%27 r%3D%273.4%27%2F%3E%3Ccircle cx%3D%2734%27 cy%3D%27128%27 r%3D%274.2%27%2F%3E%3Ccircle cx%3D%27158%27 cy%3D%2734%27 r%3D%272.4%27%2F%3E%3Ccircle cx%3D%2788%27 cy%3D%2726%27 r%3D%272%27%2F%3E%3Ccircle cx%3D%2722%27 cy%3D%2746%27 r%3D%272.8%27%2F%3E%3Ccircle cx%3D%27118%27 cy%3D%27140%27 r%3D%271.8%27%2F%3E%3C%2Fsvg%3E");
+      mask-image: url("data:image/svg+xml,%3Csvg xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27 viewBox%3D%270 0 200 200%27%3E%3Cellipse cx%3D%2768%27 cy%3D%2778%27 rx%3D%2733%27 ry%3D%2726%27 transform%3D%27rotate%28-22 68 78%29%27%2F%3E%3Cellipse cx%3D%27104%27 cy%3D%27104%27 rx%3D%2713%27 ry%3D%279%27 transform%3D%27rotate%2828 104 104%29%27%2F%3E%3Cellipse cx%3D%27126%27 cy%3D%2756%27 rx%3D%277%27 ry%3D%275%27 transform%3D%27rotate%28-10 126 56%29%27%2F%3E%3Ccircle cx%3D%27146%27 cy%3D%27112%27 r%3D%273.4%27%2F%3E%3Ccircle cx%3D%2734%27 cy%3D%27128%27 r%3D%274.2%27%2F%3E%3Ccircle cx%3D%27158%27 cy%3D%2734%27 r%3D%272.4%27%2F%3E%3Ccircle cx%3D%2788%27 cy%3D%2726%27 r%3D%272%27%2F%3E%3Ccircle cx%3D%2722%27 cy%3D%2746%27 r%3D%272.8%27%2F%3E%3Ccircle cx%3D%27118%27 cy%3D%27140%27 r%3D%271.8%27%2F%3E%3C%2Fsvg%3E");
+      -webkit-mask-size: contain;
+      mask-size: contain;
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      opacity: 0.08;
+      transform: rotate(-14deg);
+      pointer-events: none;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body::before {
+        mix-blend-mode: screen;
+        opacity: 0.05;
+      }
+
+      .app-shell::after { opacity: 0.11; }
+    }
+
+    .app-shell {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Each card arrives the way ink meets paper: a moment to soak in and sharpen. */
+    @keyframes ink-settle {
+      from { opacity: 0; transform: translateY(0.4rem); filter: blur(2px); }
+      to { opacity: 1; transform: none; filter: none; }
+    }
+
+    .card-content > * {
+      animation: ink-settle 340ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+    }
+
     @media (max-width: 30rem) {
       .app-shell { width: min(100% - 2rem, 42rem); }
+      .app-shell::after { display: none; }
       .card-frame { min-height: 13rem; }
     }
 
@@ -242,6 +309,7 @@
       *, *::before, *::after {
         scroll-behavior: auto !important;
         transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
       }
     }
   </style>
