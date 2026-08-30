@@ -7,42 +7,30 @@
   <style>
     :root {
       color-scheme: light dark;
-      --bg: #edf0f7;
-      --surface: #ffffff;
-      --surface-sunken: #f4f6fb;
-      --ink: #141b2d;
-      --muted: #55637c;
-      --line: #e0e6f0;
-      --accent: #2f5bd7;
-      --accent-ink: #ffffff;
-      --accent-strong: #2245b0;
-      --accent-soft: #e8edff;
-      --danger: #b3253a;
-      --ring: rgba(47, 91, 215, 0.32);
-      --shadow: 0 1px 2px rgba(20, 27, 45, 0.05),
-        0 16px 40px -12px rgba(20, 27, 45, 0.18);
-      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+      --paper: #faf8f4;
+      --ink: #1c1a17;
+      --ink-soft: #6b655c;
+      --rule: #e0dbd1;
+      --rule-strong: #c9c2b5;
+      --accent: #8c3b1e;
+      --serif: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino,
+        "Book Antiqua", Georgia, serif;
+      --sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
         "Segoe UI", sans-serif;
+      --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      font-family: var(--sans);
       font-size: 16px;
       line-height: 1.5;
     }
 
     @media (prefers-color-scheme: dark) {
       :root {
-        --bg: #0d111e;
-        --surface: #161d30;
-        --surface-sunken: #1b2338;
-        --ink: #e8edf9;
-        --muted: #94a2be;
-        --line: #263048;
-        --accent: #7093f7;
-        --accent-ink: #0d111e;
-        --accent-strong: #9db6ff;
-        --accent-soft: #1c2745;
-        --danger: #ff8496;
-        --ring: rgba(112, 147, 247, 0.4);
-        --shadow: 0 1px 2px rgba(0, 0, 0, 0.4),
-          0 18px 44px -12px rgba(0, 0, 0, 0.6);
+        --paper: #14120f;
+        --ink: #eae5dc;
+        --ink-soft: #9a9287;
+        --rule: #2e2a24;
+        --rule-strong: #453f36;
+        --accent: #e0906a;
       }
     }
 
@@ -52,7 +40,7 @@
       margin: 0;
       min-width: 18rem;
       color: var(--ink);
-      background: var(--bg);
+      background: var(--paper);
       -webkit-font-smoothing: antialiased;
     }
 
@@ -62,157 +50,118 @@
     }
 
     button {
-      border: 1px solid var(--line);
-      border-radius: 0.7rem;
-      padding: 0.72rem 1.15rem;
-      color: var(--ink);
-      background: var(--surface);
-      font-weight: 550;
+      border: 0;
+      border-radius: 0.25rem;
+      padding: 0.55rem 0.9rem;
+      color: var(--ink-soft);
+      background: none;
+      font-size: 0.92rem;
+      font-weight: 500;
       cursor: pointer;
-      transition: border-color 120ms ease, background 120ms ease, color 120ms ease,
-        transform 120ms ease;
+      transition: color 120ms ease, background 120ms ease;
     }
 
-    button:hover:not(:disabled) {
-      border-color: var(--accent);
-      color: var(--accent-strong);
-      background: var(--accent-soft);
-    }
-
-    button:active:not(:disabled) {
-      transform: translateY(1px);
-    }
+    button:hover:not(:disabled) { color: var(--ink); }
 
     button:focus-visible,
     input:focus-visible,
     a:focus-visible {
-      outline: 3px solid var(--ring);
-      outline-offset: 2px;
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
     }
 
-    /* Reads as unavailable rather than as a dimmed primary action. */
     button:disabled {
       cursor: not-allowed;
-      color: var(--muted);
-      border-color: var(--line);
-      background: var(--surface-sunken);
-      opacity: 0.7;
+      opacity: 0.4;
     }
 
-    a { color: var(--accent-strong); }
+    /* One filled element on the page, so the primary action is unmistakable
+       without a colour or a shadow doing the work. */
+    .next-button:not(:disabled) {
+      color: var(--paper);
+      background: var(--ink);
+      padding-inline: 1.1rem;
+    }
+
+    .next-button:not(:disabled):hover {
+      color: var(--paper);
+      background: var(--accent);
+    }
+
+    a { color: var(--accent); }
 
     .app-shell {
-      width: min(100% - 2rem, 48rem);
+      width: min(100% - 3rem, 42rem);
       margin: 0 auto;
-      padding: clamp(1.5rem, 4vw, 3rem) 0 2.5rem;
+      padding: clamp(2rem, 7vh, 4.5rem) 0 3rem;
     }
 
     .deck-header {
-      margin-bottom: 1.35rem;
-    }
-
-    .eyebrow {
-      margin: 0 0 0.4rem;
-      color: var(--muted);
-      font-size: 0.7rem;
-      font-weight: 700;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
+      margin-bottom: 2rem;
     }
 
     h1 {
-      max-width: 30ch;
+      max-width: 24ch;
       margin: 0;
-      font-size: clamp(1.55rem, 4.2vw, 2.15rem);
-      line-height: 1.15;
-      letter-spacing: -0.02em;
+      font-family: var(--serif);
+      font-size: clamp(1.7rem, 4.5vw, 2.35rem);
+      font-weight: 500;
+      line-height: 1.2;
       overflow-wrap: anywhere;
     }
 
     .deck-source {
-      max-width: 42rem;
-      margin: 0.5rem 0 0;
-      color: var(--muted);
-      font-size: 0.92rem;
+      margin: 0.6rem 0 0;
+      color: var(--ink-soft);
+      font-size: 0.86rem;
       overflow-wrap: anywhere;
     }
 
-    /* Deliberately unboxed: the card below is the only thing that should read
-       as a surface, so progress sits directly on the page. */
-    .progress-panel {
-      margin-bottom: 1.15rem;
-    }
+    .progress-panel { margin: 0; }
 
-    .progress-row {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 1rem;
-      margin-bottom: 0.5rem;
-      color: var(--muted);
-      font-size: 0.82rem;
-      font-weight: 600;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .progress-percent { color: var(--ink); }
-
+    /* The bar is the page rule: a hairline that fills as the deck advances,
+       instead of a bar plus a label plus a percentage all saying the same thing. */
     progress {
       display: block;
       width: 100%;
-      height: 0.375rem;
+      height: 2px;
       border: 0;
-      border-radius: 999px;
-      overflow: hidden;
-      background: var(--line);
+      background: var(--rule);
     }
 
-    progress::-webkit-progress-bar {
-      background: var(--line);
-      border-radius: 999px;
-    }
+    progress::-webkit-progress-bar { background: var(--rule); }
 
     progress::-webkit-progress-value {
-      background: var(--accent);
-      border-radius: 999px;
-      transition: width 180ms ease;
+      background: var(--ink);
+      transition: width 200ms ease;
     }
 
-    progress::-moz-progress-bar {
-      background: var(--accent);
-      border-radius: 999px;
-    }
+    progress::-moz-progress-bar { background: var(--ink); }
 
     .card-frame {
-      min-height: clamp(14rem, 32vh, 20rem);
+      min-height: clamp(12rem, 30vh, 17rem);
       display: flex;
       flex-direction: column;
       margin: 0;
-      padding: clamp(1.35rem, 4vw, 2.25rem);
-      border: 1px solid var(--line);
-      border-radius: 1.15rem;
-      background: var(--surface);
-      box-shadow: var(--shadow);
+      padding: 1.5rem 0 2rem;
     }
 
     .card-meta {
       display: flex;
-      align-items: center;
+      align-items: baseline;
       justify-content: space-between;
-      gap: 0.75rem;
-      margin-bottom: 1.5rem;
+      gap: 1rem;
+      margin-bottom: 1.75rem;
+      color: var(--ink-soft);
+      font-size: 0.78rem;
     }
 
-    .card-type {
-      display: inline-block;
-      padding: 0.3rem 0.6rem;
-      border-radius: 999px;
-      color: var(--accent-strong);
-      background: var(--accent-soft);
-      font-size: 0.7rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+    .card-type { letter-spacing: 0.02em; }
+
+    .card-position {
+      font-family: var(--mono);
+      font-size: 0.74rem;
+      font-variant-numeric: tabular-nums;
     }
 
     .card-content {
@@ -224,20 +173,20 @@
     }
 
     .card-prompt {
-      max-width: 44ch;
+      max-width: 40ch;
       margin: 0;
-      font-size: clamp(1.3rem, 2.3vw, 1.7rem);
-      font-weight: 500;
-      line-height: 1.45;
-      letter-spacing: -0.012em;
+      font-family: var(--serif);
+      font-size: clamp(1.35rem, 2.6vw, 1.9rem);
+      font-weight: 400;
+      line-height: 1.5;
       white-space: pre-wrap;
       overflow-wrap: anywhere;
     }
 
     .unsupported-card {
-      margin: 1rem 0 0;
-      color: var(--muted);
-      font-size: 0.9rem;
+      margin: 1.25rem 0 0;
+      color: var(--ink-soft);
+      font-size: 0.86rem;
     }
 
     .navigation {
@@ -245,49 +194,30 @@
       align-items: center;
       justify-content: space-between;
       gap: 0.75rem;
-      margin-top: 1.15rem;
-    }
-
-    .navigation button {
-      min-width: 6.75rem;
-    }
-
-    .navigation .next-button:not(:disabled) {
-      border-color: transparent;
-      color: var(--accent-ink);
-      background: var(--accent);
-      box-shadow: 0 8px 18px -8px var(--ring);
-    }
-
-    .navigation .next-button:not(:disabled):hover {
-      color: var(--accent-ink);
-      background: var(--accent-strong);
+      padding-top: 1rem;
+      border-top: 1px solid var(--rule);
     }
 
     .player-status {
       min-height: 1.5em;
-      margin: 1rem 0 0;
-      color: var(--muted);
-      font-size: 0.85rem;
-      text-align: center;
+      margin: 1.25rem 0 0;
+      color: var(--ink-soft);
+      font-size: 0.8rem;
     }
 
-    .player-status.error {
-      color: var(--danger);
-      font-weight: 550;
-    }
+    .player-status.error { color: var(--accent); }
 
     .empty-state {
       align-items: center;
       justify-content: center;
-      min-height: 13rem;
-      color: var(--muted);
+      min-height: 11rem;
       text-align: center;
     }
 
     .empty-state .card-prompt {
-      max-width: 34ch;
+      max-width: 32ch;
       margin-inline: auto;
+      color: var(--ink-soft);
       font-size: clamp(1.05rem, 2vw, 1.25rem);
     }
 
@@ -304,9 +234,8 @@
     }
 
     @media (max-width: 30rem) {
-      .app-shell { width: min(100% - 1.5rem, 48rem); }
-      .card-frame { min-height: 15rem; }
-      .navigation button { flex: 1; min-width: 0; }
+      .app-shell { width: min(100% - 2rem, 42rem); }
+      .card-frame { min-height: 13rem; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -320,13 +249,12 @@
 <body>
   <div class="app-shell" id="player" data-testid="player" data-state="loading">
     <header class="deck-header">
-      <p class="eyebrow">Cram deck</p>
       <h1 id="deck-title" data-testid="deck-title">Loading deck…</h1>
       <p class="deck-source" id="deck-source" hidden></p>
     </header>
 
     <section class="progress-panel" aria-label="Deck progress">
-      <div class="progress-row">
+      <div class="progress-row visually-hidden">
         <span id="progress-label" data-testid="progress-label">Card 0 of 0</span>
         <span class="progress-percent" id="progress-percent">0%</span>
       </div>
@@ -337,7 +265,7 @@
       <article class="card-frame" id="card-frame" data-testid="card" tabindex="-1" aria-labelledby="card-prompt">
         <div class="card-meta">
           <span class="card-type" id="card-type" data-testid="card-type">Preparing card</span>
-          <span class="visually-hidden" id="card-position" data-testid="card-position">—</span>
+          <span class="card-position" id="card-position" data-testid="card-position">—</span>
         </div>
         <div class="card-content" id="card-content" data-testid="card-content">
           <p class="card-prompt" id="card-prompt" data-testid="card-prompt">Preparing your deck…</p>
@@ -552,7 +480,9 @@
         refs.progress.setAttribute("aria-label", `Card ${position} of ${total}`);
         refs.progressLabel.textContent = `Card ${position} of ${total}`;
         refs.progressPercent.textContent = `${percent}%`;
-        refs.cardPosition.textContent = `${position} / ${total}`;
+        const width = String(total).length;
+        refs.cardPosition.textContent =
+          `${String(position).padStart(width, "0")} / ${total}`;
         const focused = document.activeElement;
         refs.previous.disabled = state.index === 0;
         refs.next.disabled = state.index === total - 1;
