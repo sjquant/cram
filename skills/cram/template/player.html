@@ -11,7 +11,6 @@
       --muted: #60708a;
       --line: #dce3ee;
       --surface: #ffffff;
-      --surface-muted: #f5f7fb;
       --accent: #315bdc;
       --accent-dark: #2447b8;
       --accent-soft: #e9edff;
@@ -196,18 +195,6 @@
       overflow-wrap: anywhere;
     }
 
-    .card-note {
-      margin: 1rem 0 0;
-      padding: 0.85rem 1rem;
-      border-left: 0.25rem solid var(--accent);
-      border-radius: 0 0.5rem 0.5rem 0;
-      color: var(--muted);
-      background: var(--surface-muted);
-      font-size: 0.95rem;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-    }
-
     .unsupported-card {
       margin: 0.75rem 0 0;
       color: var(--muted);
@@ -301,7 +288,7 @@
     </section>
 
     <main>
-      <article class="card-frame card" id="card-frame" data-testid="card" aria-labelledby="card-prompt">
+      <article class="card-frame" id="card-frame" data-testid="card" tabindex="-1" aria-labelledby="card-prompt">
         <div class="card-meta">
           <span class="card-type" id="card-type" data-testid="card-type">Preparing card</span>
           <span id="card-position" data-testid="card-position">—</span>
@@ -316,10 +303,19 @@
         <button type="button" id="next-card" data-testid="next-card" class="next-button" data-action="next" aria-label="Next card">Next →</button>
       </nav>
       <p class="player-status" id="player-status" role="status" aria-live="polite"></p>
+
+      <!-- Swapping card content in place is silent for a screen reader, so each card is
+           announced here instead. Kept separate from the visible status line, which
+           carries hints and errors rather than the card itself. -->
+      <p class="visually-hidden" id="card-announcer" role="status" aria-live="polite"></p>
     </main>
   </div>
 
-  <!-- A3 replaces only the value after this marker with JSON. Keep this exact line. -->
+  <!--
+    A3 replaces only the value after the /*INJECT*/ marker with the deck JSON. Keep this
+    exact line. Every "<" in the JSON must be escaped as \u003C, so that a card whose text
+    contains a closing script tag cannot end this element early and break the page.
+  -->
   <script>window.__DECK__ = /*INJECT*/ null;</script>
   <script>
     (() => {
@@ -351,8 +347,12 @@
         cardContent: document.getElementById("card-content"),
         previous: document.getElementById("previous-card"),
         next: document.getElementById("next-card"),
-        status: document.getElementById("player-status")
+        status: document.getElementById("player-status"),
+        announcer: document.getElementById("card-announcer")
       };
+
+      const NAVIGATION_HINT = "Use the buttons or your left and right arrow keys to move through the deck.";
+      const PROMPT_ID = "card-prompt";
 
       const renderers = Object.create(null);
       const state = {
@@ -378,23 +378,21 @@
       }
 
       function setDeck(deck) {
-        const validDeck = normaliseDeck(deck);
-        if (!validDeck) {
+        if (!isRenderableDeck(deck)) {
           showDeckError("The page needs a deck with a title and at least one card.");
           return;
         }
-        state.deck = validDeck;
+        state.deck = deck;
         state.index = 0;
         refs.player.dataset.state = "ready";
-        refs.title.textContent = validDeck.title;
-        if (typeof validDeck.source === "string" && validDeck.source.trim()) {
+        refs.title.textContent = deck.title;
+        if (typeof deck.source === "string" && deck.source.trim()) {
           refs.source.hidden = false;
-          refs.source.textContent = `Source: ${validDeck.source}`;
+          refs.source.textContent = `Source: ${deck.source}`;
         } else {
           refs.source.hidden = true;
           refs.source.textContent = "";
         }
-        setStatus("Use the buttons or your left and right arrow keys to move through the deck.");
         renderCurrentCard();
       }
 
@@ -417,6 +415,9 @@
         refs.cardFrame.classList.remove("empty-state");
         refs.cardType.textContent = type;
         refs.cardContent.replaceChildren();
+        // Drops any error left by the card we navigated away from. Set before the
+        // renderer runs, so a renderer that writes its own status keeps it.
+        setStatus(NAVIGATION_HINT);
         try {
           const result = renderer(rendererContext(card));
           const node = result && result.node ? result.node : result;
@@ -429,13 +430,11 @@
             if (typeof cleanup === "function") state.cleanup = cleanup;
           }
         } catch (error) {
-          const prompt = createElement("p", "card-prompt", "This card could not be rendered.");
-          prompt.id = "card-prompt";
-          prompt.dataset.testid = "card-prompt";
-          refs.cardContent.replaceChildren(prompt);
+          refs.cardContent.replaceChildren(createPromptElement("This card could not be rendered."));
           setStatus(error instanceof Error ? error.message : "The card renderer failed.", true);
         }
         updateProgress();
+        announceCard();
       }
 
       function rendererContext(card) {
@@ -444,6 +443,7 @@
           index: state.index,
           total: state.deck.cards.length,
           createElement,
+          createPromptElement,
           setStatus,
           player: api
         };
@@ -451,19 +451,13 @@
 
       function renderPromptCard({ card }) {
         const fragment = document.createDocumentFragment();
-        const prompt = createElement("p", "card-prompt", card.prompt || "This card has no prompt.");
-        prompt.id = "card-prompt";
-        prompt.dataset.testid = "card-prompt";
-        fragment.append(prompt);
+        fragment.append(createPromptElement(card.prompt || "This card has no prompt."));
         return fragment;
       }
 
       function renderUnsupportedCard({ card }) {
         const fragment = document.createDocumentFragment();
-        const prompt = createElement("p", "card-prompt", card.prompt || "This card has no prompt.");
-        prompt.id = "card-prompt";
-        prompt.dataset.testid = "card-prompt";
-        fragment.append(prompt);
+        fragment.append(createPromptElement(card.prompt || "This card has no prompt."));
         fragment.append(createElement(
           "p",
           "unsupported-card",
@@ -481,22 +475,25 @@
         refs.source.hidden = true;
         refs.progress.max = 1;
         refs.progress.value = 0;
+        refs.progress.setAttribute("aria-label", "No cards loaded");
         refs.progressLabel.textContent = "No cards loaded";
         refs.progressPercent.textContent = "0%";
         refs.cardType.textContent = "Deck error";
         refs.cardPosition.textContent = "—";
-        const prompt = createElement("p", "card-prompt", message);
-        prompt.id = "card-prompt";
-        prompt.dataset.testid = "card-prompt";
-        refs.cardContent.replaceChildren(prompt);
+        refs.cardContent.replaceChildren(createPromptElement(message));
         refs.cardFrame.classList.add("empty-state");
+        const focused = document.activeElement;
         refs.previous.disabled = true;
         refs.next.disabled = true;
+        restoreNavigationFocus(focused);
         setStatus(message, true);
       }
 
       function setStatus(message, isError = false) {
-        refs.status.textContent = message || "";
+        const text = message || "";
+        // Rewriting a live region re-announces it, so an unchanged hint stays untouched
+        // rather than repeating itself on every card change.
+        if (refs.status.textContent !== text) refs.status.textContent = text;
         refs.status.classList.toggle("error", Boolean(isError));
       }
 
@@ -510,16 +507,44 @@
         refs.progressLabel.textContent = `Card ${position} of ${total}`;
         refs.progressPercent.textContent = `${percent}%`;
         refs.cardPosition.textContent = `${position} / ${total}`;
+        const focused = document.activeElement;
         refs.previous.disabled = state.index === 0;
         refs.next.disabled = state.index === total - 1;
+        restoreNavigationFocus(focused);
       }
 
-      function normaliseDeck(candidate) {
-        if (!candidate || typeof candidate !== "object") return null;
-        if (typeof candidate.title !== "string" || !candidate.title.trim()) return null;
-        if (!Array.isArray(candidate.cards) || candidate.cards.length === 0) return null;
-        if (candidate.cards.some((card) => !card || typeof card !== "object")) return null;
-        return candidate;
+      // Reaching the first or last card disables the button that got you there, which
+      // would otherwise drop focus to the body and lose a keyboard user's place. The
+      // caller has to capture the focused element first: disabling it blurs it at once.
+      function restoreNavigationFocus(focused) {
+        if (focused !== refs.previous && focused !== refs.next) return;
+        if (!focused.disabled) return;
+        const sibling = focused === refs.next ? refs.previous : refs.next;
+        (sibling.disabled ? refs.cardFrame : sibling).focus();
+      }
+
+      function announceCard() {
+        const position = state.index + 1;
+        const total = state.deck.cards.length;
+        refs.announcer.textContent = `Card ${position} of ${total}. ${refs.cardContent.textContent}`;
+      }
+
+      // Deliberately lenient: the deck validator owns the strict contract, and the shell
+      // only needs enough structure to paint something rather than throw.
+      function isRenderableDeck(candidate) {
+        if (!candidate || typeof candidate !== "object") return false;
+        if (typeof candidate.title !== "string" || !candidate.title.trim()) return false;
+        if (!Array.isArray(candidate.cards) || candidate.cards.length === 0) return false;
+        return candidate.cards.every((card) => card && typeof card === "object");
+      }
+
+      // Every renderer should build its prompt with this: the card frame is labelled by
+      // the element's id, so a renderer that rolls its own leaves the card unnamed.
+      function createPromptElement(text) {
+        const prompt = createElement("p", "card-prompt", text);
+        prompt.id = PROMPT_ID;
+        prompt.dataset.testid = PROMPT_ID;
+        return prompt;
       }
 
       function createElement(tagName, className, text) {
