@@ -1,0 +1,577 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cram player</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172033;
+      --muted: #60708a;
+      --line: #dce3ee;
+      --surface: #ffffff;
+      --surface-muted: #f5f7fb;
+      --accent: #315bdc;
+      --accent-dark: #2447b8;
+      --accent-soft: #e9edff;
+      --danger: #a42f3c;
+      --shadow: 0 18px 50px rgba(23, 32, 51, 0.09);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-width: 18rem;
+      color: var(--ink);
+      background: #eef2f8;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      border-radius: 0.65rem;
+      padding: 0.7rem 1rem;
+      color: var(--ink);
+      background: var(--surface);
+      cursor: pointer;
+      transition: border-color 120ms ease, background 120ms ease, color 120ms ease,
+        transform 120ms ease;
+    }
+
+    button:hover:not(:disabled) {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+
+    button:focus-visible,
+    input:focus-visible,
+    a:focus-visible {
+      outline: 3px solid rgba(49, 91, 220, 0.35);
+      outline-offset: 2px;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+    }
+
+    a { color: var(--accent-dark); }
+
+    .app-shell {
+      width: min(100% - 2rem, 54rem);
+      margin: 0 auto;
+      padding: clamp(1.25rem, 4vw, 3rem) 0 2rem;
+    }
+
+    .deck-header {
+      margin-bottom: 1.5rem;
+    }
+
+    .eyebrow {
+      margin: 0 0 0.35rem;
+      color: var(--accent-dark);
+      font-size: 0.75rem;
+      font-weight: 750;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      max-width: 42rem;
+      margin: 0;
+      font-size: clamp(1.65rem, 5vw, 2.55rem);
+      line-height: 1.12;
+      overflow-wrap: anywhere;
+    }
+
+    .deck-source {
+      max-width: 42rem;
+      margin: 0.55rem 0 0;
+      color: var(--muted);
+      overflow-wrap: anywhere;
+    }
+
+    .progress-panel {
+      margin-bottom: 1rem;
+      padding: 1rem;
+      border: 1px solid var(--line);
+      border-radius: 0.85rem;
+      background: rgba(255, 255, 255, 0.75);
+    }
+
+    .progress-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 0.55rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .progress-percent { font-weight: 700; }
+
+    progress {
+      display: block;
+      width: 100%;
+      height: 0.55rem;
+      border: 0;
+      border-radius: 999px;
+      overflow: hidden;
+      background: #e4e9f2;
+    }
+
+    progress::-webkit-progress-bar {
+      background: #e4e9f2;
+      border-radius: 999px;
+    }
+
+    progress::-webkit-progress-value {
+      background: var(--accent);
+      border-radius: 999px;
+    }
+
+    progress::-moz-progress-bar {
+      background: var(--accent);
+      border-radius: 999px;
+    }
+
+    .card-frame {
+      min-height: min(52vh, 30rem);
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+      padding: clamp(1.25rem, 5vw, 2.5rem);
+      border: 1px solid var(--line);
+      border-radius: 1rem;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .card-meta {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 0.5rem 1rem;
+      margin-bottom: 2rem;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .card-type {
+      color: var(--accent-dark);
+    }
+
+    .card-content {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 0;
+    }
+
+    .card-prompt {
+      margin: 0;
+      font-size: clamp(1.25rem, 3.5vw, 1.8rem);
+      line-height: 1.4;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .card-note {
+      margin: 1rem 0 0;
+      padding: 0.85rem 1rem;
+      border-left: 0.25rem solid var(--accent);
+      border-radius: 0 0.5rem 0.5rem 0;
+      color: var(--muted);
+      background: var(--surface-muted);
+      font-size: 0.95rem;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .unsupported-card {
+      margin: 0.75rem 0 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .navigation {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .navigation button {
+      min-width: 6.5rem;
+    }
+
+    .navigation .next-button {
+      border-color: var(--accent);
+      color: #fff;
+      background: var(--accent);
+    }
+
+    .navigation .next-button:hover:not(:disabled) {
+      border-color: var(--accent-dark);
+      color: #fff;
+      background: var(--accent-dark);
+    }
+
+    .player-status {
+      min-height: 1.5em;
+      margin: 0.75rem 0 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+      text-align: center;
+    }
+
+    .player-status.error {
+      color: var(--danger);
+    }
+
+    .empty-state {
+      align-items: center;
+      justify-content: center;
+      min-height: 14rem;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 30rem) {
+      .app-shell { width: min(100% - 1rem, 54rem); }
+      .card-frame { min-height: 50vh; }
+      .navigation button { flex: 1; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell" id="player" data-testid="player" data-state="loading">
+    <header class="deck-header">
+      <p class="eyebrow">Cram deck</p>
+      <h1 id="deck-title" data-testid="deck-title">Loading deck…</h1>
+      <p class="deck-source" id="deck-source" hidden></p>
+    </header>
+
+    <section class="progress-panel" aria-label="Deck progress">
+      <div class="progress-row">
+        <span id="progress-label" data-testid="progress-label">Card 0 of 0</span>
+        <span class="progress-percent" id="progress-percent">0%</span>
+      </div>
+      <progress id="progress" data-testid="progress" max="1" value="0">0%</progress>
+    </section>
+
+    <main>
+      <article class="card-frame card" id="card-frame" data-testid="card" aria-labelledby="card-prompt">
+        <div class="card-meta">
+          <span class="card-type" id="card-type" data-testid="card-type">Preparing card</span>
+          <span id="card-position" data-testid="card-position">—</span>
+        </div>
+        <div class="card-content" id="card-content" data-testid="card-content">
+          <p class="card-prompt" id="card-prompt" data-testid="card-prompt">Preparing your deck…</p>
+        </div>
+      </article>
+
+      <nav class="navigation" aria-label="Card navigation">
+        <button type="button" id="previous-card" data-testid="previous-card" data-action="previous" aria-label="Previous card">← Previous</button>
+        <button type="button" id="next-card" data-testid="next-card" class="next-button" data-action="next" aria-label="Next card">Next →</button>
+      </nav>
+      <p class="player-status" id="player-status" role="status" aria-live="polite"></p>
+    </main>
+  </div>
+
+  <!-- A3 replaces only the value after this marker with JSON. Keep this exact line. -->
+  <script>window.__DECK__ = /*INJECT*/ null;</script>
+  <script>
+    (() => {
+      "use strict";
+
+      // This small copy of fixtures/valid/minimal.json makes the template useful when
+      // opened as file:// during development. A rendered deck always takes precedence.
+      const previewDeck = {
+        id: "minimal-deck",
+        title: "Minimal deck",
+        cards: [{
+          id: "only-required-fields",
+          type: "basic",
+          prompt: "Which card fields are required?",
+          answer: "id, type, prompt, and the field belonging to the card's own type."
+        }]
+      };
+
+      const refs = {
+        player: document.getElementById("player"),
+        title: document.getElementById("deck-title"),
+        source: document.getElementById("deck-source"),
+        progress: document.getElementById("progress"),
+        progressLabel: document.getElementById("progress-label"),
+        progressPercent: document.getElementById("progress-percent"),
+        cardFrame: document.getElementById("card-frame"),
+        cardType: document.getElementById("card-type"),
+        cardPosition: document.getElementById("card-position"),
+        cardContent: document.getElementById("card-content"),
+        previous: document.getElementById("previous-card"),
+        next: document.getElementById("next-card"),
+        status: document.getElementById("player-status")
+      };
+
+      const renderers = Object.create(null);
+      const state = {
+        deck: null,
+        index: 0,
+        cleanup: () => {}
+      };
+
+      function registerCardRenderer(type, renderer) {
+        if (typeof type !== "string" || !type.trim()) {
+          throw new TypeError("A card renderer needs a non-empty type.");
+        }
+        if (typeof renderer !== "function") {
+          throw new TypeError(`The renderer for ${type} must be a function.`);
+        }
+        renderers[type] = renderer;
+
+        // A card type may be registered by a later, self-contained module. Repaint
+        // immediately if that module is loaded after the player has started.
+        if (state.deck && state.deck.cards[state.index]?.type === type) {
+          renderCurrentCard();
+        }
+      }
+
+      function setDeck(deck) {
+        const validDeck = normaliseDeck(deck);
+        if (!validDeck) {
+          showDeckError("The page needs a deck with a title and at least one card.");
+          return;
+        }
+        state.deck = validDeck;
+        state.index = 0;
+        refs.player.dataset.state = "ready";
+        refs.title.textContent = validDeck.title;
+        if (typeof validDeck.source === "string" && validDeck.source.trim()) {
+          refs.source.hidden = false;
+          refs.source.textContent = `Source: ${validDeck.source}`;
+        } else {
+          refs.source.hidden = true;
+          refs.source.textContent = "";
+        }
+        setStatus("Use the buttons or your left and right arrow keys to move through the deck.");
+        renderCurrentCard();
+      }
+
+      function moveCard(delta) {
+        if (!state.deck) return;
+        const nextIndex = Math.max(0, Math.min(state.deck.cards.length - 1, state.index + delta));
+        if (nextIndex === state.index) return;
+        state.index = nextIndex;
+        renderCurrentCard();
+      }
+
+      function renderCurrentCard() {
+        if (!state.deck) return;
+        state.cleanup();
+        state.cleanup = () => {};
+        const card = state.deck.cards[state.index];
+        const type = typeof card.type === "string" && card.type.trim() ? card.type : "unknown";
+        const renderer = renderers[type] || renderUnsupportedCard;
+
+        refs.cardFrame.classList.remove("empty-state");
+        refs.cardType.textContent = type;
+        refs.cardContent.replaceChildren();
+        try {
+          const result = renderer(rendererContext(card));
+          const node = result && result.node ? result.node : result;
+          if (!(node instanceof Node)) {
+            throw new TypeError(`The ${type} renderer did not return a DOM node.`);
+          }
+          refs.cardContent.replaceChildren(node);
+          if (result && typeof result.onMount === "function") {
+            const cleanup = result.onMount(rendererContext(card));
+            if (typeof cleanup === "function") state.cleanup = cleanup;
+          }
+        } catch (error) {
+          const prompt = createElement("p", "card-prompt", "This card could not be rendered.");
+          prompt.id = "card-prompt";
+          prompt.dataset.testid = "card-prompt";
+          refs.cardContent.replaceChildren(prompt);
+          setStatus(error instanceof Error ? error.message : "The card renderer failed.", true);
+        }
+        updateProgress();
+      }
+
+      function rendererContext(card) {
+        return {
+          card,
+          index: state.index,
+          total: state.deck.cards.length,
+          createElement,
+          setStatus,
+          player: api
+        };
+      }
+
+      function renderPromptCard({ card }) {
+        const fragment = document.createDocumentFragment();
+        const prompt = createElement("p", "card-prompt", card.prompt || "This card has no prompt.");
+        prompt.id = "card-prompt";
+        prompt.dataset.testid = "card-prompt";
+        fragment.append(prompt);
+        return fragment;
+      }
+
+      function renderUnsupportedCard({ card }) {
+        const fragment = document.createDocumentFragment();
+        const prompt = createElement("p", "card-prompt", card.prompt || "This card has no prompt.");
+        prompt.id = "card-prompt";
+        prompt.dataset.testid = "card-prompt";
+        fragment.append(prompt);
+        fragment.append(createElement(
+          "p",
+          "unsupported-card",
+          `The “${card.type || "unknown"}” card renderer is not installed yet.`
+        ));
+        return fragment;
+      }
+
+      function showDeckError(message) {
+        state.cleanup();
+        state.cleanup = () => {};
+        state.deck = null;
+        refs.player.dataset.state = "error";
+        refs.title.textContent = "Unable to load deck";
+        refs.source.hidden = true;
+        refs.progress.max = 1;
+        refs.progress.value = 0;
+        refs.progressLabel.textContent = "No cards loaded";
+        refs.progressPercent.textContent = "0%";
+        refs.cardType.textContent = "Deck error";
+        refs.cardPosition.textContent = "—";
+        const prompt = createElement("p", "card-prompt", message);
+        prompt.id = "card-prompt";
+        prompt.dataset.testid = "card-prompt";
+        refs.cardContent.replaceChildren(prompt);
+        refs.cardFrame.classList.add("empty-state");
+        refs.previous.disabled = true;
+        refs.next.disabled = true;
+        setStatus(message, true);
+      }
+
+      function setStatus(message, isError = false) {
+        refs.status.textContent = message || "";
+        refs.status.classList.toggle("error", Boolean(isError));
+      }
+
+      function updateProgress() {
+        const total = state.deck.cards.length;
+        const position = state.index + 1;
+        const percent = Math.round((position / total) * 100);
+        refs.progress.max = total;
+        refs.progress.value = position;
+        refs.progress.setAttribute("aria-label", `Card ${position} of ${total}`);
+        refs.progressLabel.textContent = `Card ${position} of ${total}`;
+        refs.progressPercent.textContent = `${percent}%`;
+        refs.cardPosition.textContent = `${position} / ${total}`;
+        refs.previous.disabled = state.index === 0;
+        refs.next.disabled = state.index === total - 1;
+      }
+
+      function normaliseDeck(candidate) {
+        if (!candidate || typeof candidate !== "object") return null;
+        if (typeof candidate.title !== "string" || !candidate.title.trim()) return null;
+        if (!Array.isArray(candidate.cards) || candidate.cards.length === 0) return null;
+        if (candidate.cards.some((card) => !card || typeof card !== "object")) return null;
+        return candidate;
+      }
+
+      function createElement(tagName, className, text) {
+        const element = document.createElement(tagName);
+        if (className) element.className = className;
+        if (text !== undefined && text !== null) element.textContent = String(text);
+        return element;
+      }
+
+      const api = {
+        registerCardRenderer,
+        setDeck,
+        getState: () => ({
+          deck: state.deck,
+          index: state.index,
+          total: state.deck ? state.deck.cards.length : 0
+        })
+      };
+
+      // The shell owns this registry and navigation. Each card-type issue can add
+      // or replace exactly one renderer without changing the shell or other types.
+      registerCardRenderer("basic", renderPromptCard);
+      registerCardRenderer("mcq", renderPromptCard);
+      registerCardRenderer("cloze", renderPromptCard);
+      window.CRAM_PLAYER = api;
+
+      refs.player.addEventListener("click", (event) => {
+        const button = event.target instanceof Element
+          ? event.target.closest("button[data-action]")
+          : null;
+        if (!button) return;
+        if (button.dataset.action === "previous") moveCard(-1);
+        if (button.dataset.action === "next") moveCard(1);
+      });
+
+      document.addEventListener("keydown", (event) => {
+        const target = event.target;
+        if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target.isContentEditable) {
+          return;
+        }
+        if (event.key === "ArrowLeft") {
+          event.preventDefault();
+          moveCard(-1);
+        } else if (event.key === "ArrowRight") {
+          event.preventDefault();
+          moveCard(1);
+        }
+      });
+
+      const injectedDeck = window.__DECK__;
+      setDeck(injectedDeck === null || injectedDeck === undefined ? previewDeck : injectedDeck);
+    })();
+  </script>
+</body>
+</html>
