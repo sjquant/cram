@@ -1,7 +1,18 @@
+import io
+import subprocess
+import sys
 import unittest
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
-from skills.cram.scripts.validator import DeckParseError, DeckValidationError, load_deck, validate_deck
+from skills.cram.scripts.validator import (
+    DeckParseError,
+    DeckValidationError,
+    load_deck,
+    main,
+    parse_deck,
+    validate_deck,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -57,6 +68,48 @@ class DeckValidatorTests(unittest.TestCase):
         with self.assertRaises(DeckValidationError) as context:
             validate_deck([])
         self.assertIn("deck field 'root'", str(context.exception))
+
+    def test_deeply_nested_invalid_json_is_readable(self):
+        """Given JSON deeper than the decoder can recurse, when parsing runs, then a located parse error is raised."""
+        with self.assertRaises(DeckParseError) as context:
+            parse_deck("[" * 200_000, source="deep.json")
+        message = str(context.exception)
+        self.assertIn("deep.json", message)
+        self.assertRegex(message, r"line \d+, column \d+")
+        self.assertIn("nesting is too deep", message)
+
+    def test_cli_reports_failures_without_tracebacks(self):
+        """Given invalid files, when the CLI entry point runs, then it returns failure and prints a concise diagnostic."""
+        cases = (
+            (INVALID / "malformed-json.json", "line ", "column "),
+            (INVALID / "whitespace-only-prompt.json", "card 0 field 'prompt'", ""),
+        )
+        for path, expected_one, expected_two in cases:
+            with self.subTest(path=path.name):
+                stdout = io.StringIO()
+                stderr = io.StringIO()
+                with redirect_stdout(stdout), redirect_stderr(stderr):
+                    status = main([str(path)])
+                self.assertEqual(status, 1)
+                self.assertEqual(stdout.getvalue(), "")
+                message = stderr.getvalue()
+                self.assertIn(str(path), message)
+                self.assertIn(expected_one, message)
+                if expected_two:
+                    self.assertIn(expected_two, message)
+                self.assertNotIn("Traceback", message)
+
+    def test_module_execution_has_no_duplicate_import_warning(self):
+        """Given a valid deck, when the validator is run as a module, then stderr stays clean."""
+        result = subprocess.run(
+            [sys.executable, "-m", "skills.cram.scripts.validator", str(VALID / "minimal.json")],
+            capture_output=True,
+            text=True,
+            check=False,
+            cwd=ROOT,
+        )
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(result.stderr, "")
 
     def test_card_type_controls_allowed_fields(self):
         """Given a basic card with an mcq-only field, when validation runs, then that field is rejected."""

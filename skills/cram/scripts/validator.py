@@ -88,8 +88,20 @@ def parse_deck(text: str, *, source: str | Path | None = None) -> dict[str, Any]
         location = f"line {error.lineno}, column {error.colno}"
         detail = f"invalid JSON: {error.msg}"
         raise DeckParseError((f"{location}: {detail}",), source=display_source) from None
+    except RecursionError:
+        line, column = _input_end_location(text)
+        detail = "invalid JSON: nesting is too deep for the standard-library decoder"
+        raise DeckParseError((f"line {line}, column {column}: {detail}",), source=display_source) from None
 
     return validate_deck(deck, source=source)
+
+
+def _input_end_location(text: str) -> tuple[int, int]:
+    """Return a useful line/column location for decoder depth failures."""
+
+    line = text.count("\n") + 1
+    column = len(text.rsplit("\n", 1)[-1]) + 1
+    return line, column
 
 
 def validate_deck(deck: Any, *, source: str | Path | None = None) -> dict[str, Any]:
