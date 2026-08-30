@@ -8,7 +8,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from .support import RENDERER, fixture_paths, read_deck, run_renderer
+from .support import RENDERER, TEMPLATE, fixture_paths, read_deck, run_renderer
+
+BASELINE_SCRIPT_CLOSES = TEMPLATE.read_text(encoding="utf-8").count("</script>")
 
 
 @unittest.skipUnless(
@@ -50,6 +52,13 @@ class RendererCliTests(unittest.TestCase):
                 except json.JSONDecodeError as error:
                     self.fail(f"the injected deck should be valid JSON: {error}")
                 self.assertEqual(rendered_deck, deck)
+
+                self.assertEqual(
+                    html.count("</script>"),
+                    BASELINE_SCRIPT_CLOSES,
+                    "card text must never add a closing </script> tag beyond the template's own; "
+                    "this only holds if injected '<' characters are escaped",
+                )
 
     def test_given_an_invalid_deck_when_rendered_then_it_is_rejected_without_html(self):
         """Given an invalid deck, when rendered, then the CLI rejects it without HTML."""

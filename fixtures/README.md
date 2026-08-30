@@ -12,6 +12,7 @@ Hand-written decks used two ways. They are development inputs, not part of what 
 | `basic-only.json` | The walking-skeleton deck. Only `basic` cards, with and without hints and explanations. |
 | `all-types.json` | All three card types, including a one-distractor mcq standing in for true/false and a cloze with two blanks, one of which accepts an alternative spelling. |
 | `minimal.json` | Only the required fields. Guards against the player assuming optional fields are present. |
+| `prompt-with-script-tag.json` | A card's text contains a literal `<script>`/`</script>`. Guards the renderer's escaping of `<` in the injected deck JSON, so card text can never end the player's script element early. |
 
 ## Invalid decks
 
