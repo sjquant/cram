@@ -44,6 +44,12 @@ class PlayerBrowserTests(unittest.TestCase):
                     "prompt": "Basic prompt",
                     "answer": "Basic answer",
                 },
+                {
+                    "id": "basic-card-two",
+                    "type": "basic",
+                    "prompt": "Second basic prompt",
+                    "answer": "Second basic answer",
+                },
             ],
         }
 
@@ -95,6 +101,7 @@ class PlayerBrowserTests(unittest.TestCase):
                     checks.checkEnabledAfterSelection = !document.querySelector(
                       '[data-testid="mcq-check-answer"]'
                     ).disabled;
+                    checks.nextDisabledBeforeCheck = document.querySelector('#next-card').disabled;
                     const rightAfterSelection = Array.from(
                       document.querySelectorAll('[data-testid="mcq-option"]')
                     ).find((button) => button.textContent === deck.cards[0].answer);
@@ -115,7 +122,12 @@ class PlayerBrowserTests(unittest.TestCase):
                       '[data-testid="mcq-explanation"]'
                     ).hidden;
                     checks.incorrectGrade = window.CRAM_PLAYER.getGrade('mcq-card');
+                    checks.nextEnabledAfterCheck = !document.querySelector('#next-card').disabled;
                     document.querySelector('#next-card').click();
+                    checks.basicNextDisabledBeforeGrade = document.querySelector('#next-card').disabled;
+                    document.querySelector('[data-testid="reveal-answer"]').click();
+                    document.querySelector('[data-testid="grade-known"]').click();
+                    checks.basicNextEnabledAfterGrade = !document.querySelector('#next-card').disabled;
                     document.querySelector('#previous-card').click();
                     checks.restoredGrade = window.CRAM_PLAYER.getGrade('mcq-card');
                     checks.restoredOptionsDisabled = Array.from(
@@ -144,10 +156,14 @@ class PlayerBrowserTests(unittest.TestCase):
         self.assertTrue(result["explanationHiddenAfterSelection"])
         self.assertTrue(result["checkEnabledAfterSelection"])
         self.assertTrue(result["selectionCanChange"])
+        self.assertTrue(result["nextDisabledBeforeCheck"])
         self.assertIn("Incorrect.", result["incorrectFeedback"])
         self.assertTrue(result["answerPageVisible"])
         self.assertTrue(result["explanationVisibleAfterCheck"])
         self.assertEqual(result["incorrectGrade"], "incorrect")
+        self.assertTrue(result["nextEnabledAfterCheck"])
+        self.assertTrue(result["basicNextDisabledBeforeGrade"])
+        self.assertTrue(result["basicNextEnabledAfterGrade"])
         self.assertEqual(result["restoredGrade"], "incorrect")
         self.assertTrue(result["restoredOptionsDisabled"])
         self.assertEqual(result["correctGrade"], "correct")

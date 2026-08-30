@@ -280,7 +280,7 @@
 
     .mcq-check-button {
       align-self: flex-start;
-      margin: var(--s3) -0.9rem 0;
+      margin: var(--s3) 0 0;
       color: var(--paper);
       background: var(--ink);
     }
@@ -304,13 +304,13 @@
 
     .reveal-button {
       align-self: flex-start;
-      margin: var(--s3) -0.9rem 0;
+      margin: var(--s3) 0 0;
     }
 
     .grading-buttons {
       display: flex;
       gap: var(--s2);
-      margin: var(--s3) -0.9rem 0;
+      margin: var(--s3) 0 0;
     }
 
     .grading-buttons[hidden] {
@@ -326,12 +326,9 @@
       align-items: center;
       justify-content: space-between;
       gap: 0.75rem;
+      margin-top: var(--s4);
+      border-top: 1px solid var(--rule);
       padding-top: var(--s2);
-    }
-
-    /* A ghost button aligns to the column by its label, a filled one by its box. */
-    .navigation button:first-child {
-      margin-left: -0.9rem;
     }
 
     .player-status {
@@ -817,6 +814,7 @@
           throw new TypeError("A grade needs a non-empty value.");
         }
         state.grades[cardId] = grade;
+        if (state.deck) updateProgress();
       }
 
       function getGrade(cardId) {
@@ -867,8 +865,14 @@
           `${String(position).padStart(width, "0")}/${total}`;
         const focused = document.activeElement;
         refs.previous.disabled = state.index === 0;
-        refs.next.disabled = state.index === total - 1;
+        const card = state.deck.cards[state.index];
+        refs.next.disabled = state.index === total - 1
+          || (isAnswerRequiredCard(card) && !state.grades[card.id]);
         restoreNavigationFocus(focused);
+      }
+
+      function isAnswerRequiredCard(card) {
+        return card.type === "basic" || card.type === "mcq";
       }
 
       // Reaching the first or last card disables the button that got you there, which
