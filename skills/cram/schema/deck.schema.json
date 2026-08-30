@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/sjquant/flashcard/blob/main/skills/flashcard/schema/deck.schema.json",
+  "$id": "https://github.com/sjquant/cram/blob/main/skills/cram/schema/deck.schema.json",
   "title": "Flashcard deck",
   "description": "The contract between Claude's extraction pass and the renderer. All three card types are fixed here from the start so that implementing a type later is never a breaking schema change.",
   "type": "object",

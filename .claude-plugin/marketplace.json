@@ -1,11 +1,11 @@
 {
-  "name": "flashcard",
+  "name": "cram",
   "owner": {
     "name": "sjquant"
   },
   "plugins": [
     {
-      "name": "flashcard",
+      "name": "cram",
       "source": "./",
       "strict": false
     }
