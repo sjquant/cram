@@ -1,87 +1,59 @@
 # Card-extraction quality rubric
 
-Use this rubric when turning a source document into a cram deck. A good card
-tests one useful piece of knowledge that a learner can retrieve from the card
-alone. The source supplies the facts during extraction; it must not be needed
-to interpret the prompt during review.
+Use this when converting a source document into a cram deck. A card should
+test one useful piece of knowledge that the learner can retrieve from the card
+alone. The source is for extraction, not for interpreting a prompt during
+review.
 
-## Quality gate
+## Before emitting a card
 
-Before emitting a card, check all of the following:
+- **One idea:** Ask for one fact, relationship, decision, or short procedure,
+  with one independently gradable answer. Split questions joined by “and”,
+  “also”, or a list of questions.
+- **Standalone prompt:** Name the subject, scope, and relevant conditions. Do
+  not depend on “above”, “below”, “this section”, page order, an unseen
+  citation, or an unexplained pronoun. Include a version, environment, actor,
+  or unit when leaving it out could change the answer.
+- **Answerable and unambiguous:** The learner can answer without reopening the
+  source, and the answer is specific and concise. Avoid opinions, unstated
+  versions, arbitrary detail, and trick questions.
+- **Useful difficulty:** Test concepts, distinctions, causes, and decisions the
+  learner is likely to need; do not hide essential context.
+- **Schema-shaped:** Use only the fields and card types in
+  `schema/deck.schema.json`. Add `hint` or `explanation` when useful, but do
+  not put information required to understand the prompt only there.
 
-- **One idea:** The prompt asks for one fact, relationship, decision, or short
-  procedure. The answer can be judged as one unit. Split independent facts
-  instead of joining them with “and”, “also”, or a list of questions.
-- **Self-contained prompt:** Name the subject, scope, and relevant conditions
-  in the prompt. Do not rely on “above”, “below”, “this section”, page order,
-  an unexplained pronoun, or a citation the learner cannot see.
-- **Answerable from memory:** The learner should be able to answer without
-  reopening the source. Include enough context to disambiguate the answer,
-  but do not copy surrounding exposition into the prompt.
-- **One unambiguous answer:** The answer is specific and concise. Avoid
-  questions whose answer depends on opinion, an unstated version, or an
-  arbitrary level of detail.
-- **Useful difficulty:** Prefer concepts, distinctions, causes, and decisions
-  the learner is likely to need. Do not make a card harder by hiding essential
-  context or by using a trick question.
-- **Schema-shaped output:** Use only the fields and card types defined in
-  `schema/deck.schema.json`. Add a hint or explanation when it helps recovery
-  or feedback; neither should carry information that is required to understand
-  the prompt.
-
-If a card fails any check, rewrite it or split it before adding it to the
-deck. The deck's `source` field may preserve provenance, but it is not a
-substitute for context in the prompt.
-
-## One idea per card
+Rewrite or split any card that fails a check. The deck-level `source` field can
+preserve provenance, but cannot replace prompt context.
 
 Treat each independently gradable answer as a separate card. “What is X and
 why does it matter?”, “Name A, B, and C”, and “What does X do, when should it be
-used, and what is its exception?” are compound prompts. Splitting them gives
-the learner more honest feedback and makes scheduling each fact possible.
+used, and what is its exception?” are compound prompts. When parts are truly
+inseparable, ask for their relationship rather than a list; multiple cloze
+blanks are appropriate only when they test one inseparable sequence or
+relationship.
 
-When a concept genuinely has inseparable parts, ask for the relationship rather
-than a shopping list. For example, a cloze may test both sides of one protocol
-exchange when the blanks describe the same exchange; independent facts still
-belong on separate cards.
+## Choose the card type
 
-## Standalone prompts
+Choose based on the desired retrieval behavior, not the source passage's
+format.
 
-Write the card as though it will be shown by itself in a shuffled deck. Replace
-document navigation with the actual subject and scope:
-
-- “What does the author recommend in the next paragraph?” → “What does
-  `Cache-Control: no-store` instruct a cache to do?”
-- “What are the two exceptions listed above?” → name the rule and ask for one
-  exception per card (or ask for the complete, explicitly named set if the set
-  itself is the single learning objective).
-- “What is the default port?” → “What is the default port for HTTP?”
-
-Pronouns are fine only when their referent is in the prompt itself. Include a
-version, environment, actor, or unit whenever omitting it could change the
-answer (for example, “in Python 3’s `asyncio`” or “for an HTTPS URL”).
-
-## Choosing a card type
-
-Choose the type based on the desired retrieval behavior, not on the shape of
-the source passage.
-
-| Type | Reach for it when… | Quality rules |
+| Type | Use it when… | Rules |
 | --- | --- | --- |
-| `basic` | The learner should freely recall or explain a fact, distinction, cause, or short procedure. This is the default when recognition would be too easy. | Keep the prompt atomic and the answer short enough to grade consistently. A longer explanation belongs in `explanation`, not in a second question hidden in the answer. |
-| `mcq` | The target is a clear distinction among plausible alternatives, and selecting one option is the useful skill. | Put exactly one correct option in `answer`. Use at least one and usually two to four related, credible `distractors`; all options should fit the same question grammatically and category-wise. Do not use trivia, “all of the above”, unevenly detailed options, or obviously absurd distractors. Represent true/false with `answer: "True"` and `distractors: ["False"]` only when the statement is genuinely useful. |
-| `cloze` | The learner should recall a term, value, symbol, or short phrase in its natural context. | Put the answer inline as `{{answer}}` (alternatives as `{{answer|accepted alternative}}`). Prefer one blank for one fact. Multiple blanks are appropriate only when they jointly test one inseparable sequence or relationship; split them when each blank could be learned independently. |
+| `basic` | The learner should freely recall or explain a fact, distinction, cause, or short procedure. Use it by default when recognition would be too easy. | Keep the prompt atomic and the answer consistently gradable. Put a longer explanation in `explanation`, not a second question in `answer`. |
+| `mcq` | The useful skill is distinguishing one clear answer from plausible alternatives. | Put exactly one correct option in `answer`. Include at least one, usually two to four, related and credible `distractors`; keep all options grammatical and in the same category. Avoid trivia, “all of the above”, uneven detail, and absurd options. Use `answer: "True"` with `distractors: ["False"]` only for a useful true/false claim. |
+| `cloze` | The learner should recall a term, value, symbol, or short phrase in natural context. | Put the target inline as `{{answer}}`; use `{{answer|accepted alternative}}` for alternatives. Prefer one blank per fact. Split blanks that can be learned independently. |
 
-Do not turn a difficult basic card into an MCQ merely to make grading easier.
-Do not use cloze when the surrounding sentence gives away the answer or when a
-free explanation is the real objective.
+Do not convert a difficult `basic` card to `mcq` solely to simplify grading.
+Do not use `cloze` when the sentence gives away the answer or when free
+explanation is the actual objective.
 
 ## Few-shot rewrites
 
-The examples below use the deck schema. “Weak” cards are intentionally
-problematic; “Strong” cards show the expected extraction style.
+These card fragments use the deck schema. Weak cards are deliberately
+problematic; strong cards show the expected result.
 
-### Compound question → two atomic cards
+### Compound question → atomic cards
 
 **Weak (`basic`)**
 
@@ -113,8 +85,6 @@ problematic; “Strong” cards show the expected extraction style.
 ]
 ```
 
-Each strong card has one answer and can be reviewed independently.
-
 ### Source-dependent wording → standalone context
 
 **Weak (`basic`)**
@@ -139,10 +109,7 @@ Each strong card has one answer and can be reviewed independently.
 }
 ```
 
-The strong prompt names the protocol and directive, so it remains meaningful
-after shuffling and months after extraction.
-
-### Vague MCQ → plausible, same-category options
+### Weak MCQ → plausible options
 
 **Weak (`mcq`)**
 
@@ -168,9 +135,6 @@ after shuffling and months after extraction.
 }
 ```
 
-The strong card asks one disambiguation question and gives options that are all
-HTTP response headers with a plausible relationship to caching.
-
 ### Ungrounded blank → meaningful cloze
 
 **Weak (`cloze`)**
@@ -192,41 +156,3 @@ HTTP response headers with a plausible relationship to caching.
   "prompt": "The HTTP response header that tells shared caches which request headers must match is {{Vary}}."
 }
 ```
-
-The strong sentence supplies enough semantic context to retrieve the term;
-the blank is the single target rather than an arbitrary word.
-
-### Ambiguous scope → explicit scope and separate cards
-
-**Weak (`basic`)**
-
-```json
-{
-  "id": "ambiguous-default-port",
-  "type": "basic",
-  "prompt": "What is the default port?",
-  "answer": "80 (or 443 for HTTPS)."
-}
-```
-
-**Strong**
-
-```json
-[
-  {
-    "id": "http-default-port",
-    "type": "basic",
-    "prompt": "What is the default TCP port for HTTP?",
-    "answer": "80"
-  },
-  {
-    "id": "https-default-port",
-    "type": "basic",
-    "prompt": "What is the default TCP port for HTTPS?",
-    "answer": "443"
-  }
-]
-```
-
-The strong cards remove the ambiguity and keep the two independently useful
-facts from competing on one card.
