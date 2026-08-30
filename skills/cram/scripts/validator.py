@@ -224,6 +224,12 @@ def _validate_mcq_card(card: dict[str, Any], prefix: str, errors: list[str]) -> 
         _validate_non_empty_string(card["answer"], prefix, "answer", errors)
     if "distractors" in card:
         _validate_distractors(card["distractors"], prefix, errors)
+    if (
+        isinstance(card.get("answer"), str)
+        and isinstance(card.get("distractors"), list)
+        and card["answer"] in card["distractors"]
+    ):
+        errors.append(f"{prefix} field 'distractors': must not contain the answer")
     _validate_optional_text(card, prefix, "hint", errors)
     _validate_optional_text(card, prefix, "explanation", errors)
 

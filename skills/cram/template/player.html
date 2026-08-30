@@ -688,8 +688,9 @@
         feedback.setAttribute("role", "status");
         feedback.hidden = true;
 
-        const explanation = card.explanation
-          ? createElement("p", "mcq-explanation", card.explanation)
+        const explanationText = typeof card.explanation === "string" ? card.explanation : "";
+        const explanation = explanationText
+          ? createElement("p", "mcq-explanation")
           : null;
         if (explanation) {
           explanation.dataset.testid = "mcq-explanation";
@@ -712,7 +713,10 @@
             ? "Correct."
             : `Incorrect. The correct answer is: ${answer}`;
           feedback.hidden = false;
-          if (explanation) explanation.hidden = false;
+          if (explanation) {
+            explanation.textContent = explanationText;
+            explanation.hidden = false;
+          }
         }
 
         function handleOptionClick(selectedButton, selectedChoice) {
