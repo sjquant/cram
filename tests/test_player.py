@@ -291,6 +291,89 @@ class PlayerBrowserTests(unittest.TestCase):
         self.assertTrue(result["cardScrollResetsOnNext"])
         self.assertTrue(result["revealAlignedToCardRight"])
 
+    def test_given_a_cloze_card_when_checked_then_each_blank_is_graded_and_the_card_gets_one_grade(self):
+        """Given a cloze card, when checked, then each blank and the whole card are graded."""
+        # Given
+        deck = {
+            "id": "cloze-browser-check",
+            "title": "Cloze browser check",
+            "cards": [
+                {
+                    "id": "cloze-card",
+                    "type": "cloze",
+                    "prompt": "Send {{If-None-Match}} and accept {{304|304 Not Modified}}.",
+                    "explanation": "The cached response is still fresh.",
+                }
+            ],
+        }
+
+        with tempfile.TemporaryDirectory() as directory:
+            directory_path = Path(directory)
+            deck_path = directory_path / "deck.json"
+            output = directory_path / "deck.html"
+            deck_path.write_text(json.dumps(deck), encoding="utf-8")
+            rendered = run_renderer(deck_path, output, directory_path)
+            self.assertEqual(rendered.returncode, 0, msg=rendered.stderr or rendered.stdout)
+
+            # When
+            self._close_browser()
+            try:
+                opened = self._browser("open", output.as_uri())
+                self.assertEqual(opened.returncode, 0, msg=opened.stderr or opened.stdout)
+                result = self._eval(
+                    """
+                    const checks = {};
+                    const prompt = document.querySelector('[data-testid="card-prompt"]');
+                    const inputs = Array.from(document.querySelectorAll('[data-testid="cloze-input"]'));
+                    checks.inputCount = inputs.length;
+                    checks.rawMarkupHidden = !prompt.textContent.includes('{{');
+                    checks.feedbackHiddenBeforeCheck = document.querySelector(
+                      '[data-testid="cloze-feedback"]'
+                    ).hidden;
+                    inputs[0].value = '  if-none-match ';
+                    inputs[1].value = 'wrong';
+                    document.querySelector('[data-testid="cloze-check-answer"]').click();
+                    checks.blankResults = inputs.map((input) => input.dataset.result);
+                    checks.aggregateFeedback = document.querySelector(
+                      '[data-testid="cloze-feedback"]'
+                    ).dataset.result;
+                    checks.feedback = Array.from(
+                      document.querySelectorAll('[data-testid="cloze-blank-feedback"]')
+                    ).map((item) => item.textContent);
+                    checks.incorrectGrade = window.CRAM_PLAYER.getGrade('cloze-card');
+                    checks.inputsDisabled = inputs.every((input) => input.disabled);
+                    checks.explanationVisible = !document.querySelector(
+                      '[data-testid="cloze-explanation"]'
+                    ).hidden;
+                    window.CRAM_PLAYER.setDeck(window.CRAM_PLAYER.getState().deck);
+                    const restoredInputs = Array.from(
+                      document.querySelectorAll('[data-testid="cloze-input"]')
+                    );
+                    restoredInputs[0].value = 'If-None-Match';
+                    restoredInputs[1].value = ' 304 NOT MODIFIED ';
+                    document.querySelector('[data-testid="cloze-check-answer"]').click();
+                    checks.alternativeGrade = window.CRAM_PLAYER.getGrade('cloze-card');
+                    checks.alternativeResults = restoredInputs.map((input) => input.dataset.result);
+                    JSON.stringify(checks);
+                    """
+                )
+            finally:
+                self._close_browser()
+
+        # Then
+        self.assertEqual(result["inputCount"], 2)
+        self.assertTrue(result["rawMarkupHidden"])
+        self.assertTrue(result["feedbackHiddenBeforeCheck"])
+        self.assertEqual(result["blankResults"], ["correct", "incorrect"])
+        self.assertEqual(result["aggregateFeedback"], "incorrect")
+        self.assertIn("Correct.", result["feedback"][0])
+        self.assertIn("Correct answer: 304 / 304 Not Modified", result["feedback"][1])
+        self.assertEqual(result["incorrectGrade"], "incorrect")
+        self.assertTrue(result["inputsDisabled"])
+        self.assertTrue(result["explanationVisible"])
+        self.assertEqual(result["alternativeGrade"], "correct")
+        self.assertEqual(result["alternativeResults"], ["correct", "correct"])
+
     @classmethod
     def _browser(cls, *arguments: str, input_text: str | None = None) -> subprocess.CompletedProcess[str]:
         if AGENT_BROWSER is None:  # pragma: no cover - guarded by skipUnless

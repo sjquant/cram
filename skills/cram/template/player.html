@@ -336,6 +336,68 @@
       background: var(--accent);
     }
 
+    .cloze-input {
+      width: auto;
+      min-width: 6ch;
+      max-width: 100%;
+      margin-inline: 0.12em;
+      padding: 0 0.2em;
+      border: 0;
+      border-bottom: 2px solid var(--rule-strong);
+      border-radius: 0;
+      color: var(--ink);
+      background: transparent;
+      text-align: center;
+    }
+
+    .cloze-input.cloze-correct {
+      border-bottom-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .cloze-input.cloze-incorrect {
+      border-bottom-color: var(--ink-soft);
+    }
+
+    .cloze-check-button {
+      align-self: flex-end;
+      margin: var(--s3) 0 0;
+      color: var(--paper);
+      background: var(--ink);
+    }
+
+    .cloze-check-button:hover:not(:disabled) {
+      color: var(--paper);
+      background: var(--accent);
+    }
+
+    .cloze-feedback {
+      max-width: 34ch;
+      margin: var(--s3) 0 0;
+    }
+
+    .cloze-blank-feedback {
+      margin: 0.35rem 0 0;
+      color: var(--ink-soft);
+      font-size: 0.86rem;
+    }
+
+    .cloze-blank-feedback[data-result="correct"] {
+      color: var(--accent);
+    }
+
+    .cloze-explanation {
+      max-width: 34ch;
+      margin: var(--s3) 0 0;
+      padding-top: var(--s2);
+      border-top: 1px solid var(--rule);
+      font-family: var(--serif);
+      font-size: clamp(1.05rem, 2vw, 1.3rem);
+      line-height: 1.5;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
     .card-answer {
       max-width: 34ch;
       margin: var(--s3) 0 0;
@@ -856,6 +918,128 @@
         return fragment;
       }
 
+      const CLOZE_GRADES = Object.freeze({ CORRECT: "correct", INCORRECT: "incorrect" });
+
+      function renderClozeCard({ card, player, createElement, createPromptElement, setStatus }) {
+        const fragment = document.createDocumentFragment();
+        const prompt = createPromptElement("");
+        const blanks = [];
+        const promptText = typeof card.prompt === "string" ? card.prompt : "";
+        const blankPattern = /\{\{([^{}]*)\}\}/g;
+        let cursor = 0;
+        let match;
+
+        while ((match = blankPattern.exec(promptText)) !== null) {
+          prompt.append(document.createTextNode(promptText.slice(cursor, match.index)));
+
+          const answers = match[1]
+            .split("|")
+            .map((answer) => answer.trim())
+            .filter(Boolean);
+          const input = createElement("input", "cloze-input");
+          input.type = "text";
+          input.dataset.testid = "cloze-input";
+          input.dataset.blankIndex = String(blanks.length);
+          input.setAttribute("aria-label", `Blank ${blanks.length + 1}`);
+          input.autocomplete = "off";
+          input.spellcheck = false;
+          prompt.append(input);
+          blanks.push({ answers, input });
+          cursor = blankPattern.lastIndex;
+        }
+        prompt.append(document.createTextNode(promptText.slice(cursor)));
+        fragment.append(prompt);
+
+        const checkAnswer = createElement("button", "cloze-check-button", "Check answers");
+        checkAnswer.type = "button";
+        checkAnswer.dataset.testid = "cloze-check-answer";
+
+        const feedback = createElement("div", "cloze-feedback");
+        feedback.dataset.testid = "cloze-feedback";
+        feedback.setAttribute("role", "status");
+        feedback.hidden = true;
+        const feedbackItems = blanks.map((blank, index) => {
+          const item = createElement("p", "cloze-blank-feedback");
+          item.dataset.testid = "cloze-blank-feedback";
+          item.dataset.blankIndex = String(index);
+          feedback.append(item);
+          return item;
+        });
+
+        const explanationText = typeof card.explanation === "string" ? card.explanation : "";
+        const explanation = explanationText
+          ? createElement("p", "cloze-explanation")
+          : null;
+        if (explanation) {
+          explanation.dataset.testid = "cloze-explanation";
+          explanation.hidden = true;
+        }
+
+        fragment.append(checkAnswer, feedback);
+        if (explanation) fragment.append(explanation);
+
+        function normalizeAnswer(answer) {
+          return answer.trim().toLowerCase();
+        }
+
+        function checkBlank(blank) {
+          const submitted = normalizeAnswer(blank.input.value);
+          return blank.answers.some((answer) => normalizeAnswer(answer) === submitted);
+        }
+
+        function applyAnsweredUI(grade, results = null) {
+          const isCorrect = grade === CLOZE_GRADES.CORRECT;
+          blanks.forEach((blank, index) => {
+            const blankCorrect = results ? results[index] : isCorrect;
+            blank.input.disabled = true;
+            blank.input.classList.toggle("cloze-correct", blankCorrect);
+            blank.input.classList.toggle("cloze-incorrect", !blankCorrect);
+            blank.input.dataset.result = blankCorrect
+              ? CLOZE_GRADES.CORRECT
+              : CLOZE_GRADES.INCORRECT;
+            blank.input.setAttribute("aria-invalid", String(!blankCorrect));
+            feedbackItems[index].dataset.result = blankCorrect
+              ? CLOZE_GRADES.CORRECT
+              : CLOZE_GRADES.INCORRECT;
+            feedbackItems[index].textContent = blankCorrect
+              ? `Blank ${index + 1}: Correct.`
+              : `Blank ${index + 1}: Incorrect. Correct answer: ${blank.answers.join(" / ")}`;
+          });
+          feedback.dataset.result = grade;
+          feedback.hidden = false;
+          checkAnswer.hidden = true;
+          checkAnswer.disabled = true;
+          if (explanation) {
+            explanation.textContent = explanationText;
+            explanation.hidden = false;
+          }
+        }
+
+        function handleCheckAnswer() {
+          const results = blanks.map(checkBlank);
+          const grade = results.every(Boolean)
+            ? CLOZE_GRADES.CORRECT
+            : CLOZE_GRADES.INCORRECT;
+          try {
+            player.recordGrade(card.id, grade);
+          } catch (error) {
+            setStatus(error instanceof Error ? error.message : "The grade could not be recorded.", true);
+            return;
+          }
+          applyAnsweredUI(grade, results);
+          setStatus(grade === CLOZE_GRADES.CORRECT ? "Correct." : "Incorrect.");
+        }
+
+        checkAnswer.addEventListener("click", handleCheckAnswer);
+
+        const existingGrade = player.getGrade(card.id);
+        if (existingGrade === CLOZE_GRADES.CORRECT || existingGrade === CLOZE_GRADES.INCORRECT) {
+          applyAnsweredUI(existingGrade);
+        }
+
+        return fragment;
+      }
+
       function renderPromptCard({ card }) {
         const fragment = document.createDocumentFragment();
         fragment.append(createPromptElement(card.prompt || "This card has no prompt."));
@@ -1013,7 +1197,7 @@
       // or replace exactly one renderer without changing the shell or other types.
       registerCardRenderer("basic", renderBasicCard);
       registerCardRenderer("mcq", renderMcqCard);
-      registerCardRenderer("cloze", renderPromptCard);
+      registerCardRenderer("cloze", renderClozeCard);
       window.CRAM_PLAYER = api;
 
       refs.player.addEventListener("click", (event) => {
