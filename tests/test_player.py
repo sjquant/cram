@@ -1,4 +1,4 @@
-"""Outside-in browser checks for the player's interactive card behavior."""
+"""Outside-in browser checks for the player's public card and results views."""
 
 from __future__ import annotations
 
@@ -10,12 +10,14 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from .support import run_renderer
+from .support import FIXTURES, TEMPLATE, read_deck, run_renderer
 
 
 AGENT_BROWSER = shutil.which("agent-browser")
 BROWSER_PROFILE = Path.home() / ".agent-browser" / "profiles" / "sjquant"
-BROWSER_SESSION = f"cram-player-tests-{os.getpid()}"
+BROWSER_SESSION = f"cram-player-score-tests-{os.getpid()}"
+PLAYER_URL = TEMPLATE.as_uri()
+BASIC_DECK = FIXTURES / "valid" / "basic-only.json"
 
 
 @unittest.skipUnless(
@@ -23,8 +25,12 @@ BROWSER_SESSION = f"cram-player-tests-{os.getpid()}"
     "agent-browser and the sjquant browser profile are required for player checks",
 )
 class PlayerBrowserTests(unittest.TestCase):
+    def tearDown(self) -> None:
+        self._close_browser()
+
     def test_given_an_mcq_card_when_answered_then_feedback_explanation_and_grade_are_visible(self):
         """Given an MCQ card, when answered, then its behavior is exposed through the player UI."""
+
         # Given
         deck = {
             "id": "player-browser-check",
@@ -267,8 +273,154 @@ class PlayerBrowserTests(unittest.TestCase):
         self.assertEqual(result["alternativeGrade"], "correct")
         self.assertEqual(result["alternativeResults"], ["correct", "correct"])
 
+    def test_given_mixed_basic_grades_when_final_next_is_activated_then_results_review_missed_cards(self):
+        """Given mixed grades, when final Next is activated, then score and review details appear."""
+
+        deck = read_deck(BASIC_DECK)
+
+        # Given: the basic fixture is loaded in the standalone file:// player.
+        self._open_player(deck)
+
+        # When: the learner grades each card and advances past the last one.
+        result = self._eval(
+            """
+            const grade = (testid) => {
+              document.querySelector('[data-testid="reveal-answer"]').click();
+              document.querySelector(`[data-testid="${testid}"]`).click();
+            };
+            const next = () => document.querySelector('#next-card').click();
+            const checks = {};
+            grade('grade-known');
+            next();
+            grade('grade-missed');
+            next();
+            grade('grade-known');
+            next();
+            grade('grade-missed');
+            next();
+            grade('grade-known');
+            checks.finalAction = {
+              label: document.querySelector('#next-card').textContent,
+              disabled: document.querySelector('#next-card').disabled,
+            };
+            next();
+            checks.state = document.querySelector('#player').dataset.state;
+            checks.score = document.querySelector('[data-testid="score-value"]').textContent;
+            checks.summary = document.querySelector('#score-summary').textContent;
+            checks.status = document.querySelector('#player-status').textContent;
+            checks.missed = Array.from(
+              document.querySelectorAll('[data-testid="missed-card"]')
+            ).map((item) => item.textContent);
+            checks.cardHidden = document.querySelector('#card-frame').hidden;
+            checks.navigationHidden = document.querySelector('.navigation').hidden;
+            JSON.stringify(checks);
+            """
+        )
+
+        # Then: the results view reports the score and both missed cards in order.
+        self.assertEqual(result["finalAction"]["label"], "See results →")
+        self.assertFalse(result["finalAction"]["disabled"])
+        self.assertEqual(result["state"], "results")
+        self.assertEqual(result["score"], "3/5")
+        self.assertEqual(result["summary"], "Score: 3/5")
+        self.assertEqual(result["status"], "Session complete. Score 3/5.")
+        self.assertEqual(len(result["missed"]), 2)
+        self.assertIn(deck["cards"][1]["prompt"], result["missed"][0])
+        self.assertIn(deck["cards"][1]["answer"], result["missed"][0])
+        self.assertIn(deck["cards"][1]["explanation"], result["missed"][0])
+        self.assertIn(deck["cards"][3]["prompt"], result["missed"][1])
+        self.assertIn(deck["cards"][3]["answer"], result["missed"][1])
+        self.assertIn(deck["cards"][3]["explanation"], result["missed"][1])
+        self.assertTrue(result["cardHidden"])
+        self.assertTrue(result["navigationHidden"])
+
+    def test_given_all_basic_cards_are_known_when_session_finishes_then_results_are_perfect(self):
+        """Given every card is known, when the session finishes, then no review items are shown."""
+
+        deck = read_deck(BASIC_DECK)
+
+        # Given: the basic fixture is loaded in the standalone file:// player.
+        self._open_player(deck)
+
+        # When: the learner marks every card known and advances past the last one.
+        result = self._eval(
+            """
+            const cards = window.CRAM_PLAYER.getState().deck.cards;
+            for (let index = 0; index < cards.length; index += 1) {
+              document.querySelector('[data-testid="reveal-answer"]').click();
+              document.querySelector('[data-testid="grade-known"]').click();
+              if (index < cards.length - 1) document.querySelector('#next-card').click();
+            }
+            document.querySelector('#next-card').click();
+            JSON.stringify({
+              state: document.querySelector('#player').dataset.state,
+              score: document.querySelector('[data-testid="score-value"]').textContent,
+              missedCount: document.querySelectorAll('[data-testid="missed-card"]').length,
+              noMissedHidden: document.querySelector('#no-missed-cards').hidden,
+            });
+            """
+        )
+
+        # Then: the perfect-score state has no missed-card review list.
+        self.assertEqual(result["state"], "results")
+        self.assertEqual(result["score"], "5/5")
+        self.assertEqual(result["missedCount"], 0)
+        self.assertFalse(result["noMissedHidden"])
+
+    def test_given_an_mcq_answer_is_correct_when_session_finishes_then_score_counts_it(self):
+        """Given a correct MCQ answer, when the session finishes, then it counts as positive."""
+
+        deck = {
+            "id": "mcq-score-check",
+            "title": "MCQ score check",
+            "cards": [
+                {
+                    "id": "mcq-card",
+                    "type": "mcq",
+                    "prompt": "Which option is correct?",
+                    "answer": "Right",
+                    "distractors": ["Wrong"],
+                }
+            ],
+        }
+
+        # Given: the MCQ card is loaded in the standalone file:// player.
+        self._open_player(deck)
+
+        # When: the learner selects and confirms the correct option, then sees results.
+        result = self._eval(
+            """
+            const right = Array.from(
+              document.querySelectorAll('[data-testid="mcq-option"]')
+            ).find((button) => button.textContent === 'Right');
+            right.click();
+            document.querySelector('[data-testid="mcq-check-answer"]').click();
+            document.querySelector('#next-card').click();
+            JSON.stringify({
+              state: document.querySelector('#player').dataset.state,
+              score: document.querySelector('[data-testid="score-value"]').textContent,
+              missedCount: document.querySelectorAll('[data-testid="missed-card"]').length,
+            });
+            """
+        )
+
+        # Then: the MCQ's "correct" grade is recognized by the score screen.
+        self.assertEqual(result["state"], "results")
+        self.assertEqual(result["score"], "1/1")
+        self.assertEqual(result["missedCount"], 0)
+
+    def _open_player(self, deck: dict) -> None:
+        self._close_browser()
+        opened = self._browser("open", PLAYER_URL)
+        self.assertEqual(opened.returncode, 0, msg=opened.stderr or opened.stdout)
+        result = self._eval(
+            f"window.CRAM_PLAYER.setDeck({json.dumps(deck)}); "
+            "JSON.stringify({state: document.querySelector('#player').dataset.state});"
+        )
+        self.assertEqual(result["state"], "ready")
+
     @classmethod
-    def _browser(cls, *arguments: str, input_text: str | None = None) -> subprocess.CompletedProcess[str]:
+    def _browser(cls, *arguments: str, input_text: str | None = None):
         if AGENT_BROWSER is None:  # pragma: no cover - guarded by skipUnless
             raise unittest.SkipTest("agent-browser is not installed")
         return subprocess.run(
