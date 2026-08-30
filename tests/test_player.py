@@ -86,6 +86,15 @@ class PlayerBrowserTests(unittest.TestCase):
                     checks.checkAlignedToOptionRight = Math.abs(
                       checkBounds.right - optionBounds.right
                     ) < 1;
+                    const nextBounds = document.querySelector('#next-card').getBoundingClientRect();
+                    const promptBounds = document.querySelector('[data-testid="card-prompt"]')
+                      .getBoundingClientRect();
+                    checks.nextAlignedToOptionRight = Math.abs(
+                      nextBounds.right - optionBounds.right
+                    ) < 1;
+                    checks.promptAlignedToOptionLeft = Math.abs(
+                      promptBounds.left - optionBounds.left
+                    ) < 1;
                     checks.announcementLeaksExplanation = document.querySelector(
                       '#card-announcer'
                     ).textContent.includes(deck.cards[0].explanation);
@@ -160,6 +169,8 @@ class PlayerBrowserTests(unittest.TestCase):
         self.assertEqual(len(result["options"]), 3)
         self.assertTrue(result["explanationHiddenBeforeAnswer"])
         self.assertTrue(result["checkAlignedToOptionRight"])
+        self.assertTrue(result["nextAlignedToOptionRight"])
+        self.assertTrue(result["promptAlignedToOptionLeft"])
         self.assertFalse(result["announcementLeaksExplanation"])
         self.assertTrue(result["shuffledOrderChanged"])
         self.assertTrue(result["gradeBeforeCheck"])
