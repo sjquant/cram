@@ -1,0 +1,12 @@
+{
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test:browser": "playwright test tests/browser"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1"
+  }
+}
