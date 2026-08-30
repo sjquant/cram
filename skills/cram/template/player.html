@@ -83,8 +83,8 @@
       opacity: 0.4;
     }
 
-    /* One filled element on the page, so the primary action is unmistakable
-       without a colour or a shadow doing the work. */
+    /* Keep the current card action prominent while making an unanswered card's
+       optional navigation visibly secondary. */
     .next-button:not(:disabled) {
       color: var(--paper);
       background: var(--ink);
@@ -94,6 +94,18 @@
     .next-button:not(:disabled):hover {
       color: var(--paper);
       background: var(--accent);
+    }
+
+    .next-button.is-skip:not(:disabled) {
+      color: var(--ink);
+      background: none;
+      padding-inline: 0;
+      font-weight: 700;
+    }
+
+    .next-button.is-skip:not(:disabled):hover {
+      color: var(--accent);
+      background: none;
     }
 
     a { color: var(--accent); }
@@ -853,6 +865,9 @@
         const focused = document.activeElement;
         refs.previous.disabled = true;
         refs.next.disabled = true;
+        refs.next.classList.remove("is-skip");
+        refs.next.textContent = "Next →";
+        refs.next.setAttribute("aria-label", "Next card");
         restoreNavigationFocus(focused);
         setStatus(message, true);
       }
@@ -880,8 +895,11 @@
         const focused = document.activeElement;
         refs.previous.disabled = state.index === 0;
         const card = state.deck.cards[state.index];
-        refs.next.disabled = state.index === total - 1
-          || (isAnswerRequiredCard(card) && !state.grades[card.id]);
+        const isSkip = isAnswerRequiredCard(card) && !state.grades[card.id];
+        refs.next.disabled = state.index === total - 1;
+        refs.next.classList.toggle("is-skip", isSkip);
+        refs.next.textContent = isSkip ? "Skip →" : "Next →";
+        refs.next.setAttribute("aria-label", isSkip ? "Skip to next card" : "Next card");
         restoreNavigationFocus(focused);
       }
 
