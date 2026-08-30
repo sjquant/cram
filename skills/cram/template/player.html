@@ -23,7 +23,6 @@
       font-size: 16px;
       line-height: 1.5;
 
-      --gutter: 3rem;
       --s1: 0.5rem;
       --s2: 1rem;
       --s3: 1.5rem;
@@ -98,13 +97,12 @@
     a { color: var(--accent); }
 
     .app-shell {
-      width: min(100% - 3rem, 38rem);
+      width: min(100% - 3rem, 46rem);
       margin: 0 auto;
       padding: clamp(2.5rem, 12vh, 7rem) 0 4rem;
     }
 
     .deck-header {
-      padding-left: var(--gutter);
       margin-bottom: var(--s3);
     }
 
@@ -160,60 +158,33 @@
       display: flex;
       flex-direction: column;
       margin: 0;
-      padding: var(--s4) var(--gutter);
+      padding: var(--s4) 0;
     }
-
-    .card-frame::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: -1px;
-      width: 7px;
-      height: 100%;
-      background: var(--rule-strong);
-      -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27 viewBox%3D%270 0 12 1000%27 preserveAspectRatio%3D%27none%27%3E%3Cfilter id%3D%27v%27 x%3D%27-60%25%27 y%3D%27-4%25%27 width%3D%27220%25%27 height%3D%27108%25%27%3E%3CfeTurbulence type%3D%27fractalNoise%27 baseFrequency%3D%271.1 0.5%27 numOctaves%3D%273%27 seed%3D%279%27 result%3D%27t%27%2F%3E%3CfeDisplacementMap in%3D%27SourceGraphic%27 in2%3D%27t%27 scale%3D%272.6%27 xChannelSelector%3D%27R%27 yChannelSelector%3D%27G%27%2F%3E%3CfeGaussianBlur stdDeviation%3D%270.4%27%2F%3E%3C%2Ffilter%3E%3Cpath filter%3D%27url%28%23v%29%27 d%3D%27M5.4 2c2.4 44 3.6 118 3.2 208-.4 96 1.4 190 .6 286-.6 78-2.4 160-4.2 214l-2.4-2.6c-1.4-54-2.2-136-1.4-214 1-96 .4-190 .2-286C1.2 120 2.6 46 5.4 2Z%27%2F%3E%3C%2Fsvg%3E");
-      mask-image: url("data:image/svg+xml,%3Csvg xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27 viewBox%3D%270 0 12 1000%27 preserveAspectRatio%3D%27none%27%3E%3Cfilter id%3D%27v%27 x%3D%27-60%25%27 y%3D%27-4%25%27 width%3D%27220%25%27 height%3D%27108%25%27%3E%3CfeTurbulence type%3D%27fractalNoise%27 baseFrequency%3D%271.1 0.5%27 numOctaves%3D%273%27 seed%3D%279%27 result%3D%27t%27%2F%3E%3CfeDisplacementMap in%3D%27SourceGraphic%27 in2%3D%27t%27 scale%3D%272.6%27 xChannelSelector%3D%27R%27 yChannelSelector%3D%27G%27%2F%3E%3CfeGaussianBlur stdDeviation%3D%270.4%27%2F%3E%3C%2Ffilter%3E%3Cpath filter%3D%27url%28%23v%29%27 d%3D%27M5.4 2c2.4 44 3.6 118 3.2 208-.4 96 1.4 190 .6 286-.6 78-2.4 160-4.2 214l-2.4-2.6c-1.4-54-2.2-136-1.4-214 1-96 .4-190 .2-286C1.2 120 2.6 46 5.4 2Z%27%2F%3E%3C%2Fsvg%3E");
-      -webkit-mask-size: 100% 100%;
-      mask-size: 100% 100%;
-      -webkit-mask-repeat: no-repeat;
-      mask-repeat: no-repeat;
-    }
-
-    /* The two marks place themselves in the margins rather than in a row. */
-    .card-meta { display: contents; }
 
     .card-meta {
       display: flex;
-      align-items: baseline;
+      align-items: center;
       justify-content: space-between;
-      gap: 1rem;
-      margin-bottom: 0;
-      color: var(--ink-soft);
-      font-size: 0.78rem;
+      gap: var(--s2);
+      margin-bottom: var(--s3);
     }
 
     .card-type {
-      position: absolute;
-      top: calc(var(--s4) + 0.3rem);
-      left: 0.95rem;
-      writing-mode: vertical-rl;
       font-family: var(--serif);
       font-style: italic;
-      font-size: 0.88rem;
-      letter-spacing: 0.2em;
+      font-size: 0.92rem;
+      letter-spacing: 0.06em;
       color: var(--ink-soft);
     }
 
     /* 낙관: the reader's seal, stamped in the corner of the page. */
     .card-position {
-      position: absolute;
-      top: calc(var(--s4) + 0.25rem);
-      right: 0;
       display: flex;
+      flex: none;
       align-items: center;
       justify-content: center;
-      width: 1.75rem;
-      height: 3.1rem;
+      width: 2.3rem;
+      height: 2.3rem;
       background: var(--accent);
       color: var(--paper);
       -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27 viewBox%3D%270 0 100 170%27 preserveAspectRatio%3D%27none%27%3E%3Cfilter id%3D%27s%27 x%3D%27-12%25%27 y%3D%27-8%25%27 width%3D%27124%25%27 height%3D%27116%25%27%3E%3CfeTurbulence type%3D%27fractalNoise%27 baseFrequency%3D%270.09%27 numOctaves%3D%273%27 seed%3D%273%27 result%3D%27t%27%2F%3E%3CfeDisplacementMap in%3D%27SourceGraphic%27 in2%3D%27t%27 scale%3D%275%27 xChannelSelector%3D%27R%27 yChannelSelector%3D%27G%27%2F%3E%3CfeGaussianBlur stdDeviation%3D%270.8%27%2F%3E%3C%2Ffilter%3E%3Cpath filter%3D%27url%28%23s%29%27 d%3D%27M6 5.5 22 3l24 1.4L70 2.6l22 2.2 3.4 20-1.2 30 1.6 34-1.1 32-2.4 22-22 2.4-26-1.6-22 1.2-16-2.6-2.6-24 1.4-32L4 62 5.2 28Z%27%2F%3E%3C%2Fsvg%3E");
@@ -222,10 +193,9 @@
       mask-size: 100% 100%;
       -webkit-mask-repeat: no-repeat;
       mask-repeat: no-repeat;
-      writing-mode: vertical-rl;
       font-family: var(--mono);
-      font-size: 0.74rem;
-      letter-spacing: 0.06em;
+      font-size: 0.72rem;
+      letter-spacing: 0.02em;
       transform: rotate(-1.5deg);
     }
 
@@ -260,7 +230,6 @@
       align-items: center;
       justify-content: space-between;
       gap: 0.75rem;
-      margin-left: var(--gutter);
       padding-top: var(--s2);
     }
 
@@ -271,7 +240,7 @@
 
     .player-status {
       min-height: 1.5em;
-      margin: var(--s2) 0 0 var(--gutter);
+      margin: var(--s2) 0 0;
       color: var(--ink-soft);
       font-size: 0.8rem;
     }
@@ -329,6 +298,29 @@
 
     }
 
+    body::after {
+      content: "";
+      position: fixed;
+      right: -5vw;
+      top: -4vh;
+      z-index: 0;
+      width: min(58vw, 46rem);
+      height: min(42vh, 24rem);
+      background: var(--ink);
+      -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27 viewBox%3D%270 0 700 440%27%3E%3Cfilter id%3D%27k%27 x%3D%27-15%25%27 y%3D%27-25%25%27 width%3D%27130%25%27 height%3D%27150%25%27%3E%3CfeTurbulence type%3D%27fractalNoise%27 baseFrequency%3D%270.012 0.05%27 numOctaves%3D%274%27 seed%3D%2723%27 result%3D%27t%27%2F%3E%3CfeDisplacementMap in%3D%27SourceGraphic%27 in2%3D%27t%27 scale%3D%2724%27 xChannelSelector%3D%27R%27 yChannelSelector%3D%27G%27%2F%3E%3CfeGaussianBlur stdDeviation%3D%274%27%2F%3E%3C%2Ffilter%3E%3Cg filter%3D%27url%28%23k%29%27%3E%3Cellipse cx%3D%27140%27 cy%3D%27322%27 rx%3D%27128%27 ry%3D%2719%27 transform%3D%27rotate%28-28 140 322%29%27%2F%3E%3Cellipse cx%3D%27350%27 cy%3D%27210%27 rx%3D%27152%27 ry%3D%2730%27 transform%3D%27rotate%28-28 350 210%29%27%2F%3E%3Cellipse cx%3D%27555%27 cy%3D%27100%27 rx%3D%27118%27 ry%3D%2720%27 transform%3D%27rotate%28-28 555 100%29%27%2F%3E%3Cellipse cx%3D%27648%27 cy%3D%2750%27 rx%3D%2748%27 ry%3D%279%27 transform%3D%27rotate%28-28 648 50%29%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+      mask-image: url("data:image/svg+xml,%3Csvg xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27 viewBox%3D%270 0 700 440%27%3E%3Cfilter id%3D%27k%27 x%3D%27-15%25%27 y%3D%27-25%25%27 width%3D%27130%25%27 height%3D%27150%25%27%3E%3CfeTurbulence type%3D%27fractalNoise%27 baseFrequency%3D%270.012 0.05%27 numOctaves%3D%274%27 seed%3D%2723%27 result%3D%27t%27%2F%3E%3CfeDisplacementMap in%3D%27SourceGraphic%27 in2%3D%27t%27 scale%3D%2724%27 xChannelSelector%3D%27R%27 yChannelSelector%3D%27G%27%2F%3E%3CfeGaussianBlur stdDeviation%3D%274%27%2F%3E%3C%2Ffilter%3E%3Cg filter%3D%27url%28%23k%29%27%3E%3Cellipse cx%3D%27140%27 cy%3D%27322%27 rx%3D%27128%27 ry%3D%2719%27 transform%3D%27rotate%28-28 140 322%29%27%2F%3E%3Cellipse cx%3D%27350%27 cy%3D%27210%27 rx%3D%27152%27 ry%3D%2730%27 transform%3D%27rotate%28-28 350 210%29%27%2F%3E%3Cellipse cx%3D%27555%27 cy%3D%27100%27 rx%3D%27118%27 ry%3D%2720%27 transform%3D%27rotate%28-28 555 100%29%27%2F%3E%3Cellipse cx%3D%27648%27 cy%3D%2750%27 rx%3D%2748%27 ry%3D%279%27 transform%3D%27rotate%28-28 648 50%29%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+      -webkit-mask-size: contain;
+      mask-size: contain;
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      opacity: 0.05;
+      pointer-events: none;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body::after { opacity: 0.07; }
+    }
+
     .app-shell {
       position: relative;
       z-index: 1;
@@ -346,7 +338,6 @@
 
     @media (max-width: 30rem) {
       .app-shell { width: min(100% - 2rem, 38rem); }
-      :root { --gutter: 2.4rem; }
       .card-frame { min-height: 12rem; }
     }
 
