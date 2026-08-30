@@ -1,6 +1,6 @@
 ---
 name: cram
-description: Turn source text into a validated, self-contained flashcard quiz.
+description: Creates validated, self-contained flashcard quiz decks from pasted, attached, local, or provided web source material. Use when the user asks for flashcards, study cards, a quiz, or an interactive deck.
 ---
 
 # Cram
