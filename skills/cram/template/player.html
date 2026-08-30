@@ -218,6 +218,60 @@
       font-size: 0.86rem;
     }
 
+    .mcq-options {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.35rem;
+      max-width: 34rem;
+      margin: var(--s3) 0 0;
+    }
+
+    .mcq-option {
+      border: 1px solid var(--rule);
+      color: var(--ink);
+      text-align: left;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .mcq-option:hover:not(:disabled) {
+      background: var(--rule);
+    }
+
+    .mcq-option.mcq-correct {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .mcq-option.mcq-incorrect {
+      text-decoration: line-through;
+    }
+
+    .mcq-feedback,
+    .mcq-explanation {
+      max-width: 34ch;
+      margin: var(--s3) 0 0;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .mcq-feedback[data-result="correct"] {
+      color: var(--accent);
+    }
+
+    .mcq-feedback[data-result="incorrect"] {
+      color: var(--ink-soft);
+    }
+
+    .mcq-explanation {
+      padding-top: var(--s2);
+      border-top: 1px solid var(--rule);
+      font-family: var(--serif);
+      font-size: clamp(1.05rem, 2vw, 1.3rem);
+      line-height: 1.5;
+    }
+
     .card-answer {
       max-width: 34ch;
       margin: var(--s3) 0 0;
@@ -597,6 +651,94 @@
         return fragment;
       }
 
+      const MCQ_GRADES = Object.freeze({ CORRECT: "correct", INCORRECT: "incorrect" });
+
+      function renderMcqCard({ card, player, createElement, createPromptElement, setStatus }) {
+        const fragment = document.createDocumentFragment();
+        fragment.append(createPromptElement(card.prompt || "This card has no prompt."));
+
+        const answer = typeof card.answer === "string" && card.answer
+          ? card.answer
+          : "This card has no answer.";
+        const choices = [answer, ...(Array.isArray(card.distractors) ? card.distractors : [])];
+
+        // Fisher-Yates makes every option equally likely to occupy each position.
+        for (let index = choices.length - 1; index > 0; index -= 1) {
+          const swapIndex = Math.floor(Math.random() * (index + 1));
+          [choices[index], choices[swapIndex]] = [choices[swapIndex], choices[index]];
+        }
+
+        const options = createElement("div", "mcq-options");
+        options.dataset.testid = "mcq-options";
+        options.setAttribute("role", "group");
+        options.setAttribute("aria-label", "Choose an answer");
+        const optionButtons = [];
+
+        choices.forEach((choice) => {
+          const button = createElement("button", "mcq-option", choice || "This option has no text.");
+          button.type = "button";
+          button.dataset.testid = "mcq-option";
+          button.setAttribute("aria-pressed", "false");
+          optionButtons.push({ button, choice });
+          options.append(button);
+        });
+
+        const feedback = createElement("p", "mcq-feedback");
+        feedback.dataset.testid = "mcq-feedback";
+        feedback.setAttribute("role", "status");
+        feedback.hidden = true;
+
+        const explanation = card.explanation
+          ? createElement("p", "mcq-explanation", card.explanation)
+          : null;
+        if (explanation) {
+          explanation.dataset.testid = "mcq-explanation";
+          explanation.hidden = true;
+        }
+
+        fragment.append(options, feedback);
+        if (explanation) fragment.append(explanation);
+
+        function applyAnsweredUI(grade, selectedButton = null) {
+          const isCorrect = grade === MCQ_GRADES.CORRECT;
+          optionButtons.forEach(({ button, choice }) => {
+            button.disabled = true;
+            button.setAttribute("aria-pressed", String(button === selectedButton));
+            button.classList.toggle("mcq-correct", choice === answer);
+            button.classList.toggle("mcq-incorrect", button === selectedButton && !isCorrect);
+          });
+          feedback.dataset.result = grade;
+          feedback.textContent = isCorrect
+            ? "Correct."
+            : `Incorrect. The correct answer is: ${answer}`;
+          feedback.hidden = false;
+          if (explanation) explanation.hidden = false;
+        }
+
+        function handleOptionClick(selectedButton, selectedChoice) {
+          const grade = selectedChoice === answer ? MCQ_GRADES.CORRECT : MCQ_GRADES.INCORRECT;
+          try {
+            player.recordGrade(card.id, grade);
+          } catch (error) {
+            setStatus(error instanceof Error ? error.message : "The grade could not be recorded.", true);
+            return;
+          }
+          applyAnsweredUI(grade, selectedButton);
+          setStatus(grade === MCQ_GRADES.CORRECT ? "Correct." : "Incorrect.");
+        }
+
+        optionButtons.forEach(({ button, choice }) => {
+          button.addEventListener("click", () => handleOptionClick(button, choice));
+        });
+
+        const existingGrade = player.getGrade(card.id);
+        if (existingGrade === MCQ_GRADES.CORRECT || existingGrade === MCQ_GRADES.INCORRECT) {
+          applyAnsweredUI(existingGrade);
+        }
+
+        return fragment;
+      }
+
       function renderPromptCard({ card }) {
         const fragment = document.createDocumentFragment();
         fragment.append(createPromptElement(card.prompt || "This card has no prompt."));
@@ -739,7 +881,7 @@
       // The shell owns this registry and navigation. Each card-type issue can add
       // or replace exactly one renderer without changing the shell or other types.
       registerCardRenderer("basic", renderBasicCard);
-      registerCardRenderer("mcq", renderPromptCard);
+      registerCardRenderer("mcq", renderMcqCard);
       registerCardRenderer("cloze", renderPromptCard);
       window.CRAM_PLAYER = api;
 
