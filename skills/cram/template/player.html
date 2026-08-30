@@ -503,6 +503,91 @@
       font-size: clamp(1.05rem, 2vw, 1.25rem);
     }
 
+    .card-frame[hidden],
+    .navigation[hidden] { display: none; }
+
+    .score-screen {
+      min-height: clamp(18rem, 44vh, 28rem);
+      padding: var(--s4) 0;
+    }
+
+    .score-screen[hidden] { display: none; }
+
+    .score-header {
+      padding-bottom: var(--s4);
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .score-header .card-type { display: block; }
+
+    .score-title {
+      max-width: 24ch;
+      margin: var(--s2) 0 0;
+      font-family: var(--serif);
+      font-size: clamp(1.45rem, 3vw, 2rem);
+      font-weight: 500;
+      line-height: 1.25;
+    }
+
+    .score-value {
+      margin: var(--s3) 0 0;
+      font-family: var(--mono);
+      font-size: clamp(2rem, 7vw, 3.5rem);
+      letter-spacing: 0.02em;
+      line-height: 1;
+    }
+
+    .score-summary {
+      margin: var(--s2) 0 0;
+      color: var(--ink-soft);
+    }
+
+    .review-section { padding-top: var(--s4); }
+
+    .review-heading {
+      margin: 0;
+      font-family: var(--serif);
+      font-size: 1.3rem;
+      font-weight: 500;
+    }
+
+    .missed-list {
+      display: grid;
+      gap: var(--s3);
+      margin: var(--s3) 0 0;
+      padding-left: 1.5rem;
+    }
+
+    .missed-card {
+      padding-left: var(--s1);
+    }
+
+    .missed-prompt {
+      margin: 0;
+      font-family: var(--serif);
+      font-size: 1.15rem;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .review-field {
+      margin: var(--s2) 0 0;
+      color: var(--ink-soft);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .review-label {
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    .no-missed-cards {
+      margin: var(--s3) 0 0;
+      color: var(--ink-soft);
+    }
+
     .visually-hidden {
       position: absolute;
       width: 1px;
@@ -596,6 +681,20 @@
         </div>
       </article>
 
+      <section class="score-screen" id="score-screen" data-testid="score-screen" hidden aria-labelledby="score-title">
+        <header class="score-header">
+          <span class="card-type">Session complete</span>
+          <h2 class="score-title" id="score-title" tabindex="-1">Session complete</h2>
+          <p class="score-value" id="score-value" data-testid="score-value">0/0</p>
+          <p class="score-summary" id="score-summary">Score: 0/0</p>
+        </header>
+        <section class="review-section" aria-labelledby="missed-heading">
+          <h3 class="review-heading" id="missed-heading">Review missed cards</h3>
+          <ol class="missed-list" id="missed-cards" data-testid="missed-cards"></ol>
+          <p class="no-missed-cards" id="no-missed-cards" data-testid="no-missed-cards" hidden>Perfect score — nothing to review.</p>
+        </section>
+      </section>
+
       <footer class="player-footer">
         <nav class="navigation" aria-label="Card navigation">
           <button type="button" id="previous-card" data-testid="previous-card" data-action="previous" aria-label="Previous card" disabled>← Previous</button>
@@ -644,6 +743,13 @@
         cardType: document.getElementById("card-type"),
         cardPosition: document.getElementById("card-position"),
         cardContent: document.getElementById("card-content"),
+        scoreScreen: document.getElementById("score-screen"),
+        scoreTitle: document.getElementById("score-title"),
+        scoreValue: document.getElementById("score-value"),
+        scoreSummary: document.getElementById("score-summary"),
+        missedCards: document.getElementById("missed-cards"),
+        noMissedCards: document.getElementById("no-missed-cards"),
+        navigation: document.querySelector(".navigation"),
         previous: document.getElementById("previous-card"),
         next: document.getElementById("next-card"),
         status: document.getElementById("player-status"),
@@ -685,13 +791,17 @@
         state.deck = deck;
         state.index = 0;
         state.grades = Object.create(null);
+        setViewState("ready");
         refs.title.textContent = deck.title;
         renderCurrentCard();
-        refs.player.dataset.state = "ready";
       }
 
       function moveCard(delta) {
-        if (!state.deck) return;
+        if (!state.deck || refs.player.dataset.state === "results") return;
+        if (delta > 0 && state.index === state.deck.cards.length - 1) {
+          showScoreScreen();
+          return;
+        }
         const nextIndex = Math.max(0, Math.min(state.deck.cards.length - 1, state.index + delta));
         if (nextIndex === state.index) return;
         state.index = nextIndex;
@@ -1124,7 +1234,7 @@
         state.cleanup();
         state.cleanup = () => {};
         state.deck = null;
-        refs.player.dataset.state = "error";
+        setViewState("error");
         refs.title.textContent = "Unable to load deck";
         refs.progress.max = 1;
         refs.progress.value = 0;
@@ -1169,16 +1279,96 @@
         const focused = document.activeElement;
         refs.previous.disabled = state.index === 0;
         const card = state.deck.cards[state.index];
-        const isSkip = isAnswerRequiredCard(card) && !state.grades[card.id];
+        const atLastCard = state.index === total - 1;
+        const isSkip = !atLastCard && isAnswerRequiredCard(card) && !state.grades[card.id];
+        refs.next.disabled = false;
         refs.next.classList.toggle("is-skip", isSkip);
-        refs.next.disabled = state.index === total - 1;
-        refs.next.textContent = isSkip ? "Skip →" : "Next →";
-        refs.next.setAttribute("aria-label", isSkip ? "Skip to next card" : "Next card");
+        refs.next.textContent = atLastCard ? "See results →" : (isSkip ? "Skip →" : "Next →");
+        refs.next.setAttribute(
+          "aria-label",
+          atLastCard ? "See results" : (isSkip ? "Skip to next card" : "Next card")
+        );
         restoreNavigationFocus(focused);
       }
 
       function isAnswerRequiredCard(card) {
         return card.type === "basic" || card.type === "mcq";
+      }
+
+      // Grade values are owned by card renderers. The score screen only needs to know
+      // which values represent a positive result for each renderer it understands.
+      // Add a card type here as its renderer defines a new grade vocabulary.
+      const POSITIVE_GRADES_BY_TYPE = Object.freeze({
+        basic: Object.freeze(["known"]),
+        mcq: Object.freeze(["correct"])
+      });
+
+      function showScoreScreen() {
+        state.cleanup();
+        state.cleanup = () => {};
+        const result = renderScoreScreen();
+        setViewState("results");
+        setStatus(`Session complete. Score ${result.score}/${result.total}.`);
+        refs.scoreTitle.focus();
+      }
+
+      function renderScoreScreen() {
+        const { deck, grades } = api.getState();
+        const total = deck.cards.length;
+        const score = deck.cards.filter((card) => isPositiveGrade(card, grades[card.id])).length;
+        const missedCards = deck.cards.filter((card) => !isPositiveGrade(card, grades[card.id]));
+
+        refs.scoreValue.textContent = `${score}/${total}`;
+        refs.scoreSummary.textContent = `Score: ${score}/${total}`;
+        refs.missedCards.replaceChildren(...missedCards.map(createMissedCard));
+        refs.missedCards.hidden = missedCards.length === 0;
+        refs.noMissedCards.hidden = missedCards.length !== 0;
+        refs.progress.max = total;
+        refs.progress.value = total;
+        refs.progress.setAttribute("aria-label", `Session complete: score ${score} of ${total}`);
+        refs.progressLabel.textContent = `Session complete: ${score} of ${total}`;
+        refs.progressPercent.textContent = "100%";
+        refs.announcer.textContent = `Session complete. Score ${score}/${total}.`;
+
+        return { score, total };
+      }
+
+      function isPositiveGrade(card, grade) {
+        const positiveGrades = POSITIVE_GRADES_BY_TYPE[card.type];
+        return Array.isArray(positiveGrades) && positiveGrades.includes(grade);
+      }
+
+      function createMissedCard(card) {
+        const item = createElement("li", "missed-card");
+        item.dataset.testid = "missed-card";
+        const prompt = createElement(
+          "p",
+          "missed-prompt",
+          card.prompt || "This card has no prompt."
+        );
+        prompt.dataset.testid = "missed-prompt";
+        item.append(prompt);
+        if (card.answer) item.append(createReviewField("Answer", card.answer));
+        if (card.explanation) item.append(createReviewField("Explanation", card.explanation));
+        return item;
+      }
+
+      function createReviewField(label, value) {
+        const field = createElement("p", "review-field");
+        field.dataset.testid = `missed-${label.toLowerCase()}`;
+        field.append(
+          createElement("strong", "review-label", `${label}:`),
+          document.createTextNode(` ${String(value)}`)
+        );
+        return field;
+      }
+
+      function setViewState(view) {
+        const showingResults = view === "results";
+        refs.player.dataset.state = view;
+        refs.cardFrame.hidden = showingResults;
+        refs.navigation.hidden = showingResults;
+        refs.scoreScreen.hidden = !showingResults;
       }
 
       // Reaching the first or last card disables the button that got you there, which
