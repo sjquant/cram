@@ -31,17 +31,22 @@ class FixtureContractTests(unittest.TestCase):
         invalid = fixture_paths("invalid")
 
         self.assertTrue(invalid, "the invalid fixture directory should contain decks")
-        parse_failures = []
-        for path in invalid:
-            with self.subTest(fixture=path.name):
-                try:
-                    read_deck(path)
-                except json.JSONDecodeError:
-                    parse_failures.append(path)
-
         malformed = next(
             (path for path in invalid if path.name == "malformed-json.json"),
             None,
         )
-        if malformed is not None:
-            self.assertEqual(parse_failures, [malformed])
+        self.assertIsNotNone(
+            malformed,
+            "the invalid fixture inventory must include malformed-json.json",
+        )
+        if malformed is None:
+            return
+
+        with self.assertRaises(json.JSONDecodeError):
+            read_deck(malformed)
+
+        for path in invalid:
+            if path == malformed:
+                continue
+            with self.subTest(fixture=path.name):
+                read_deck(path)

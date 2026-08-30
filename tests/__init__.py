@@ -1,1 +1,1 @@
-"""The project's standard-library test suite."""
+"""Test package for the cram Python helpers."""

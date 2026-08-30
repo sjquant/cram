@@ -8,6 +8,7 @@ implementation details from the validator or renderer.
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -34,12 +35,15 @@ def read_deck(path: Path) -> dict:
     return value
 
 
-def run_renderer(deck: Path, output: Path) -> subprocess.CompletedProcess:
+def run_renderer(deck: Path, output: Path, cwd: Path) -> subprocess.CompletedProcess:
     """Run the renderer's documented CLI against one deck fixture."""
 
+    environment = os.environ.copy()
+    environment["CLAUDE_PLUGIN_ROOT"] = str(ROOT)
     return subprocess.run(
         [sys.executable, str(RENDERER), str(deck), "-o", str(output)],
-        cwd=ROOT,
+        cwd=cwd,
+        env=environment,
         capture_output=True,
         text=True,
         check=False,
