@@ -15,5 +15,25 @@ The optional player check in `test_player.py` uses the installed `agent-browser`
 CLI and the `~/.agent-browser/profiles/sjquant` profile when available. It is
 skipped on machines without that local browser setup; when enabled, it exercises
 the rendered page through its public DOM and player API rather than mocking the
-renderer internals. Future validator and player tests should keep the same
-outside-in boundary.
+renderer internals. Future validator and player tests belong in separate
+`test_*.py` modules and should keep the same outside-in boundary.
+
+## Browser tests
+
+The player browser tests use Playwright as a contributor/CI-only dependency;
+it is not installed for skill users. Install the JavaScript development
+dependencies (Node.js 20 or newer) and Chromium once, then run the browser
+suite separately:
+
+```sh
+npm install
+npx playwright install chromium
+npm run test:browser
+```
+
+The standard-library suite remains independent and needs no Node or Playwright
+installation:
+
+```sh
+python3 -m unittest discover -s tests -t . -v
+```
