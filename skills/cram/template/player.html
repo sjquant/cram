@@ -224,6 +224,13 @@
       flex-direction: column;
       align-items: stretch;
       gap: 0.35rem;
+      margin: 0;
+    }
+
+    .mcq-response {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
       max-width: 34rem;
       margin: var(--s3) 0 0;
     }
@@ -279,7 +286,7 @@
     }
 
     .mcq-check-button {
-      align-self: flex-start;
+      align-self: flex-end;
       margin: var(--s3) 0 0;
       color: var(--paper);
       background: var(--ink);
@@ -718,7 +725,9 @@
           explanation.hidden = true;
         }
 
-        fragment.append(options, checkAnswer, feedback);
+        const response = createElement("div", "mcq-response");
+        response.append(options, checkAnswer);
+        fragment.append(response, feedback);
         if (explanation) fragment.append(explanation);
 
         let selected = null;

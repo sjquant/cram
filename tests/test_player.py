@@ -77,6 +77,15 @@ class PlayerBrowserTests(unittest.TestCase):
                     checks.explanationHiddenBeforeAnswer = document.querySelector(
                       '[data-testid="mcq-explanation"]'
                     ).hidden;
+                    const optionBounds = document.querySelector(
+                      '[data-testid="mcq-options"]'
+                    ).getBoundingClientRect();
+                    const checkBounds = document.querySelector(
+                      '[data-testid="mcq-check-answer"]'
+                    ).getBoundingClientRect();
+                    checks.checkAlignedToOptionRight = Math.abs(
+                      checkBounds.right - optionBounds.right
+                    ) < 1;
                     checks.announcementLeaksExplanation = document.querySelector(
                       '#card-announcer'
                     ).textContent.includes(deck.cards[0].explanation);
@@ -150,6 +159,7 @@ class PlayerBrowserTests(unittest.TestCase):
         self.assertEqual(set(result["options"]), {"Right", "Wrong one", "Wrong two"})
         self.assertEqual(len(result["options"]), 3)
         self.assertTrue(result["explanationHiddenBeforeAnswer"])
+        self.assertTrue(result["checkAlignedToOptionRight"])
         self.assertFalse(result["announcementLeaksExplanation"])
         self.assertTrue(result["shuffledOrderChanged"])
         self.assertTrue(result["gradeBeforeCheck"])
