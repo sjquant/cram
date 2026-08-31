@@ -190,6 +190,28 @@
       padding: var(--s4) 0;
       overflow-y: auto;
       overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: var(--rule-strong) transparent;
+    }
+
+    .card-frame::-webkit-scrollbar {
+      width: 0.45rem;
+    }
+
+    .card-frame::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .card-frame::-webkit-scrollbar-thumb {
+      border: 0.1rem solid transparent;
+      border-radius: 999px;
+      background: var(--rule-strong);
+      background-clip: content-box;
+    }
+
+    .card-frame::-webkit-scrollbar-thumb:hover {
+      background: var(--ink-soft);
+      background-clip: content-box;
     }
 
     .card-meta {
