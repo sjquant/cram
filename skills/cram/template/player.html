@@ -1310,7 +1310,7 @@
       }
 
       function isAnswerRequiredCard(card) {
-        return card.type === "basic" || card.type === "mcq";
+        return card.type === "basic" || card.type === "mcq" || card.type === "cloze";
       }
 
       // Grade values are owned by card renderers. The score screen only needs to know
@@ -1318,7 +1318,8 @@
       // Add a card type here as its renderer defines a new grade vocabulary.
       const POSITIVE_GRADES_BY_TYPE = Object.freeze({
         basic: Object.freeze(["known"]),
-        mcq: Object.freeze(["correct"])
+        mcq: Object.freeze(["correct"]),
+        cloze: Object.freeze(["correct"])
       });
 
       function showScoreScreen() {
