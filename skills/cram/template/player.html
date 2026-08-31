@@ -550,6 +550,11 @@
       color: var(--ink-soft);
     }
 
+    .player__reset-button {
+      margin-top: var(--s3);
+      padding-inline: 0;
+    }
+
     .player__review-section { padding-top: var(--s4); }
 
     .player__review-heading {
@@ -695,6 +700,7 @@
           <h2 class="player__score-title" id="score-title" tabindex="-1">Session complete</h2>
           <p class="player__score-value" id="score-value" data-testid="score-value">0/0</p>
           <p class="player__score-summary" id="score-summary">Score: 0/0</p>
+          <button type="button" class="player__reset-button" id="reset-progress" data-testid="reset-progress" data-action="reset-progress">Reset progress</button>
         </header>
         <section class="player__review-section" aria-labelledby="missed-heading">
           <h3 class="player__review-heading" id="missed-heading">Review missed cards</h3>
@@ -798,7 +804,7 @@
         }
         state.deck = deck;
         state.index = 0;
-        state.grades = Object.create(null);
+        state.grades = loadGrades(deck);
         setViewState("ready");
         refs.title.textContent = deck.title;
         renderCurrentCard();
@@ -1241,7 +1247,10 @@
           throw new TypeError("A grade needs a non-empty value.");
         }
         state.grades[cardId] = grade;
-        if (state.deck) updateProgress();
+        if (state.deck) {
+          persistGrades();
+          updateProgress();
+        }
       }
 
       function getGrade(cardId) {
@@ -1331,6 +1340,18 @@
         refs.scoreTitle.focus();
       }
 
+      function resetProgress() {
+        if (!state.deck) return;
+        clearStoredProgress(state.deck);
+        state.grades = Object.create(null);
+        if (refs.player.dataset.state === "results") {
+          const result = renderScoreScreen();
+          setStatus(`Progress reset. Score ${result.score}/${result.total}.`);
+          return;
+        }
+        renderCurrentCard();
+      }
+
       function renderScoreScreen() {
         const { deck, grades } = api.getState();
         const total = deck.cards.length;
@@ -1415,6 +1436,55 @@
         return candidate.cards.every((card) => card && typeof card === "object");
       }
 
+      function loadGrades(deck) {
+        const key = getProgressKey(deck);
+        if (!key) return Object.create(null);
+        try {
+          const stored = window.localStorage.getItem(key);
+          if (stored === null) return Object.create(null);
+          const parsed = JSON.parse(stored);
+          if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+            return Object.create(null);
+          }
+          const grades = Object.create(null);
+          for (const [cardId, grade] of Object.entries(parsed)) {
+            if (!cardId || typeof grade !== "string" || !grade) {
+              return Object.create(null);
+            }
+            grades[cardId] = grade;
+          }
+          return grades;
+        } catch {
+          return Object.create(null);
+        }
+      }
+
+      function persistGrades() {
+        const key = getProgressKey(state.deck);
+        if (!key) return;
+        try {
+          window.localStorage.setItem(key, JSON.stringify(state.grades));
+        } catch {
+          // Storage can be unavailable in restricted browser contexts; the in-memory
+          // session remains usable when persistence is not available.
+        }
+      }
+
+      function clearStoredProgress(deck) {
+        const key = getProgressKey(deck);
+        if (!key) return;
+        try {
+          window.localStorage.removeItem(key);
+        } catch {
+          // The in-memory reset still applies when storage is unavailable.
+        }
+      }
+
+      function getProgressKey(deck) {
+        if (!deck || typeof deck.id !== "string" || !deck.id) return null;
+        return `fc:${deck.id}:v1`;
+      }
+
       // Every renderer should build its prompt with this: the card frame is labelled by
       // the element's id, so a renderer that rolls its own leaves the card unnamed.
       function createPromptElement(text) {
@@ -1458,6 +1528,7 @@
         if (!button) return;
         if (button.dataset.action === "previous") moveCard(-1);
         if (button.dataset.action === "next") moveCard(1);
+        if (button.dataset.action === "reset-progress") resetProgress();
       });
 
       document.addEventListener("keydown", (event) => {
