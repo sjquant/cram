@@ -91,18 +91,18 @@
 
     /* Keep the current card action prominent while making an unanswered card's
        optional navigation visibly secondary. */
-    .next-button:not(:disabled) {
+    .player__next-button:not(:disabled) {
       color: var(--paper);
       background: var(--ink);
       padding-inline: 1.1rem;
     }
 
-    .next-button:not(:disabled):hover {
+    .player__next-button:not(:disabled):hover {
       color: var(--paper);
       background: var(--accent);
     }
 
-    .next-button.is-skip:not(:disabled) {
+    .player__next-button--skip:not(:disabled) {
       color: var(--ink-soft);
       background: none;
       padding-inline: 0;
@@ -110,14 +110,14 @@
       font-weight: 500;
     }
 
-    .next-button.is-skip:not(:disabled):hover {
+    .player__next-button--skip:not(:disabled):hover {
       color: var(--accent);
       background: none;
     }
 
     a { color: var(--accent); }
 
-    .app-shell {
+    .player {
       width: min(100% - 3rem, 46rem);
       height: 100vh;
       height: 100dvh;
@@ -129,11 +129,11 @@
       overflow: hidden;
     }
 
-    .deck-header {
+    .player__header {
       margin-bottom: var(--s3);
     }
 
-    h1 {
+    .player__title {
       max-width: 24ch;
       margin: 0;
       font-family: var(--serif);
@@ -144,11 +144,11 @@
       overflow-wrap: anywhere;
     }
 
-    .progress-panel { margin: 0; }
+    .player__progress-panel { margin: 0; }
 
     /* The bar is the page rule: a hairline that fills as the deck advances,
        instead of a bar plus a label plus a percentage all saying the same thing. */
-    progress {
+    .player__progress-bar {
       display: block;
       width: 100%;
       height: 9px;
@@ -162,24 +162,24 @@
       mask-repeat: no-repeat;
     }
 
-    progress::-webkit-progress-bar { background: var(--rule); }
+    .player__progress-bar::-webkit-progress-bar { background: var(--rule); }
 
-    progress::-webkit-progress-value {
+    .player__progress-bar::-webkit-progress-value {
       background: var(--accent);
       box-shadow: 1px 0 2px -0.5px var(--accent);
       transition: width 260ms cubic-bezier(0.2, 0.7, 0.3, 1);
     }
 
-    progress::-moz-progress-bar { background: var(--accent); }
+    .player__progress-bar::-moz-progress-bar { background: var(--accent); }
 
-    main {
+    .player__main {
       display: flex;
       flex: 1;
       flex-direction: column;
       min-height: 0;
     }
 
-    .card-frame {
+    .player__card {
       position: relative;
       width: 100%;
       flex: 1;
@@ -194,27 +194,27 @@
       scrollbar-color: var(--rule-strong) transparent;
     }
 
-    .card-frame::-webkit-scrollbar {
+    .player__card::-webkit-scrollbar {
       width: 0.45rem;
     }
 
-    .card-frame::-webkit-scrollbar-track {
+    .player__card::-webkit-scrollbar-track {
       background: transparent;
     }
 
-    .card-frame::-webkit-scrollbar-thumb {
+    .player__card::-webkit-scrollbar-thumb {
       border: 0.1rem solid transparent;
       border-radius: 999px;
       background: var(--rule-strong);
       background-clip: content-box;
     }
 
-    .card-frame::-webkit-scrollbar-thumb:hover {
+    .player__card::-webkit-scrollbar-thumb:hover {
       background: var(--ink-soft);
       background-clip: content-box;
     }
 
-    .card-meta {
+    .player__card-meta {
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -222,7 +222,7 @@
       margin-bottom: var(--s3);
     }
 
-    .card-type {
+    .player__card-type {
       font-family: var(--serif);
       font-style: italic;
       font-size: 0.92rem;
@@ -231,7 +231,7 @@
     }
 
     /* 낙관: the reader's seal, stamped in the corner of the page. */
-    .card-position {
+    .player__card-position {
       display: flex;
       flex: none;
       align-items: center;
@@ -252,7 +252,7 @@
       transform: rotate(-1.5deg);
     }
 
-    .card-content {
+    .player__card-content {
       display: flex;
       flex: 1;
       flex-direction: column;
@@ -261,12 +261,12 @@
     }
 
     /* Content fills the card frame; action buttons keep their intrinsic width. */
-    .card-content > :not(button) {
+    .player__card-content > :not(button) {
       width: 100%;
       max-width: none;
     }
 
-    .card-prompt {
+    .player__card-prompt {
       margin: 0;
       font-family: var(--serif);
       font-variant-numeric: oldstyle-nums;
@@ -277,13 +277,13 @@
       overflow-wrap: anywhere;
     }
 
-    .unsupported-card {
+    .player__unsupported-card {
       margin: 1.25rem 0 0;
       color: var(--ink-soft);
       font-size: 0.86rem;
     }
 
-    .mcq-options {
+    .mcq__options {
       display: flex;
       flex-direction: column;
       align-items: stretch;
@@ -291,14 +291,14 @@
       margin: 0;
     }
 
-    .mcq-response {
+    .mcq__response {
       display: flex;
       flex-direction: column;
       align-items: stretch;
       margin: var(--s3) 0 0;
     }
 
-    .mcq-option {
+    .mcq__option {
       border: 1px solid var(--rule);
       color: var(--ink);
       text-align: left;
@@ -306,40 +306,40 @@
       overflow-wrap: anywhere;
     }
 
-    .mcq-option:hover:not(:disabled) {
+    .mcq__option:hover:not(:disabled) {
       background: var(--rule);
     }
 
-    .mcq-option[aria-pressed="true"] {
+    .mcq__option[aria-pressed="true"] {
       background: var(--rule);
       color: var(--ink);
     }
 
-    .mcq-option.mcq-correct {
+    .mcq__option--correct {
       border-color: var(--accent);
       color: var(--accent);
     }
 
-    .mcq-option.mcq-incorrect {
+    .mcq__option--incorrect {
       text-decoration: line-through;
     }
 
-    .mcq-feedback,
-    .mcq-explanation {
+    .mcq__feedback,
+    .mcq__explanation {
       margin: var(--s3) 0 0;
       white-space: pre-wrap;
       overflow-wrap: anywhere;
     }
 
-    .mcq-feedback[data-result="correct"] {
+    .mcq__feedback--correct {
       color: var(--accent);
     }
 
-    .mcq-feedback[data-result="incorrect"] {
+    .mcq__feedback--incorrect {
       color: var(--ink-soft);
     }
 
-    .mcq-explanation {
+    .mcq__explanation {
       padding-top: var(--s2);
       border-top: 1px solid var(--rule);
       font-family: var(--serif);
@@ -347,19 +347,19 @@
       line-height: 1.5;
     }
 
-    .mcq-check-button {
+    .mcq__check-button {
       align-self: flex-end;
       margin: var(--s3) 0 0;
       color: var(--paper);
       background: var(--ink);
     }
 
-    .mcq-check-button:hover:not(:disabled) {
+    .mcq__check-button:hover:not(:disabled) {
       color: var(--paper);
       background: var(--accent);
     }
 
-    .cloze-input {
+    .cloze__input {
       width: auto;
       min-width: 6ch;
       max-width: 100%;
@@ -373,42 +373,50 @@
       text-align: center;
     }
 
-    .cloze-input.cloze-correct {
+    .cloze__input--correct {
       border-bottom-color: var(--accent);
       color: var(--accent);
     }
 
-    .cloze-input.cloze-incorrect {
+    .cloze__input--incorrect {
       border-bottom-color: var(--ink-soft);
     }
 
-    .cloze-check-button {
+    .cloze__check-button {
       align-self: flex-end;
       margin: var(--s3) 0 0;
       color: var(--paper);
       background: var(--ink);
     }
 
-    .cloze-check-button:hover:not(:disabled) {
+    .cloze__check-button:hover:not(:disabled) {
       color: var(--paper);
       background: var(--accent);
     }
 
-    .cloze-feedback {
+    .cloze__feedback {
       margin: var(--s3) 0 0;
     }
 
-    .cloze-blank-feedback {
+    .cloze__feedback--correct { color: var(--accent); }
+
+    .cloze__feedback--incorrect { color: var(--ink-soft); }
+
+    .cloze__blank-feedback {
       margin: 0.35rem 0 0;
       color: var(--ink-soft);
       font-size: 0.86rem;
     }
 
-    .cloze-blank-feedback[data-result="correct"] {
+    .cloze__blank-feedback--correct {
       color: var(--accent);
     }
 
-    .cloze-explanation {
+    .cloze__blank-feedback--incorrect {
+      color: var(--ink-soft);
+    }
+
+    .cloze__explanation {
       margin: var(--s3) 0 0;
       padding-top: var(--s2);
       border-top: 1px solid var(--rule);
@@ -419,7 +427,7 @@
       overflow-wrap: anywhere;
     }
 
-    .card-answer {
+    .basic__answer {
       margin: var(--s3) 0 0;
       padding-top: var(--s2);
       border-top: 1px solid var(--rule);
@@ -430,39 +438,39 @@
       overflow-wrap: anywhere;
     }
 
-    .reveal-button {
+    .basic__reveal-button {
       align-self: flex-end;
       margin: var(--s3) 0 0;
     }
 
-    .grading-buttons {
+    .basic__grading-buttons {
       display: flex;
       gap: var(--s2);
       justify-content: flex-end;
       margin: var(--s3) 0 0;
     }
 
-    .grading-buttons[hidden] {
+    .basic__grading-buttons[hidden] {
       display: none;
     }
 
-    .grade-button[aria-pressed="true"] {
+    .basic__grade-button[aria-pressed="true"] {
       color: var(--accent);
     }
 
-    .player-footer {
+    .player__footer {
       flex: none;
     }
 
-    #player[data-state="loading"] .navigation {
+    .player[data-state="loading"] .player__navigation {
       visibility: hidden;
     }
 
-    #player[data-state="loading"] .navigation button {
+    .player[data-state="loading"] .player__navigation button {
       transition: none;
     }
 
-    .navigation {
+    .player__navigation {
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -473,37 +481,122 @@
       padding-top: var(--s2);
     }
 
-    .navigation #previous-card {
+    .player__navigation #previous-card {
       padding-inline: 0;
     }
 
-    .player-status {
+    .player__status {
       min-height: 1.5em;
       margin: var(--s2) 0 0;
       color: var(--ink-soft);
       font-size: 0.8rem;
     }
 
-    .player-status.error { color: var(--accent); }
+    .player__status--error { color: var(--accent); }
 
-    .empty-state .card-type,
-    .empty-state .card-position { display: none; }
+    .player__card--empty .player__card-type,
+    .player__card--empty .player__card-position { display: none; }
 
-    .empty-state {
+    .player__card--empty {
       align-items: center;
       justify-content: center;
       min-height: 11rem;
       text-align: center;
     }
 
-    .empty-state .card-prompt {
+    .player__card--empty .player__card-prompt {
       max-width: 32ch;
       margin-inline: auto;
       color: var(--ink-soft);
       font-size: clamp(1.05rem, 2vw, 1.25rem);
     }
 
-    .visually-hidden {
+    .player__card[hidden],
+    .player__navigation[hidden] { display: none; }
+
+    .player__score-screen {
+      min-height: clamp(18rem, 44vh, 28rem);
+      padding: var(--s4) 0;
+    }
+
+    .player__score-screen[hidden] { display: none; }
+
+    .player__score-header {
+      padding-bottom: var(--s4);
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .player__score-header .player__card-type { display: block; }
+
+    .player__score-title {
+      max-width: 24ch;
+      margin: var(--s2) 0 0;
+      font-family: var(--serif);
+      font-size: clamp(1.45rem, 3vw, 2rem);
+      font-weight: 500;
+      line-height: 1.25;
+    }
+
+    .player__score-value {
+      margin: var(--s3) 0 0;
+      font-family: var(--mono);
+      font-size: clamp(2rem, 7vw, 3.5rem);
+      letter-spacing: 0.02em;
+      line-height: 1;
+    }
+
+    .player__score-summary {
+      margin: var(--s2) 0 0;
+      color: var(--ink-soft);
+    }
+
+    .player__review-section { padding-top: var(--s4); }
+
+    .player__review-heading {
+      margin: 0;
+      font-family: var(--serif);
+      font-size: 1.3rem;
+      font-weight: 500;
+    }
+
+    .player__missed-list {
+      display: grid;
+      gap: var(--s3);
+      margin: var(--s3) 0 0;
+      padding-left: 1.5rem;
+    }
+
+    .player__missed-card {
+      padding-left: var(--s1);
+    }
+
+    .player__missed-prompt {
+      margin: 0;
+      font-family: var(--serif);
+      font-size: 1.15rem;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .player__review-field {
+      margin: var(--s2) 0 0;
+      color: var(--ink-soft);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .player__review-label {
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    .player__no-missed-cards {
+      margin: var(--s3) 0 0;
+      color: var(--ink-soft);
+    }
+
+    .player__visually-hidden {
       position: absolute;
       width: 1px;
       height: 1px;
@@ -538,7 +631,7 @@
 
     }
 
-    .app-shell {
+    .player {
       position: relative;
       z-index: 1;
     }
@@ -549,17 +642,17 @@
       to { opacity: 1; transform: none; filter: none; }
     }
 
-    .card-content > * {
+    .player__card-content > * {
       animation: ink-settle 340ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
     }
 
     @media (max-width: 30rem) {
-      .app-shell {
+      .player {
         width: min(100% - 2rem, 38rem);
         --shell-gutter: clamp(1.5rem, 6vh, 3rem);
       }
-      .card-frame { min-height: 12rem; }
-      .player-status.is-navigation-hint { visibility: hidden; }
+      .player__card { min-height: 12rem; }
+      .player__status--navigation-hint { visibility: hidden; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -572,42 +665,56 @@
   </style>
 </head>
 <body>
-  <div class="app-shell" id="player" data-testid="player" data-state="loading">
-    <header class="deck-header">
-      <h1 id="deck-title" data-testid="deck-title">Loading deck…</h1>
+  <div class="player" id="player" data-testid="player" data-state="loading">
+    <header class="player__header">
+      <h1 class="player__title" id="deck-title" data-testid="deck-title">Loading deck…</h1>
     </header>
 
-    <section class="progress-panel" aria-label="Deck progress">
-      <div class="progress-row visually-hidden">
+    <section class="player__progress-panel" aria-label="Deck progress">
+      <div class="player__progress-row player__visually-hidden">
         <span id="progress-label" data-testid="progress-label">Card 0 of 0</span>
-        <span class="progress-percent" id="progress-percent">0%</span>
+        <span class="player__progress-percent" id="progress-percent">0%</span>
       </div>
-      <progress id="progress" data-testid="progress" max="1" value="0">0%</progress>
+      <progress class="player__progress-bar" id="progress" data-testid="progress" max="1" value="0">0%</progress>
     </section>
 
-    <main>
-      <article class="card-frame" id="card-frame" data-testid="card" tabindex="-1" aria-labelledby="card-prompt">
-        <div class="card-meta">
-          <span class="card-type" id="card-type" data-testid="card-type">Preparing card</span>
-          <span class="card-position" id="card-position" data-testid="card-position">—</span>
+    <main class="player__main">
+      <article class="player__card" id="card-frame" data-testid="card" tabindex="-1" aria-labelledby="card-prompt">
+        <div class="player__card-meta">
+          <span class="player__card-type" id="card-type" data-testid="card-type">Preparing card</span>
+          <span class="player__card-position" id="card-position" data-testid="card-position">—</span>
         </div>
-        <div class="card-content" id="card-content" data-testid="card-content">
-          <p class="card-prompt" id="card-prompt" data-testid="card-prompt">Preparing your deck…</p>
+        <div class="player__card-content" id="card-content" data-testid="card-content">
+          <p class="player__card-prompt" id="card-prompt" data-testid="card-prompt">Preparing your deck…</p>
         </div>
       </article>
 
-      <footer class="player-footer">
-        <nav class="navigation" aria-label="Card navigation">
+      <section class="player__score-screen" id="score-screen" data-testid="score-screen" hidden aria-labelledby="score-title">
+        <header class="player__score-header">
+          <span class="player__card-type">Session complete</span>
+          <h2 class="player__score-title" id="score-title" tabindex="-1">Session complete</h2>
+          <p class="player__score-value" id="score-value" data-testid="score-value">0/0</p>
+          <p class="player__score-summary" id="score-summary">Score: 0/0</p>
+        </header>
+        <section class="player__review-section" aria-labelledby="missed-heading">
+          <h3 class="player__review-heading" id="missed-heading">Review missed cards</h3>
+          <ol class="player__missed-list" id="missed-cards" data-testid="missed-cards"></ol>
+          <p class="player__no-missed-cards" id="no-missed-cards" data-testid="no-missed-cards" hidden>Perfect score — nothing to review.</p>
+        </section>
+      </section>
+
+      <footer class="player__footer">
+        <nav class="player__navigation" aria-label="Card navigation">
           <button type="button" id="previous-card" data-testid="previous-card" data-action="previous" aria-label="Previous card" disabled>← Previous</button>
-          <button type="button" id="next-card" data-testid="next-card" class="next-button is-skip" data-action="next" aria-label="Next card" disabled>Skip →</button>
+          <button type="button" id="next-card" data-testid="next-card" class="player__next-button player__next-button--skip" data-action="next" aria-label="Next card" disabled>Skip →</button>
         </nav>
-        <p class="player-status" id="player-status" role="status" aria-live="polite"></p>
+        <p class="player__status" id="player-status" role="status" aria-live="polite"></p>
       </footer>
 
       <!-- Swapping card content in place is silent for a screen reader, so each card is
            announced here instead. Kept separate from the visible status line, which
            carries hints and errors rather than the card itself. -->
-      <p class="visually-hidden" id="card-announcer" role="status" aria-live="polite"></p>
+      <p class="player__visually-hidden" id="card-announcer" role="status" aria-live="polite"></p>
     </main>
   </div>
 
@@ -644,6 +751,13 @@
         cardType: document.getElementById("card-type"),
         cardPosition: document.getElementById("card-position"),
         cardContent: document.getElementById("card-content"),
+        scoreScreen: document.getElementById("score-screen"),
+        scoreTitle: document.getElementById("score-title"),
+        scoreValue: document.getElementById("score-value"),
+        scoreSummary: document.getElementById("score-summary"),
+        missedCards: document.getElementById("missed-cards"),
+        noMissedCards: document.getElementById("no-missed-cards"),
+        navigation: document.querySelector(".player__navigation"),
         previous: document.getElementById("previous-card"),
         next: document.getElementById("next-card"),
         status: document.getElementById("player-status"),
@@ -685,13 +799,17 @@
         state.deck = deck;
         state.index = 0;
         state.grades = Object.create(null);
+        setViewState("ready");
         refs.title.textContent = deck.title;
         renderCurrentCard();
-        refs.player.dataset.state = "ready";
       }
 
       function moveCard(delta) {
-        if (!state.deck) return;
+        if (!state.deck || refs.player.dataset.state === "results") return;
+        if (delta > 0 && state.index === state.deck.cards.length - 1) {
+          showScoreScreen();
+          return;
+        }
         const nextIndex = Math.max(0, Math.min(state.deck.cards.length - 1, state.index + delta));
         if (nextIndex === state.index) return;
         state.index = nextIndex;
@@ -706,7 +824,7 @@
         const type = typeof card.type === "string" && card.type.trim() ? card.type : "unknown";
         const renderer = renderers[type] || renderUnsupportedCard;
 
-        refs.cardFrame.classList.remove("empty-state");
+        refs.cardFrame.classList.remove("player__card--empty");
         refs.cardType.textContent = type;
         refs.cardContent.replaceChildren();
         refs.cardFrame.scrollTop = 0;
@@ -752,17 +870,17 @@
         const fragment = document.createDocumentFragment();
         fragment.append(createPromptElement(card.prompt || "This card has no prompt."));
 
-        const answer = createElement("p", "card-answer", card.answer || "This card has no answer.");
+        const answer = createElement("p", "basic__answer", card.answer || "This card has no answer.");
         answer.dataset.testid = "card-answer";
         answer.hidden = true;
 
-        const reveal = createElement("button", "reveal-button", "Show answer");
+        const reveal = createElement("button", "basic__reveal-button", "Show answer");
         reveal.type = "button";
         reveal.dataset.testid = "reveal-answer";
         reveal.setAttribute("aria-expanded", "false");
 
         function createGradeButton(grade, label) {
-          const button = createElement("button", "grade-button", label);
+          const button = createElement("button", "basic__grade-button", label);
           button.type = "button";
           button.dataset.testid = `grade-${grade}`;
           button.setAttribute("aria-pressed", "false");
@@ -772,7 +890,7 @@
         const missed = createGradeButton(BASIC_GRADES.MISSED, "Missed it");
         const known = createGradeButton(BASIC_GRADES.KNOWN, "Knew it");
 
-        const grading = createElement("div", "grading-buttons");
+        const grading = createElement("div", "basic__grading-buttons");
         grading.dataset.testid = "grading-buttons";
         grading.setAttribute("role", "group");
         grading.setAttribute("aria-label", "Grade your recall");
@@ -837,14 +955,14 @@
           [choices[index], choices[swapIndex]] = [choices[swapIndex], choices[index]];
         }
 
-        const options = createElement("div", "mcq-options");
+        const options = createElement("div", "mcq__options");
         options.dataset.testid = "mcq-options";
         options.setAttribute("role", "group");
         options.setAttribute("aria-label", "Choose an answer");
         const optionButtons = [];
 
         choices.forEach((choice) => {
-          const button = createElement("button", "mcq-option", choice || "This option has no text.");
+          const button = createElement("button", "mcq__option", choice || "This option has no text.");
           button.type = "button";
           button.dataset.testid = "mcq-option";
           button.setAttribute("aria-pressed", "false");
@@ -852,26 +970,26 @@
           options.append(button);
         });
 
-        const checkAnswer = createElement("button", "mcq-check-button", "Check answer");
+        const checkAnswer = createElement("button", "mcq__check-button", "Check answer");
         checkAnswer.type = "button";
         checkAnswer.dataset.testid = "mcq-check-answer";
         checkAnswer.disabled = true;
 
-        const feedback = createElement("p", "mcq-feedback");
+        const feedback = createElement("p", "mcq__feedback");
         feedback.dataset.testid = "mcq-feedback";
         feedback.setAttribute("role", "status");
         feedback.hidden = true;
 
         const explanationText = typeof card.explanation === "string" ? card.explanation : "";
         const explanation = explanationText
-          ? createElement("p", "mcq-explanation")
+          ? createElement("p", "mcq__explanation")
           : null;
         if (explanation) {
           explanation.dataset.testid = "mcq-explanation";
           explanation.hidden = true;
         }
 
-        const response = createElement("div", "mcq-response");
+        const response = createElement("div", "mcq__response");
         response.append(options, checkAnswer);
         fragment.append(response, feedback);
         if (explanation) fragment.append(explanation);
@@ -891,9 +1009,11 @@
           optionButtons.forEach(({ button, choice }) => {
             button.disabled = true;
             button.setAttribute("aria-pressed", String(button === selectedButton));
-            button.classList.toggle("mcq-correct", choice === answer);
-            button.classList.toggle("mcq-incorrect", button === selectedButton && !isCorrect);
+            button.classList.toggle("mcq__option--correct", choice === answer);
+            button.classList.toggle("mcq__option--incorrect", button === selectedButton && !isCorrect);
           });
+          feedback.classList.toggle("mcq__feedback--correct", isCorrect);
+          feedback.classList.toggle("mcq__feedback--incorrect", !isCorrect);
           feedback.dataset.result = grade;
           feedback.textContent = isCorrect
             ? "Correct."
@@ -956,7 +1076,7 @@
             .split("|")
             .map((answer) => answer.trim())
             .filter(Boolean);
-          const input = createElement("input", "cloze-input");
+          const input = createElement("input", "cloze__input");
           input.type = "text";
           input.dataset.testid = "cloze-input";
           input.dataset.blankIndex = String(blanks.length);
@@ -970,20 +1090,20 @@
         prompt.append(document.createTextNode(promptText.slice(cursor)));
         fragment.append(prompt);
 
-        const checkAnswer = createElement("button", "cloze-check-button", "Check answers");
+        const checkAnswer = createElement("button", "cloze__check-button", "Check answers");
         checkAnswer.type = "button";
         checkAnswer.dataset.testid = "cloze-check-answer";
 
-        const feedback = createElement("div", "cloze-feedback");
+        const feedback = createElement("div", "cloze__feedback");
         feedback.dataset.testid = "cloze-feedback";
         feedback.setAttribute("role", "status");
         feedback.hidden = true;
-        const feedbackSummary = createElement("p", "cloze-feedback-summary");
+        const feedbackSummary = createElement("p", "cloze__feedback-summary");
         feedbackSummary.dataset.testid = "cloze-feedback-summary";
         feedbackSummary.hidden = true;
         feedback.append(feedbackSummary);
         const feedbackItems = blanks.map((_, index) => {
-          const item = createElement("p", "cloze-blank-feedback");
+          const item = createElement("p", "cloze__blank-feedback");
           item.dataset.testid = "cloze-blank-feedback";
           item.dataset.blankIndex = String(index);
           feedback.append(item);
@@ -992,7 +1112,7 @@
 
         const explanationText = typeof card.explanation === "string" ? card.explanation : "";
         const explanation = explanationText
-          ? createElement("p", "cloze-explanation")
+          ? createElement("p", "cloze__explanation")
           : null;
         if (explanation) {
           explanation.dataset.testid = "cloze-explanation";
@@ -1028,19 +1148,23 @@
 
         function applyAnsweredUI(grade, results = null) {
           const isCorrect = grade === CLOZE_GRADES.CORRECT;
+          feedback.classList.toggle("cloze__feedback--correct", isCorrect);
+          feedback.classList.toggle("cloze__feedback--incorrect", !isCorrect);
           feedback.dataset.result = grade;
           if (results) {
             feedbackSummary.hidden = true;
             blanks.forEach((blank, index) => {
               const blankCorrect = results[index];
               blank.input.disabled = true;
-              blank.input.classList.toggle("cloze-correct", blankCorrect);
-              blank.input.classList.toggle("cloze-incorrect", !blankCorrect);
+              blank.input.classList.toggle("cloze__input--correct", blankCorrect);
+              blank.input.classList.toggle("cloze__input--incorrect", !blankCorrect);
               blank.input.dataset.result = blankCorrect
                 ? CLOZE_GRADES.CORRECT
                 : CLOZE_GRADES.INCORRECT;
               blank.input.setAttribute("aria-invalid", String(!blankCorrect));
               feedbackItems[index].hidden = false;
+              feedbackItems[index].classList.toggle("cloze__blank-feedback--correct", blankCorrect);
+              feedbackItems[index].classList.toggle("cloze__blank-feedback--incorrect", !blankCorrect);
               feedbackItems[index].dataset.result = blankCorrect
                 ? CLOZE_GRADES.CORRECT
                 : CLOZE_GRADES.INCORRECT;
@@ -1055,10 +1179,14 @@
               : "This card was previously marked incorrect.";
             blanks.forEach((blank, index) => {
               blank.input.disabled = true;
-              blank.input.classList.remove("cloze-correct", "cloze-incorrect");
+              blank.input.classList.remove("cloze__input--correct", "cloze__input--incorrect");
               blank.input.removeAttribute("data-result");
               blank.input.removeAttribute("aria-invalid");
               feedbackItems[index].hidden = true;
+              feedbackItems[index].classList.remove(
+                "cloze__blank-feedback--correct",
+                "cloze__blank-feedback--incorrect"
+              );
               feedbackItems[index].removeAttribute("data-result");
               feedbackItems[index].textContent = "";
             });
@@ -1093,7 +1221,7 @@
         fragment.append(createPromptElement(card.prompt || "This card has no prompt."));
         fragment.append(createElement(
           "p",
-          "unsupported-card",
+          "player__unsupported-card",
           `The “${card.type || "unknown"}” card renderer is not installed yet.`
         ));
         return fragment;
@@ -1124,7 +1252,7 @@
         state.cleanup();
         state.cleanup = () => {};
         state.deck = null;
-        refs.player.dataset.state = "error";
+        setViewState("error");
         refs.title.textContent = "Unable to load deck";
         refs.progress.max = 1;
         refs.progress.value = 0;
@@ -1134,11 +1262,11 @@
         refs.cardType.textContent = "Deck error";
         refs.cardPosition.textContent = "—";
         refs.cardContent.replaceChildren(createPromptElement(message));
-        refs.cardFrame.classList.add("empty-state");
+        refs.cardFrame.classList.add("player__card--empty");
         const focused = document.activeElement;
         refs.previous.disabled = true;
         refs.next.disabled = true;
-        refs.next.classList.remove("is-skip");
+        refs.next.classList.remove("player__next-button--skip");
         refs.next.textContent = "Next →";
         refs.next.setAttribute("aria-label", "Next card");
         restoreNavigationFocus(focused);
@@ -1150,8 +1278,8 @@
         // Rewriting a live region re-announces it, so an unchanged hint stays untouched
         // rather than repeating itself on every card change.
         if (refs.status.textContent !== text) refs.status.textContent = text;
-        refs.status.classList.toggle("is-navigation-hint", text === NAVIGATION_HINT);
-        refs.status.classList.toggle("error", Boolean(isError));
+        refs.status.classList.toggle("player__status--navigation-hint", text === NAVIGATION_HINT);
+        refs.status.classList.toggle("player__status--error", Boolean(isError));
       }
 
       function updateProgress() {
@@ -1169,16 +1297,96 @@
         const focused = document.activeElement;
         refs.previous.disabled = state.index === 0;
         const card = state.deck.cards[state.index];
-        const isSkip = isAnswerRequiredCard(card) && !state.grades[card.id];
-        refs.next.classList.toggle("is-skip", isSkip);
-        refs.next.disabled = state.index === total - 1;
-        refs.next.textContent = isSkip ? "Skip →" : "Next →";
-        refs.next.setAttribute("aria-label", isSkip ? "Skip to next card" : "Next card");
+        const atLastCard = state.index === total - 1;
+        const isSkip = !atLastCard && isAnswerRequiredCard(card) && !state.grades[card.id];
+        refs.next.disabled = false;
+        refs.next.classList.toggle("player__next-button--skip", isSkip);
+        refs.next.textContent = atLastCard ? "See results →" : (isSkip ? "Skip →" : "Next →");
+        refs.next.setAttribute(
+          "aria-label",
+          atLastCard ? "See results" : (isSkip ? "Skip to next card" : "Next card")
+        );
         restoreNavigationFocus(focused);
       }
 
       function isAnswerRequiredCard(card) {
         return card.type === "basic" || card.type === "mcq";
+      }
+
+      // Grade values are owned by card renderers. The score screen only needs to know
+      // which values represent a positive result for each renderer it understands.
+      // Add a card type here as its renderer defines a new grade vocabulary.
+      const POSITIVE_GRADES_BY_TYPE = Object.freeze({
+        basic: Object.freeze(["known"]),
+        mcq: Object.freeze(["correct"])
+      });
+
+      function showScoreScreen() {
+        state.cleanup();
+        state.cleanup = () => {};
+        const result = renderScoreScreen();
+        setViewState("results");
+        setStatus(`Session complete. Score ${result.score}/${result.total}.`);
+        refs.scoreTitle.focus();
+      }
+
+      function renderScoreScreen() {
+        const { deck, grades } = api.getState();
+        const total = deck.cards.length;
+        const score = deck.cards.filter((card) => isPositiveGrade(card, grades[card.id])).length;
+        const missedCards = deck.cards.filter((card) => !isPositiveGrade(card, grades[card.id]));
+
+        refs.scoreValue.textContent = `${score}/${total}`;
+        refs.scoreSummary.textContent = `Score: ${score}/${total}`;
+        refs.missedCards.replaceChildren(...missedCards.map(createMissedCard));
+        refs.missedCards.hidden = missedCards.length === 0;
+        refs.noMissedCards.hidden = missedCards.length !== 0;
+        refs.progress.max = total;
+        refs.progress.value = total;
+        refs.progress.setAttribute("aria-label", `Session complete: score ${score} of ${total}`);
+        refs.progressLabel.textContent = `Session complete: ${score} of ${total}`;
+        refs.progressPercent.textContent = "100%";
+        refs.announcer.textContent = `Session complete. Score ${score}/${total}.`;
+
+        return { score, total };
+      }
+
+      function isPositiveGrade(card, grade) {
+        const positiveGrades = POSITIVE_GRADES_BY_TYPE[card.type];
+        return Array.isArray(positiveGrades) && positiveGrades.includes(grade);
+      }
+
+      function createMissedCard(card) {
+        const item = createElement("li", "player__missed-card");
+        item.dataset.testid = "missed-card";
+        const prompt = createElement(
+          "p",
+          "player__missed-prompt",
+          card.prompt || "This card has no prompt."
+        );
+        prompt.dataset.testid = "missed-prompt";
+        item.append(prompt);
+        if (card.answer) item.append(createReviewField("Answer", card.answer));
+        if (card.explanation) item.append(createReviewField("Explanation", card.explanation));
+        return item;
+      }
+
+      function createReviewField(label, value) {
+        const field = createElement("p", "player__review-field");
+        field.dataset.testid = `missed-${label.toLowerCase()}`;
+        field.append(
+          createElement("strong", "player__review-label", `${label}:`),
+          document.createTextNode(` ${String(value)}`)
+        );
+        return field;
+      }
+
+      function setViewState(view) {
+        const showingResults = view === "results";
+        refs.player.dataset.state = view;
+        refs.cardFrame.hidden = showingResults;
+        refs.navigation.hidden = showingResults;
+        refs.scoreScreen.hidden = !showingResults;
       }
 
       // Reaching the first or last card disables the button that got you there, which
@@ -1209,7 +1417,7 @@
       // Every renderer should build its prompt with this: the card frame is labelled by
       // the element's id, so a renderer that rolls its own leaves the card unnamed.
       function createPromptElement(text) {
-        const prompt = createElement("p", "card-prompt", text);
+        const prompt = createElement("p", "player__card-prompt", text);
         prompt.id = PROMPT_ID;
         prompt.dataset.testid = PROMPT_ID;
         return prompt;
