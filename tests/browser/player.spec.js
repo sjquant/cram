@@ -31,19 +31,6 @@ const CLOZE_DECK = {
 };
 
 test.describe("basic cards", () => {
-  test("stretches the card frame across the available player width", async ({ page }) => {
-    await openPlayer(page, BASIC_DECK);
-
-    // Given: the first card is rendered inside the player's main content area.
-    const widths = await page.evaluate(() => ({
-      main: document.querySelector("main").getBoundingClientRect().width,
-      cardFrame: document.querySelector("[data-testid='card']").getBoundingClientRect().width,
-    }));
-
-    // Then: the card frame uses the full width available to it.
-    expect(Math.abs(widths.cardFrame - widths.main)).toBeLessThan(0.5);
-  });
-
   test("reveals a basic-card answer and records the selected grade", async ({ page }) => {
     await openPlayer(page, BASIC_DECK);
 

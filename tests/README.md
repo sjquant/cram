@@ -37,3 +37,6 @@ installation:
 ```sh
 python3 -m unittest discover -s tests -t . -v
 ```
+
+Browser checks specify card behavior and accessibility through public controls;
+they do not assert geometry, computed styles, or other presentation details.
