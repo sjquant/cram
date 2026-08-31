@@ -774,6 +774,7 @@
       const PROMPT_ID = "card-prompt";
 
       const renderers = Object.create(null);
+      const gradeValidators = Object.create(null);
       const state = {
         deck: null,
         index: 0,
@@ -781,14 +782,28 @@
         grades: Object.create(null)
       };
 
-      function registerCardRenderer(type, renderer) {
+      // The validator is the renderer's grade contract. A renderer may omit it when
+      // its grades are intentionally opaque; persistence then accepts non-empty strings.
+      function registerCardRenderer(type, renderer, gradeValidator = null) {
         if (typeof type !== "string" || !type.trim()) {
           throw new TypeError("A card renderer needs a non-empty type.");
         }
         if (typeof renderer !== "function") {
           throw new TypeError(`The renderer for ${type} must be a function.`);
         }
+        if (gradeValidator !== null && typeof gradeValidator !== "function") {
+          throw new TypeError(`The grade validator for ${type} must be a function.`);
+        }
         renderers[type] = renderer;
+        if (gradeValidator) gradeValidators[type] = gradeValidator;
+        else delete gradeValidators[type];
+
+        // A renderer can be loaded after a deck has already been selected. Re-run
+        // validation so grades read before its validator was available cannot leak into
+        // the renderer's state.
+        if (state.deck) {
+          state.grades = sanitizeGrades(state.deck, state.grades) || Object.create(null);
+        }
 
         // A card type may be registered by a later, self-contained module. Repaint
         // immediately if that module is loaded after the player has started.
@@ -1248,10 +1263,9 @@
 
       // Grades are keyed by card id rather than index, so they survive deck
       // navigation and stay meaningful to a later score screen (B3) even if
-      // cards are ever reordered. Each card type defines and interprets its own
-      // grade vocabulary (the basic renderer uses "known"/"missed"; mcq and
-      // cloze use "correct"/"incorrect"). Persistence restores only grades
-      // that belong to the current deck and one of its known card vocabularies.
+      // cards are ever reordered. Each renderer defines and interprets its own grade
+      // vocabulary; persistence restores only grades that belong to the current deck
+      // and pass the registered renderer validator.
       function recordGrade(cardId, grade) {
         if (typeof cardId !== "string" || !cardId) {
           throw new TypeError("A grade needs a card id.");
@@ -1349,12 +1363,6 @@
       const POSITIVE_GRADES_BY_TYPE = Object.freeze({
         basic: Object.freeze(["known"]),
         mcq: Object.freeze(["correct"])
-      });
-
-      const VALID_GRADES_BY_TYPE = Object.freeze({
-        basic: Object.freeze(["known", "missed"]),
-        mcq: Object.freeze(["correct", "incorrect"]),
-        cloze: Object.freeze(["correct", "incorrect"])
       });
 
       function showScoreScreen() {
@@ -1516,8 +1524,11 @@
       }
 
       function isValidStoredGrade(card, grade) {
-        const validGrades = VALID_GRADES_BY_TYPE[card.type];
-        return Array.isArray(validGrades) && validGrades.includes(grade);
+        const gradeValidator = gradeValidators[card.type];
+        if (typeof gradeValidator !== "function") {
+          return typeof grade === "string" && Boolean(grade);
+        }
+        return Boolean(gradeValidator(grade, card));
       }
 
       // Every renderer should build its prompt with this: the card frame is labelled by
@@ -1551,9 +1562,21 @@
 
       // The shell owns this registry and navigation. Each card-type issue can add
       // or replace exactly one renderer without changing the shell or other types.
-      registerCardRenderer("basic", renderBasicCard);
-      registerCardRenderer("mcq", renderMcqCard);
-      registerCardRenderer("cloze", renderClozeCard);
+      registerCardRenderer(
+        "basic",
+        renderBasicCard,
+        (grade) => grade === BASIC_GRADES.KNOWN || grade === BASIC_GRADES.MISSED
+      );
+      registerCardRenderer(
+        "mcq",
+        renderMcqCard,
+        (grade) => grade === MCQ_GRADES.CORRECT || grade === MCQ_GRADES.INCORRECT
+      );
+      registerCardRenderer(
+        "cloze",
+        renderClozeCard,
+        (grade) => grade === CLOZE_GRADES.CORRECT || grade === CLOZE_GRADES.INCORRECT
+      );
       window.CRAM_PLAYER = api;
 
       refs.player.addEventListener("click", (event) => {

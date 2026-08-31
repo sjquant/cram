@@ -44,6 +44,17 @@ const OTHER_DECK = {
     },
   ],
 };
+const CUSTOM_DECK = {
+  id: "custom-browser-check",
+  title: "Custom browser check",
+  cards: [
+    {
+      id: "custom-card",
+      type: "custom",
+      prompt: "A custom card",
+    },
+  ],
+};
 
 test.describe("basic cards", () => {
   test("reveals a basic-card answer and records the selected grade", async ({ page }) => {
@@ -252,6 +263,50 @@ test("renders a fallback for unsupported card types", async ({ page }) => {
     page.getByTestId("card-content").getByText("The “ordering” card renderer is not installed yet.")
   ).toBeVisible();
   await expect(page.getByTestId("reveal-answer")).toHaveCount(0);
+});
+
+test("persists grades for a renderer supplied through the public registry", async ({ page }) => {
+  await openPlayer(page, CUSTOM_DECK);
+
+  // Given: a self-contained renderer registers its own grade vocabulary.
+  await page.evaluate((deck) => {
+    const customRenderer = ({ card, createPromptElement }) => createPromptElement(card.prompt);
+    window.CRAM_PLAYER.registerCardRenderer(
+      "custom",
+      customRenderer,
+      (grade) => grade === "remembered"
+    );
+    window.CRAM_PLAYER.setDeck(deck);
+
+    // When: the renderer records its opaque grade through the shared player API.
+    window.CRAM_PLAYER.recordGrade("custom-card", "remembered");
+  }, CUSTOM_DECK);
+
+  // When: the page reloads and the deck is selected before its renderer is registered.
+  await page.reload();
+  await page.evaluate((deck) => {
+    window.CRAM_PLAYER.setDeck(deck);
+  }, CUSTOM_DECK);
+  await page.evaluate(() => {
+    const customRenderer = ({ card, createPromptElement }) => createPromptElement(card.prompt);
+    window.CRAM_PLAYER.registerCardRenderer(
+      "custom",
+      customRenderer,
+      (grade) => grade === "remembered"
+    );
+  });
+
+  // Then: the renderer-owned grade validator restores the saved custom value.
+  expect(await page.evaluate(() => window.CRAM_PLAYER.getState().grades)).toEqual({
+    "custom-card": "remembered",
+  });
+
+  // And: a value outside that renderer's vocabulary is discarded as malformed.
+  await page.evaluate((deck) => {
+    localStorage.setItem(`fc:${deck.id}:v1`, JSON.stringify({ "custom-card": "forgotten" }));
+    window.CRAM_PLAYER.setDeck(deck);
+  }, CUSTOM_DECK);
+  expect(await page.evaluate(() => window.CRAM_PLAYER.getState().grades)).toEqual({});
 });
 
 test("checks cloze blanks with exact alternatives and restores aggregate feedback", async ({ page }) => {
