@@ -8,6 +8,9 @@ const PLAYER_URL = pathToFileURL(path.join(ROOT, "skills/cram/template/player.ht
 const BASIC_DECK = JSON.parse(
   fs.readFileSync(path.join(ROOT, "fixtures/valid/basic-only.json"), "utf8")
 );
+const ALL_TYPES_DECK = JSON.parse(
+  fs.readFileSync(path.join(ROOT, "fixtures/valid/all-types.json"), "utf8")
+);
 const UNSUPPORTED_DECK = JSON.parse(
   fs.readFileSync(path.join(ROOT, "fixtures/invalid/unknown-card-type.json"), "utf8")
 );
@@ -90,6 +93,9 @@ test.describe("basic cards", () => {
     // Given: the learner records a grade for the first card.
     await page.getByTestId("reveal-answer").click();
     await page.getByTestId("grade-known").click();
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-missed").click();
 
     // When: the page reloads and the same deck is selected again.
     await page.reload();
@@ -97,9 +103,61 @@ test.describe("basic cards", () => {
 
     // Then: the selected grade is restored from the deck-scoped localStorage entry.
     await expect(page.getByTestId("grade-known")).toHaveAttribute("aria-pressed", "true");
+    await page.getByTestId("next-card").click();
+    await expect(page.getByTestId("grade-missed")).toHaveAttribute("aria-pressed", "true");
     expect(await page.evaluate(() => window.CRAM_PLAYER.getState().grades)).toEqual({
       [BASIC_DECK.cards[0].id]: "known",
+      [BASIC_DECK.cards[1].id]: "missed",
     });
+  });
+
+  test("persists basic, MCQ, and cloze grades across reloads", async ({ page }) => {
+    await openPlayer(page, ALL_TYPES_DECK);
+
+    // Given: the learner answers one card from each renderer.
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("mcq-option").filter({ hasText: ALL_TYPES_DECK.cards[1].answer }).click();
+    await page.getByTestId("mcq-check-answer").click();
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("cloze-input").nth(0).fill("If-None-Match");
+    await page.getByTestId("cloze-input").nth(1).fill("304");
+    await page.getByTestId("cloze-check-answer").click();
+
+    // When: the page reloads and the same deck is selected again.
+    await page.reload();
+    await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), ALL_TYPES_DECK);
+
+    // Then: each renderer restores its own persisted grade state.
+    await expect(page.getByTestId("grade-known")).toHaveAttribute("aria-pressed", "true");
+    await page.getByTestId("next-card").click();
+    await expect(page.getByTestId("mcq-feedback")).toHaveAttribute("data-result", "correct");
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("next-card").click();
+    await expect(page.getByTestId("cloze-feedback-summary")).toBeVisible();
+  });
+
+  test("reports when saved progress is unavailable", async ({ page }) => {
+    await openPlayer(page, BASIC_DECK);
+
+    // Given: the browser refuses writes for the player's storage key.
+    await page.evaluate(() => {
+      const originalSetItem = Storage.prototype.setItem;
+      Storage.prototype.setItem = function setItem(key, value) {
+        if (key.startsWith("fc:")) throw new Error("storage unavailable");
+        return originalSetItem.call(this, key, value);
+      };
+    });
+
+    // When: the learner tries to record a grade.
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+
+    // Then: the session reports the failed save and does not claim the grade was saved.
+    await expect(page.locator("#player-status")).toHaveText("Progress could not be saved. Try again.");
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getState().grades)).toEqual({});
   });
 
   test("keeps progress isolated between deck ids", async ({ page }) => {
@@ -126,7 +184,11 @@ test.describe("basic cards", () => {
   test("resets the current deck progress from the score screen", async ({ page }) => {
     await openPlayer(page, BASIC_DECK);
 
-    // Given: the learner completes a session with one known card.
+    // Given: another deck has independent progress and the current deck is completed.
+    await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), OTHER_DECK);
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+    await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), BASIC_DECK);
     await page.getByTestId("reveal-answer").click();
     await page.getByTestId("grade-known").click();
     for (let index = 0; index < BASIC_DECK.cards.length; index += 1) {
@@ -138,33 +200,44 @@ test.describe("basic cards", () => {
     // When: the learner explicitly resets progress.
     await page.getByTestId("reset-progress").click();
 
-    // Then: the score, in-memory grades, and deck-scoped storage are cleared.
-    await expect(page.getByTestId("score-value")).toHaveText(`0/${BASIC_DECK.cards.length}`);
+    // Then: the current deck is restarted while the other deck's progress remains stored.
+    await expect(page.getByTestId("score-screen")).toBeHidden();
+    await expect(page.getByTestId("card-prompt")).toHaveText(BASIC_DECK.cards[0].prompt);
+    await expect(page.getByTestId("card-answer")).toBeHidden();
+    await expect(page.getByTestId("player")).toHaveAttribute("data-state", "ready");
     expect(await page.evaluate(() => window.CRAM_PLAYER.getState().grades)).toEqual({});
     expect(await page.evaluate((deckId) => localStorage.getItem(`fc:${deckId}:v1`), BASIC_DECK.id)).toBeNull();
+    expect(await page.evaluate((deckId) => JSON.parse(localStorage.getItem(`fc:${deckId}:v1`)), OTHER_DECK.id)).toEqual({
+      [OTHER_DECK.cards[0].id]: "known",
+    });
   });
 
   test("discards malformed or old-shaped stored progress", async ({ page }) => {
     await page.goto(PLAYER_URL);
     const key = `fc:${BASIC_DECK.id}:v1`;
 
-    // Given: the deck key contains data that is not a grade map.
-    await page.evaluate((storageKey) => localStorage.setItem(storageKey, "not-json"), key);
+    // Given: the deck key contains several malformed or unsupported shapes.
+    const invalidEntries = [
+      "not-json",
+      "null",
+      "[]",
+      JSON.stringify({ grades: { "coroutine-definition": "known" } }),
+      JSON.stringify({ "coroutine-definition": "" }),
+      JSON.stringify({ "coroutine-definition": 1 }),
+      JSON.stringify({ "coroutine-definition": "bogus" }),
+    ];
 
-    // When: the page reloads and the deck is selected.
-    await page.reload();
-    await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), BASIC_DECK);
+    for (const entry of invalidEntries) {
+      // When: the page reloads and the deck is selected.
+      await page.evaluate(([storageKey, storageValue]) => {
+        localStorage.setItem(storageKey, storageValue);
+      }, [key, entry]);
+      await page.reload();
+      await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), BASIC_DECK);
 
-    // Then: the player starts with empty progress instead of throwing.
-    expect(await page.evaluate(() => window.CRAM_PLAYER.getState().grades)).toEqual({});
-
-    // And when an older nested shape is present, it is discarded as well.
-    await page.evaluate((storageKey) => {
-      localStorage.setItem(storageKey, JSON.stringify({ grades: { "coroutine-definition": "known" } }));
-    }, key);
-    await page.reload();
-    await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), BASIC_DECK);
-    expect(await page.evaluate(() => window.CRAM_PLAYER.getState().grades)).toEqual({});
+      // Then: the player starts with empty progress instead of throwing.
+      expect(await page.evaluate(() => window.CRAM_PLAYER.getState().grades)).toEqual({});
+    }
   });
 });
 
@@ -235,7 +308,12 @@ test("checks cloze blanks with exact alternatives and restores aggregate feedbac
 
 async function openPlayer(page, deck) {
   await page.goto(PLAYER_URL);
-  await page.evaluate(() => localStorage.clear());
+  await page.evaluate(() => {
+    for (let index = localStorage.length - 1; index >= 0; index -= 1) {
+      const key = localStorage.key(index);
+      if (key && key.startsWith("fc:")) localStorage.removeItem(key);
+    }
+  });
   // Directly opened templates start with their built-in preview deck. Replace it
   // through the player's public setup API so each test can supply a fixture deck.
   await page.evaluate((initialDeck) => {
