@@ -239,8 +239,14 @@ def _validate_cloze_card(card: dict[str, Any], prefix: str, errors: list[str]) -
         prompt = card["prompt"]
         if not isinstance(prompt, str):
             errors.append(f"{prefix} field 'prompt': must be a string")
-        elif not _CLOZE_BLANK.search(prompt):
-            errors.append(f"{prefix} field 'prompt': must contain at least one {{{{answer}}}} blank")
+        else:
+            blanks = list(_CLOZE_BLANK.finditer(prompt))
+            if not blanks:
+                errors.append(f"{prefix} field 'prompt': must contain at least one {{{{answer}}}} blank")
+            elif any(not part.strip() for blank in blanks for part in blank.group(1).split("|")):
+                errors.append(
+                    f"{prefix} field 'prompt': each {{{{answer}}}} alternative must be non-empty"
+                )
     _validate_optional_text(card, prefix, "hint", errors)
     _validate_optional_text(card, prefix, "explanation", errors)
 
@@ -304,7 +310,7 @@ def _check_additional(
 
 _NON_WHITESPACE = re.compile(r"\S")
 _SLUG = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
-_CLOZE_BLANK = re.compile(r"\{\{[^{}]*\S[^{}]*\}\}")
+_CLOZE_BLANK = re.compile(r"\{\{([^{}]*)\}\}")
 
 
 if __name__ == "__main__":

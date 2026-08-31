@@ -958,7 +958,11 @@
         feedback.dataset.testid = "cloze-feedback";
         feedback.setAttribute("role", "status");
         feedback.hidden = true;
-        const feedbackItems = blanks.map((blank, index) => {
+        const feedbackSummary = createElement("p", "cloze-feedback-summary");
+        feedbackSummary.dataset.testid = "cloze-feedback-summary";
+        feedbackSummary.hidden = true;
+        feedback.append(feedbackSummary);
+        const feedbackItems = blanks.map((_, index) => {
           const item = createElement("p", "cloze-blank-feedback");
           item.dataset.testid = "cloze-blank-feedback";
           item.dataset.blankIndex = String(index);
@@ -978,43 +982,6 @@
         fragment.append(checkAnswer, feedback);
         if (explanation) fragment.append(explanation);
 
-        function normalizeAnswer(answer) {
-          return answer.trim().toLowerCase();
-        }
-
-        function checkBlank(blank) {
-          const submitted = normalizeAnswer(blank.input.value);
-          return blank.answers.some((answer) => normalizeAnswer(answer) === submitted);
-        }
-
-        function applyAnsweredUI(grade, results = null) {
-          const isCorrect = grade === CLOZE_GRADES.CORRECT;
-          blanks.forEach((blank, index) => {
-            const blankCorrect = results ? results[index] : isCorrect;
-            blank.input.disabled = true;
-            blank.input.classList.toggle("cloze-correct", blankCorrect);
-            blank.input.classList.toggle("cloze-incorrect", !blankCorrect);
-            blank.input.dataset.result = blankCorrect
-              ? CLOZE_GRADES.CORRECT
-              : CLOZE_GRADES.INCORRECT;
-            blank.input.setAttribute("aria-invalid", String(!blankCorrect));
-            feedbackItems[index].dataset.result = blankCorrect
-              ? CLOZE_GRADES.CORRECT
-              : CLOZE_GRADES.INCORRECT;
-            feedbackItems[index].textContent = blankCorrect
-              ? `Blank ${index + 1}: Correct.`
-              : `Blank ${index + 1}: Incorrect. Correct answer: ${blank.answers.join(" / ")}`;
-          });
-          feedback.dataset.result = grade;
-          feedback.hidden = false;
-          checkAnswer.hidden = true;
-          checkAnswer.disabled = true;
-          if (explanation) {
-            explanation.textContent = explanationText;
-            explanation.hidden = false;
-          }
-        }
-
         function handleCheckAnswer() {
           const results = blanks.map(checkBlank);
           const grade = results.every(Boolean)
@@ -1028,6 +995,61 @@
           }
           applyAnsweredUI(grade, results);
           setStatus(grade === CLOZE_GRADES.CORRECT ? "Correct." : "Incorrect.");
+        }
+
+        function checkBlank(blank) {
+          const submitted = normalizeAnswer(blank.input.value);
+          return blank.answers.some((answer) => normalizeAnswer(answer) === submitted);
+        }
+
+        function normalizeAnswer(answer) {
+          return answer.trim().toLowerCase();
+        }
+
+        function applyAnsweredUI(grade, results = null) {
+          const isCorrect = grade === CLOZE_GRADES.CORRECT;
+          feedback.dataset.result = grade;
+          if (results) {
+            feedbackSummary.hidden = true;
+            blanks.forEach((blank, index) => {
+              const blankCorrect = results[index];
+              blank.input.disabled = true;
+              blank.input.classList.toggle("cloze-correct", blankCorrect);
+              blank.input.classList.toggle("cloze-incorrect", !blankCorrect);
+              blank.input.dataset.result = blankCorrect
+                ? CLOZE_GRADES.CORRECT
+                : CLOZE_GRADES.INCORRECT;
+              blank.input.setAttribute("aria-invalid", String(!blankCorrect));
+              feedbackItems[index].hidden = false;
+              feedbackItems[index].dataset.result = blankCorrect
+                ? CLOZE_GRADES.CORRECT
+                : CLOZE_GRADES.INCORRECT;
+              feedbackItems[index].textContent = blankCorrect
+                ? `Blank ${index + 1}: Correct.`
+                : `Blank ${index + 1}: Incorrect. Correct answer: ${blank.answers.join(" / ")}`;
+            });
+          } else {
+            feedbackSummary.hidden = false;
+            feedbackSummary.textContent = isCorrect
+              ? "Correct."
+              : "This card was previously marked incorrect.";
+            blanks.forEach((blank, index) => {
+              blank.input.disabled = true;
+              blank.input.classList.remove("cloze-correct", "cloze-incorrect");
+              blank.input.removeAttribute("data-result");
+              blank.input.removeAttribute("aria-invalid");
+              feedbackItems[index].hidden = true;
+              feedbackItems[index].removeAttribute("data-result");
+              feedbackItems[index].textContent = "";
+            });
+          }
+          feedback.hidden = false;
+          checkAnswer.hidden = true;
+          checkAnswer.disabled = true;
+          if (explanation) {
+            explanation.textContent = explanationText;
+            explanation.hidden = false;
+          }
         }
 
         checkAnswer.addEventListener("click", handleCheckAnswer);

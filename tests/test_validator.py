@@ -37,6 +37,7 @@ class DeckValidatorTests(unittest.TestCase):
         """Reject each invalid fixture with an actionable validation or parse error."""
         # Given
         expected_fields = {
+            "cloze-with-empty-alternative.json": "prompt",
             "cloze-without-a-blank.json": "prompt",
             "deck-id-not-a-slug.json": "id",
             "duplicate-card-ids.json": "id",

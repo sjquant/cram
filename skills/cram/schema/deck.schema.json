@@ -111,7 +111,7 @@
         "type": { "const": "cloze" },
         "prompt": {
           "type": "string",
-          "pattern": "\\{\\{[^{}]*\\S[^{}]*\\}\\}",
+          "pattern": "\\{\\{[^{}|]*[^\\s{}|][^{}|]*(?:\\|[^{}|]*[^\\s{}|][^{}|]*)*\\}\\}",
           "description": "Must contain at least one {{answer}} blank."
         },
         "hint": { "$ref": "#/$defs/hint" },

@@ -1,0 +1,11 @@
+{
+  "id": "cloze-with-empty-alternative",
+  "title": "Cloze card with an empty alternative",
+  "cards": [
+    {
+      "id": "empty-alternative",
+      "type": "cloze",
+      "prompt": "The response is {{fresh| }}."
+    }
+  ]
+}

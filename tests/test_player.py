@@ -327,13 +327,21 @@ class PlayerBrowserTests(unittest.TestCase):
                     const inputs = Array.from(document.querySelectorAll('[data-testid="cloze-input"]'));
                     checks.inputCount = inputs.length;
                     checks.rawMarkupHidden = !prompt.textContent.includes('{{');
+                    checks.surroundingText = prompt.textContent === 'Send  and accept .';
                     checks.feedbackHiddenBeforeCheck = document.querySelector(
                       '[data-testid="cloze-feedback"]'
                     ).hidden;
+                    const originalRecordGrade = window.CRAM_PLAYER.recordGrade;
+                    let recordGradeCalls = 0;
+                    window.CRAM_PLAYER.recordGrade = (...args) => {
+                      recordGradeCalls += 1;
+                      return originalRecordGrade(...args);
+                    };
                     inputs[0].value = '  if-none-match ';
-                    inputs[1].value = 'wrong';
+                    inputs[1].value = '304 Not Modifie';
                     document.querySelector('[data-testid="cloze-check-answer"]').click();
                     checks.blankResults = inputs.map((input) => input.dataset.result);
+                    checks.recordGradeCalls = recordGradeCalls;
                     checks.aggregateFeedback = document.querySelector(
                       '[data-testid="cloze-feedback"]'
                     ).dataset.result;
@@ -345,6 +353,7 @@ class PlayerBrowserTests(unittest.TestCase):
                     checks.explanationVisible = !document.querySelector(
                       '[data-testid="cloze-explanation"]'
                     ).hidden;
+                    window.CRAM_PLAYER.recordGrade = originalRecordGrade;
                     window.CRAM_PLAYER.setDeck(window.CRAM_PLAYER.getState().deck);
                     const restoredInputs = Array.from(
                       document.querySelectorAll('[data-testid="cloze-input"]')
@@ -363,8 +372,10 @@ class PlayerBrowserTests(unittest.TestCase):
         # Then
         self.assertEqual(result["inputCount"], 2)
         self.assertTrue(result["rawMarkupHidden"])
+        self.assertTrue(result["surroundingText"])
         self.assertTrue(result["feedbackHiddenBeforeCheck"])
         self.assertEqual(result["blankResults"], ["correct", "incorrect"])
+        self.assertEqual(result["recordGradeCalls"], 1)
         self.assertEqual(result["aggregateFeedback"], "incorrect")
         self.assertIn("Correct.", result["feedback"][0])
         self.assertIn("Correct answer: 304 / 304 Not Modified", result["feedback"][1])
