@@ -11,6 +11,24 @@ const BASIC_DECK = JSON.parse(
 const UNSUPPORTED_DECK = JSON.parse(
   fs.readFileSync(path.join(ROOT, "fixtures/invalid/unknown-card-type.json"), "utf8")
 );
+const CLOZE_DECK = {
+  id: "cloze-browser-check",
+  title: "Cloze browser check",
+  cards: [
+    {
+      id: "cloze-card",
+      type: "cloze",
+      prompt: "Send {{If-None-Match}} and accept {{304|304 Not Modified}}.",
+      explanation: "The cached response is still fresh.",
+    },
+    {
+      id: "other-card",
+      type: "basic",
+      prompt: "Other prompt",
+      answer: "Other answer",
+    },
+  ],
+};
 
 test.describe("basic cards", () => {
   test("reveals a basic-card answer and records the selected grade", async ({ page }) => {
@@ -66,6 +84,58 @@ test("renders a fallback for unsupported card types", async ({ page }) => {
     page.getByTestId("card-content").getByText("The “ordering” card renderer is not installed yet.")
   ).toBeVisible();
   await expect(page.getByTestId("reveal-answer")).toHaveCount(0);
+});
+
+test("checks cloze blanks with exact alternatives and restores aggregate feedback", async ({ page }) => {
+  await openPlayer(page, CLOZE_DECK);
+
+  // Given: inline blanks replace their markup while surrounding prompt text remains visible.
+  await expect(page.getByTestId("card-prompt")).toHaveText("Send  and accept .");
+  await expect(page.getByTestId("cloze-input")).toHaveCount(2);
+  await expect(page.getByTestId("cloze-feedback")).toBeHidden();
+
+  // When: one blank is exact (with case/whitespace normalization) and the other is a near miss.
+  await page.evaluate(() => {
+    window.__recordGradeCalls = 0;
+    window.__originalRecordGrade = window.CRAM_PLAYER.recordGrade;
+    window.CRAM_PLAYER.recordGrade = (...args) => {
+      window.__recordGradeCalls += 1;
+      return window.__originalRecordGrade(...args);
+    };
+  });
+  await page.getByTestId("cloze-input").nth(0).fill("  if-none-match ");
+  await page.getByTestId("cloze-input").nth(1).fill("304 Not Modifie");
+  await page.getByTestId("cloze-check-answer").click();
+
+  // Then: every blank exposes its own result, and exactly one aggregate grade is recorded.
+  await expect(page.getByTestId("cloze-input").nth(0)).toHaveAttribute("data-result", "correct");
+  await expect(page.getByTestId("cloze-input").nth(1)).toHaveAttribute("data-result", "incorrect");
+  await expect(page.getByTestId("cloze-feedback")).toHaveAttribute("data-result", "incorrect");
+  await expect(page.getByTestId("cloze-blank-feedback").nth(1)).toContainText(
+    "Correct answer: 304 / 304 Not Modified"
+  );
+  expect(await page.evaluate(() => window.__recordGradeCalls)).toBe(1);
+  expect(await page.evaluate(() => window.CRAM_PLAYER.getGrade("cloze-card"))).toBe("incorrect");
+
+  // Returning to the card shows only the aggregate result because the shell stores one grade.
+  await page.getByTestId("next-card").click();
+  await page.getByTestId("previous-card").click();
+  await expect(page.getByTestId("cloze-feedback-summary")).toBeVisible();
+  await expect(page.getByTestId("cloze-blank-feedback").nth(0)).toBeHidden();
+  await expect(page.getByTestId("cloze-input").nth(0)).not.toHaveAttribute("data-result");
+
+  // A fresh attempt accepts the pipe-separated alternative with case/whitespace normalization.
+  await page.evaluate(() => {
+    window.CRAM_PLAYER.recordGrade = window.__originalRecordGrade;
+  });
+  await openPlayer(page, CLOZE_DECK);
+  await page.getByTestId("cloze-input").nth(0).fill("If-None-Match");
+  await page.getByTestId("cloze-input").nth(1).fill(" 304 NOT MODIFIED ");
+  await page.getByTestId("cloze-check-answer").click();
+  await expect(page.getByTestId("cloze-feedback")).toHaveAttribute("data-result", "correct");
+  await expect(page.getByTestId("cloze-input").nth(0)).toHaveAttribute("data-result", "correct");
+  await expect(page.getByTestId("cloze-input").nth(1)).toHaveAttribute("data-result", "correct");
+  expect(await page.evaluate(() => window.CRAM_PLAYER.getGrade("cloze-card"))).toBe("correct");
 });
 
 async function openPlayer(page, deck) {

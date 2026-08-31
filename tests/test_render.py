@@ -84,6 +84,7 @@ class RendererCliTests(unittest.TestCase):
 
 
 EXPECTED_DIAGNOSTICS = {
+    "cloze-with-empty-alternative.json": "card 0 field 'prompt'",
     "cloze-without-a-blank.json": "card 0 field 'prompt'",
     "deck-id-not-a-slug.json": "deck field 'id'",
     "duplicate-card-ids.json": "card 1 field 'id'",
