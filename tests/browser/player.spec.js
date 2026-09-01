@@ -493,10 +493,11 @@ test.describe("basic cards", () => {
     // When: the learner starts a retry session.
     await page.getByTestId("retry-missed").click();
 
-    // Then: the missed MCQ can be answered again.
-    await expect(page.getByTestId("mcq-check-answer")).toBeVisible();
+    // Then: the missed MCQ starts with fresh, unselected answer controls.
+    await expect(page.getByTestId("mcq-check-answer")).toBeHidden();
     await expect(page.getByTestId("mcq-option").first()).toBeEnabled();
     await page.getByRole("button", { name: "Correct option", exact: true }).click();
+    await expect(page.getByTestId("mcq-check-answer")).toBeVisible();
     await page.getByTestId("mcq-check-answer").click();
     await page.getByTestId("next-card").click();
 
