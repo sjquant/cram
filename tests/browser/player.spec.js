@@ -26,6 +26,24 @@ const RETRY_DECK = {
     },
   ],
 };
+const RETRY_TYPES_DECK = {
+  id: "retry-types-browser-check",
+  title: "Retry card types browser check",
+  cards: [
+    {
+      id: "retry-mcq-card",
+      type: "mcq",
+      prompt: "Which option is correct?",
+      answer: "Correct option",
+      distractors: ["Incorrect option"],
+    },
+    {
+      id: "retry-cloze-card",
+      type: "cloze",
+      prompt: "The correct answer is {{correct}}.",
+    },
+  ],
+};
 const ALL_TYPES_DECK = JSON.parse(
   fs.readFileSync(path.join(ROOT, "fixtures/valid/all-types.json"), "utf8")
 );
@@ -441,13 +459,48 @@ test.describe("basic cards", () => {
     await expect(page.getByTestId("score-value")).toHaveText("1/1");
     await expect(page.getByTestId("no-missed-cards")).toBeVisible();
     await expect(page.getByTestId("retry-missed")).toBeDisabled();
-    expect(await page.evaluate((deckId) => JSON.parse(localStorage.getItem(`fc:${deckId}:v1`)), RETRY_DECK.id)).toEqual({
-      [RETRY_DECK.cards[0].id]: "known",
-      [RETRY_DECK.cards[1].id]: "known",
-    });
 
     // And: selecting the original deck again counts the corrected card as positive.
+    await page.reload();
     await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), RETRY_DECK);
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("next-card").click();
+    await expect(page.getByTestId("score-value")).toHaveText("2/2");
+  });
+
+  test("retries missed MCQ and cloze cards with fresh answer controls", async ({ page }) => {
+    await openPlayer(page, RETRY_TYPES_DECK);
+
+    // Given: an MCQ and cloze card are both answered incorrectly.
+    await page.getByTestId("mcq-option").filter({ hasText: "Incorrect option" }).click();
+    await page.getByTestId("mcq-check-answer").click();
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("cloze-input").fill("wrong");
+    await page.getByTestId("cloze-check-answer").click();
+    await page.getByTestId("next-card").click();
+    await expect(page.getByTestId("score-value")).toHaveText("0/2");
+
+    // When: the learner starts a retry session.
+    await page.getByTestId("retry-missed").click();
+
+    // Then: the missed MCQ can be answered again.
+    await expect(page.getByTestId("mcq-check-answer")).toBeVisible();
+    await expect(page.getByTestId("mcq-option").first()).toBeEnabled();
+    await page.getByRole("button", { name: "Correct option", exact: true }).click();
+    await page.getByTestId("mcq-check-answer").click();
+    await page.getByTestId("next-card").click();
+
+    // And: the missed cloze card can be answered again and completes the retry.
+    await expect(page.getByTestId("cloze-check-answer")).toBeVisible();
+    await expect(page.getByTestId("cloze-input")).toBeEnabled();
+    await page.getByTestId("cloze-input").fill("correct");
+    await page.getByTestId("cloze-check-answer").click();
+    await page.getByTestId("next-card").click();
+    await expect(page.getByTestId("score-value")).toHaveText("2/2");
+
+    // And: the corrected grades persist when the original deck is reopened.
+    await page.reload();
+    await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), RETRY_TYPES_DECK);
     await page.getByTestId("next-card").click();
     await page.getByTestId("next-card").click();
     await expect(page.getByTestId("score-value")).toHaveText("2/2");

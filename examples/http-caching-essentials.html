@@ -809,6 +809,7 @@
           <h2 class="player__score-title" id="score-title" tabindex="-1">Session complete</h2>
           <p class="player__score-value" id="score-value" data-testid="score-value">0/0</p>
           <p class="player__score-summary" id="score-summary">Score: 0/0</p>
+          <button type="button" class="player__reset-button" id="retry-missed" data-testid="retry-missed" data-action="retry-missed">Retry missed cards</button>
           <button type="button" class="player__reset-button" id="reset-progress" data-testid="reset-progress" data-action="reset-progress">Reset progress</button>
         </header>
         <section class="player__review-section" aria-labelledby="missed-heading">
@@ -870,6 +871,7 @@
         scoreTitle: document.getElementById("score-title"),
         scoreValue: document.getElementById("score-value"),
         scoreSummary: document.getElementById("score-summary"),
+        retryMissed: document.getElementById("retry-missed"),
         missedCards: document.getElementById("missed-cards"),
         noMissedCards: document.getElementById("no-missed-cards"),
         navigation: document.querySelector(".player__navigation"),
@@ -886,6 +888,8 @@
       const deckCardMaps = new WeakMap();
       const state = {
         deck: null,
+        sessionCards: [],
+        isRetry: false,
         index: 0,
         cleanup: () => {},
         grades: Object.create(null),
@@ -950,7 +954,7 @@
         // immediately if that module is loaded after the player has started.
         if (state.deck && refs.player.dataset.state === "results") {
           renderScoreScreen();
-        } else if (state.deck && state.deck.cards[state.index]?.type === type) {
+        } else if (state.deck && state.sessionCards[state.index]?.type === type) {
           renderCurrentCard();
         }
       }
@@ -961,6 +965,8 @@
           return;
         }
         state.deck = deck;
+        state.sessionCards = deck.cards;
+        state.isRetry = false;
         state.index = 0;
         state.persistenceWarning = "";
         state.grades = progressStore.load(deck);
@@ -976,6 +982,8 @@
         state.grades = Object.create(null);
         state.hintsUsed = Object.create(null);
         state.persistenceWarning = "";
+        state.sessionCards = state.deck.cards;
+        state.isRetry = false;
         state.index = 0;
         setViewState("ready");
         renderCurrentCard();
@@ -986,12 +994,12 @@
       }
 
       function moveCard(delta) {
-        if (!state.deck || refs.player.dataset.state === "results") return;
-        if (delta > 0 && state.index === state.deck.cards.length - 1) {
+        if (!state.deck || !state.sessionCards.length || refs.player.dataset.state === "results") return;
+        if (delta > 0 && state.index === state.sessionCards.length - 1) {
           showScoreScreen();
           return;
         }
-        const nextIndex = Math.max(0, Math.min(state.deck.cards.length - 1, state.index + delta));
+        const nextIndex = Math.max(0, Math.min(state.sessionCards.length - 1, state.index + delta));
         if (nextIndex === state.index) return;
         state.index = nextIndex;
         renderCurrentCard();
@@ -1002,7 +1010,7 @@
         state.cleanup();
         state.cleanup = () => {};
         state.persistenceWarning = "";
-        const card = state.deck.cards[state.index];
+        const card = state.sessionCards[state.index];
         const type = typeof card.type === "string" && card.type.trim() ? card.type : "unknown";
         const cardType = cardTypes[type];
         const renderer = cardType ? cardType.renderer : renderUnsupportedCard;
@@ -1037,7 +1045,8 @@
         return {
           card,
           index: state.index,
-          total: state.deck.cards.length,
+          total: state.sessionCards.length,
+          isRetry: state.isRetry,
           createElement,
           createPromptElement,
           setStatus,
@@ -1136,7 +1145,7 @@
 
       const MCQ_GRADES = Object.freeze({ CORRECT: "correct", INCORRECT: "incorrect" });
 
-      function renderMcqCard({ card, player, createElement, createPromptElement, setStatus }) {
+      function renderMcqCard({ card, player, createElement, createPromptElement, setStatus, isRetry }) {
         const fragment = document.createDocumentFragment();
         fragment.append(createPromptElement(card.prompt || "This card has no prompt."));
         const hint = createHintControls(card, player, createElement, setStatus);
@@ -1261,7 +1270,7 @@
         checkAnswer.addEventListener("click", handleCheckAnswer);
 
         const existingGrade = player.getGrade(card.id);
-        if (existingGrade === MCQ_GRADES.CORRECT || existingGrade === MCQ_GRADES.INCORRECT) {
+        if (existingGrade === MCQ_GRADES.CORRECT || (existingGrade === MCQ_GRADES.INCORRECT && !isRetry)) {
           applyAnsweredUI(existingGrade);
         }
 
@@ -1270,7 +1279,7 @@
 
       const CLOZE_GRADES = Object.freeze({ CORRECT: "correct", INCORRECT: "incorrect" });
 
-      function renderClozeCard({ card, player, createElement, createPromptElement, setStatus }) {
+      function renderClozeCard({ card, player, createElement, createPromptElement, setStatus, isRetry }) {
         const fragment = document.createDocumentFragment();
         const prompt = createPromptElement("");
         const blanks = [];
@@ -1423,7 +1432,7 @@
         checkAnswer.addEventListener("click", handleCheckAnswer);
 
         const existingGrade = player.getGrade(card.id);
-        if (existingGrade === CLOZE_GRADES.CORRECT || existingGrade === CLOZE_GRADES.INCORRECT) {
+        if (existingGrade === CLOZE_GRADES.CORRECT || (existingGrade === CLOZE_GRADES.INCORRECT && !isRetry)) {
           applyAnsweredUI(existingGrade);
         }
 
@@ -1571,6 +1580,8 @@
         state.cleanup();
         state.cleanup = () => {};
         state.deck = null;
+        state.sessionCards = [];
+        state.isRetry = false;
         setViewState("error");
         state.hintsUsed = Object.create(null);
         refs.title.textContent = "Unable to load deck";
@@ -1607,7 +1618,7 @@
       }
 
       function updateProgress() {
-        const total = state.deck.cards.length;
+        const total = state.sessionCards.length;
         const position = state.index + 1;
         const percent = Math.round((position / total) * 100);
         refs.progress.max = total;
@@ -1620,7 +1631,7 @@
           `${String(position).padStart(width, "0")}/${total}`;
         const focused = document.activeElement;
         refs.previous.disabled = state.index === 0;
-        const card = state.deck.cards[state.index];
+        const card = state.sessionCards[state.index];
         const atLastCard = state.index === total - 1;
         const isSkip = !atLastCard && isAnswerRequiredCard(card) && !state.grades[card.id];
         refs.next.disabled = false;
@@ -1648,13 +1659,14 @@
       }
 
       function renderScoreScreen() {
-        const { deck, grades } = state;
-        const total = deck.cards.length;
-        const score = deck.cards.filter((card) => isPositiveGrade(card, grades[card.id])).length;
-        const missedCards = deck.cards.filter((card) => !isPositiveGrade(card, grades[card.id]));
+        const { grades, sessionCards } = state;
+        const total = sessionCards.length;
+        const score = sessionCards.filter((card) => isPositiveGrade(card, grades[card.id])).length;
+        const missedCards = getMissedCards(sessionCards, grades);
 
         refs.scoreValue.textContent = `${score}/${total}`;
         refs.scoreSummary.textContent = `Score: ${score}/${total}`;
+        refs.retryMissed.disabled = missedCards.length === 0;
         refs.missedCards.replaceChildren(...missedCards.map(createMissedCard));
         refs.missedCards.hidden = missedCards.length === 0;
         refs.noMissedCards.hidden = missedCards.length !== 0;
@@ -1666,6 +1678,28 @@
         refs.announcer.textContent = `Session complete. Score ${score}/${total}.`;
 
         return { score, total };
+      }
+
+      function retryMissedCards() {
+        if (!state.deck || refs.player.dataset.state !== "results") return;
+        const missedCards = getMissedCards(state.sessionCards, state.grades);
+        if (!missedCards.length) {
+          refs.retryMissed.disabled = true;
+          setStatus("Nothing to retry.");
+          return;
+        }
+
+        state.sessionCards = missedCards;
+        state.isRetry = true;
+        state.index = 0;
+        setViewState("ready");
+        renderCurrentCard();
+        refs.cardFrame.focus();
+        setStatus(`Retrying ${missedCards.length} missed card${missedCards.length === 1 ? "" : "s"}.`);
+      }
+
+      function getMissedCards(cards, grades) {
+        return cards.filter((card) => !isPositiveGrade(card, grades[card.id]));
       }
 
       function isPositiveGrade(card, grade) {
@@ -1724,7 +1758,7 @@
 
       function announceCard() {
         const position = state.index + 1;
-        const total = state.deck.cards.length;
+        const total = state.sessionCards.length;
         refs.announcer.textContent = `Card ${position} of ${total}. ${refs.cardContent.textContent}`;
       }
 
@@ -1915,7 +1949,7 @@
         getState: () => ({
           deck: state.deck,
           index: state.index,
-          total: state.deck ? state.deck.cards.length : 0,
+          total: state.sessionCards.length,
           grades: { ...state.grades },
           hintsUsed: { ...state.hintsUsed }
         })
@@ -1959,12 +1993,13 @@
         if (!button) return;
         if (button.dataset.action === "previous") moveCard(-1);
         if (button.dataset.action === "next") moveCard(1);
+        if (button.dataset.action === "retry-missed") retryMissedCards();
         if (button.dataset.action === "reset-progress") resetProgress();
       });
 
       window.addEventListener("storage", (event) => {
         if (!state.deck) return;
-        const currentCard = state.deck.cards[state.index];
+        const currentCard = state.sessionCards[state.index];
         const previousGrade = currentCard && state.grades[currentCard.id];
         const grades = progressStore.sync(state.deck, state.grades, event);
         if (!grades) return;

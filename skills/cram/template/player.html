@@ -870,6 +870,7 @@
       const state = {
         deck: null,
         sessionCards: [],
+        isRetry: false,
         index: 0,
         cleanup: () => {},
         grades: Object.create(null),
@@ -946,6 +947,7 @@
         }
         state.deck = deck;
         state.sessionCards = deck.cards;
+        state.isRetry = false;
         state.index = 0;
         state.persistenceWarning = "";
         state.grades = progressStore.load(deck);
@@ -962,6 +964,7 @@
         state.hintsUsed = Object.create(null);
         state.persistenceWarning = "";
         state.sessionCards = state.deck.cards;
+        state.isRetry = false;
         state.index = 0;
         setViewState("ready");
         renderCurrentCard();
@@ -1024,6 +1027,7 @@
           card,
           index: state.index,
           total: state.sessionCards.length,
+          isRetry: state.isRetry,
           createElement,
           createPromptElement,
           setStatus,
@@ -1122,7 +1126,7 @@
 
       const MCQ_GRADES = Object.freeze({ CORRECT: "correct", INCORRECT: "incorrect" });
 
-      function renderMcqCard({ card, player, createElement, createPromptElement, setStatus }) {
+      function renderMcqCard({ card, player, createElement, createPromptElement, setStatus, isRetry }) {
         const fragment = document.createDocumentFragment();
         fragment.append(createPromptElement(card.prompt || "This card has no prompt."));
         const hint = createHintControls(card, player, createElement, setStatus);
@@ -1247,7 +1251,7 @@
         checkAnswer.addEventListener("click", handleCheckAnswer);
 
         const existingGrade = player.getGrade(card.id);
-        if (existingGrade === MCQ_GRADES.CORRECT || existingGrade === MCQ_GRADES.INCORRECT) {
+        if (existingGrade === MCQ_GRADES.CORRECT || (existingGrade === MCQ_GRADES.INCORRECT && !isRetry)) {
           applyAnsweredUI(existingGrade);
         }
 
@@ -1256,7 +1260,7 @@
 
       const CLOZE_GRADES = Object.freeze({ CORRECT: "correct", INCORRECT: "incorrect" });
 
-      function renderClozeCard({ card, player, createElement, createPromptElement, setStatus }) {
+      function renderClozeCard({ card, player, createElement, createPromptElement, setStatus, isRetry }) {
         const fragment = document.createDocumentFragment();
         const prompt = createPromptElement("");
         const blanks = [];
@@ -1409,7 +1413,7 @@
         checkAnswer.addEventListener("click", handleCheckAnswer);
 
         const existingGrade = player.getGrade(card.id);
-        if (existingGrade === CLOZE_GRADES.CORRECT || existingGrade === CLOZE_GRADES.INCORRECT) {
+        if (existingGrade === CLOZE_GRADES.CORRECT || (existingGrade === CLOZE_GRADES.INCORRECT && !isRetry)) {
           applyAnsweredUI(existingGrade);
         }
 
@@ -1558,6 +1562,7 @@
         state.cleanup = () => {};
         state.deck = null;
         state.sessionCards = [];
+        state.isRetry = false;
         setViewState("error");
         state.hintsUsed = Object.create(null);
         refs.title.textContent = "Unable to load deck";
@@ -1666,6 +1671,7 @@
         }
 
         state.sessionCards = missedCards;
+        state.isRetry = true;
         state.index = 0;
         setViewState("ready");
         renderCurrentCard();
