@@ -283,6 +283,20 @@
       font-size: 0.86rem;
     }
 
+    .player__hint {
+      margin: var(--s3) 0 0;
+      padding: var(--s2);
+      border-left: 2px solid var(--accent);
+      color: var(--ink-soft);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .player__hint-button {
+      align-self: flex-end;
+      margin: var(--s3) 0 0;
+    }
+
     .mcq__options {
       display: flex;
       flex-direction: column;
@@ -803,6 +817,7 @@
         index: 0,
         cleanup: () => {},
         grades: Object.create(null),
+        hintsUsed: Object.create(null),
         persistenceWarning: ""
       };
 
@@ -877,6 +892,7 @@
         state.index = 0;
         state.persistenceWarning = "";
         state.grades = progressStore.load(deck);
+        state.hintsUsed = Object.create(null);
         setViewState("ready");
         refs.title.textContent = deck.title;
         renderCurrentCard();
@@ -886,6 +902,7 @@
         if (!state.deck) return;
         const cleared = progressStore.reset(state.deck);
         state.grades = Object.create(null);
+        state.hintsUsed = Object.create(null);
         state.persistenceWarning = "";
         state.index = 0;
         setViewState("ready");
@@ -963,6 +980,8 @@
       function renderBasicCard({ card, player, createElement, createPromptElement, setStatus }) {
         const fragment = document.createDocumentFragment();
         fragment.append(createPromptElement(card.prompt || "This card has no prompt."));
+        const hint = createHintControls(card, player, createElement, setStatus);
+        if (hint) fragment.append(hint);
 
         const answer = createElement("p", "basic__answer", card.answer || "This card has no answer.");
         answer.dataset.testid = "card-answer";
@@ -1037,6 +1056,8 @@
       function renderMcqCard({ card, player, createElement, createPromptElement, setStatus }) {
         const fragment = document.createDocumentFragment();
         fragment.append(createPromptElement(card.prompt || "This card has no prompt."));
+        const hint = createHintControls(card, player, createElement, setStatus);
+        if (hint) fragment.append(hint);
 
         const answer = typeof card.answer === "string" && card.answer
           ? card.answer
@@ -1183,6 +1204,8 @@
         }
         prompt.append(document.createTextNode(promptText.slice(cursor)));
         fragment.append(prompt);
+        const hint = createHintControls(card, player, createElement, setStatus);
+        if (hint) fragment.append(hint);
 
         const checkAnswer = createElement("button", "cloze__check-button", "Check answers");
         checkAnswer.type = "button";
@@ -1304,6 +1327,44 @@
         return fragment;
       }
 
+      function createHintControls(card, player, createElement, setStatus) {
+        const hintText = typeof card.hint === "string" && card.hint.trim()
+          ? card.hint
+          : "";
+        if (!hintText) return null;
+
+        const fragment = document.createDocumentFragment();
+        const hint = createElement("p", "player__hint", hintText);
+        hint.dataset.testid = "card-hint";
+        hint.hidden = true;
+
+        const reveal = createElement("button", "player__hint-button", "Show hint");
+        reveal.type = "button";
+        reveal.dataset.testid = "show-hint";
+        reveal.setAttribute("aria-expanded", "false");
+
+        function applyHintUI() {
+          hint.hidden = false;
+          reveal.hidden = true;
+          reveal.setAttribute("aria-expanded", "true");
+        }
+
+        function handleHintClick() {
+          try {
+            player.recordHintUsed(card.id);
+          } catch (error) {
+            setStatus(error instanceof Error ? error.message : "The hint could not be recorded.", true);
+            return;
+          }
+          applyHintUI();
+        }
+
+        reveal.addEventListener("click", handleHintClick);
+        if (player.getHintUsed(card.id)) applyHintUI();
+        fragment.append(hint, reveal);
+        return fragment;
+      }
+
       function renderPromptCard({ card }) {
         const fragment = document.createDocumentFragment();
         fragment.append(createPromptElement(card.prompt || "This card has no prompt."));
@@ -1359,15 +1420,38 @@
         return state.grades[cardId];
       }
 
-      // Renderers can grade their own card and restore its grade, but they cannot
-      // replace the active deck, mutate the registry, or inspect shell state.
-      const rendererPlayer = Object.freeze({ recordGrade, getGrade });
+      function recordHintUsed(cardId) {
+        if (typeof cardId !== "string" || !cardId) {
+          throw new TypeError("A hint needs a card id.");
+        }
+        if (state.deck) {
+          const card = state.deck.cards.find((candidate) => candidate && candidate.id === cardId);
+          if (!card) throw new Error("That card is not in the current deck.");
+        }
+        state.hintsUsed[cardId] = true;
+        return true;
+      }
+
+      function getHintUsed(cardId) {
+        return Boolean(state.hintsUsed[cardId]);
+      }
+
+      // Renderers can grade their own card, track hint use, and restore those values,
+      // but they cannot replace the active deck, mutate the registry, or inspect shell
+      // state.
+      const rendererPlayer = Object.freeze({
+        recordGrade,
+        getGrade,
+        recordHintUsed,
+        getHintUsed
+      });
 
       function showDeckError(message) {
         state.cleanup();
         state.cleanup = () => {};
         state.deck = null;
         setViewState("error");
+        state.hintsUsed = Object.create(null);
         refs.title.textContent = "Unable to load deck";
         refs.progress.max = 1;
         refs.progress.value = 0;
@@ -1485,6 +1569,7 @@
         item.append(prompt);
         if (card.answer) item.append(createReviewField("Answer", card.answer));
         if (card.explanation) item.append(createReviewField("Explanation", card.explanation));
+        if (getHintUsed(card.id)) item.append(createReviewField("Hint", "Needed a hint"));
         return item;
       }
 
@@ -1704,11 +1789,14 @@
         setDeck,
         recordGrade,
         getGrade,
+        recordHintUsed,
+        getHintUsed,
         getState: () => ({
           deck: state.deck,
           index: state.index,
           total: state.deck ? state.deck.cards.length : 0,
-          grades: { ...state.grades }
+          grades: { ...state.grades },
+          hintsUsed: { ...state.hintsUsed }
         })
       };
 

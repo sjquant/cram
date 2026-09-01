@@ -11,6 +11,39 @@ const BASIC_DECK = JSON.parse(
 const ALL_TYPES_DECK = JSON.parse(
   fs.readFileSync(path.join(ROOT, "fixtures/valid/all-types.json"), "utf8")
 );
+const HINT_DECK = {
+  id: "hint-browser-check",
+  title: "Hint browser check",
+  cards: [
+    {
+      id: "hint-basic-card",
+      type: "basic",
+      prompt: "What does a coroutine call return?",
+      answer: "A coroutine object.",
+      hint: "The function body has not run yet.",
+    },
+    {
+      id: "hint-mcq-card",
+      type: "mcq",
+      prompt: "Which directive prevents storage?",
+      answer: "no-store",
+      distractors: ["no-cache"],
+      hint: "Think about the difference between storing and reusing.",
+    },
+    {
+      id: "hint-cloze-card",
+      type: "cloze",
+      prompt: "A cache revalidates with {{If-None-Match}}.",
+      hint: "It carries the stored entity tag.",
+    },
+    {
+      id: "without-hint-card",
+      type: "basic",
+      prompt: "Which card has no optional hint?",
+      answer: "This one.",
+    },
+  ],
+};
 const UNSUPPORTED_DECK = JSON.parse(
   fs.readFileSync(path.join(ROOT, "fixtures/invalid/unknown-card-type.json"), "utf8")
 );
@@ -450,6 +483,103 @@ test.describe("basic cards", () => {
       // Then: the player starts with empty progress instead of throwing.
       expect(await page.evaluate(() => window.CRAM_PLAYER.getState().grades)).toEqual({});
     }
+  });
+});
+
+test.describe("hints", () => {
+  test("reveals and records hints across basic, MCQ, and cloze cards", async ({ page }) => {
+    await openPlayer(page, HINT_DECK);
+
+    // Given: a basic card with a hint starts with the hint hidden and unrecorded.
+    await expect(page.getByTestId("show-hint")).toBeVisible();
+    await expect(page.getByTestId("card-hint")).toBeHidden();
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getHintUsed("hint-basic-card"))).toBe(false);
+
+    // When: the learner requests the hint, then marks the basic card missed.
+    await page.getByTestId("show-hint").click();
+
+    // Then: the hint is revealed and recorded independently of the grade.
+    await expect(page.getByTestId("card-hint")).toHaveText(HINT_DECK.cards[0].hint);
+    await expect(page.getByTestId("card-hint")).toBeVisible();
+    await expect(page.getByTestId("show-hint")).toBeHidden();
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getHintUsed("hint-basic-card"))).toBe(true);
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-missed").click();
+
+    // Given: the MCQ card also has a hidden hint.
+    await page.getByTestId("next-card").click();
+    await expect(page.getByTestId("show-hint")).toBeVisible();
+    await expect(page.getByTestId("card-hint")).toBeHidden();
+
+    // When: the learner requests it and submits an incorrect option.
+    await page.getByTestId("show-hint").click();
+    await page.getByTestId("mcq-option").filter({ hasText: "no-cache" }).click();
+    await page.getByTestId("mcq-check-answer").click();
+
+    // Then: that renderer records the same per-card hint state.
+    await expect(page.getByTestId("card-hint")).toHaveText(HINT_DECK.cards[1].hint);
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getHintUsed("hint-mcq-card"))).toBe(true);
+
+    // Given/When: the cloze learner requests its hint and submits an incorrect answer.
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("show-hint").click();
+    await page.getByTestId("cloze-input").fill("wrong");
+    await page.getByTestId("cloze-check-answer").click();
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getHintUsed("hint-cloze-card"))).toBe(true);
+
+    // Then: a card without a hint renders no hint affordance at all.
+    await page.getByTestId("next-card").click();
+    await expect(page.getByTestId("show-hint")).toHaveCount(0);
+    await expect(page.getByTestId("card-hint")).toHaveCount(0);
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-missed").click();
+    await page.getByTestId("next-card").click();
+
+    // And: the missed-card review identifies exactly the cards that needed hints.
+    await expect(page.getByTestId("score-value")).toHaveText("0/4");
+    await expect(page.getByTestId("missed-hint")).toHaveCount(3);
+    await expect(page.getByTestId("missed-hint").first()).toHaveText("Hint: Needed a hint");
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getState().hintsUsed)).toEqual({
+      "hint-basic-card": true,
+      "hint-mcq-card": true,
+      "hint-cloze-card": true,
+    });
+
+    // When: the learner resets progress from the score screen.
+    await page.getByTestId("reset-progress").click();
+
+    // Then: the session-only hint state is cleared with the rest of the session.
+    await expect(page.getByTestId("show-hint")).toBeVisible();
+    await expect(page.getByTestId("card-hint")).toBeHidden();
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getState().hintsUsed)).toEqual({});
+  });
+
+  test("does not persist hint usage in deck progress", async ({ page }) => {
+    await openPlayer(page, HINT_DECK);
+
+    // Given/When: the learner requests a hint before recording a grade.
+    await page.getByTestId("show-hint").click();
+
+    // Then: hint usage stays in memory and creates no localStorage entry.
+    expect(await page.evaluate((deckId) => localStorage.getItem(`fc:${deckId}:v1`), HINT_DECK.id)).toBeNull();
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getHintUsed("hint-basic-card"))).toBe(true);
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-missed").click();
+    expect(await page.evaluate((deckId) => JSON.parse(localStorage.getItem(`fc:${deckId}:v1`)), HINT_DECK.id)).toEqual({
+      "hint-basic-card": "missed",
+    });
+
+    // When: the page reloads and selects the same deck.
+    await page.reload();
+    await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), HINT_DECK);
+
+    // Then: the hint starts hidden again while grade persistence remains independent.
+    await expect(page.getByTestId("show-hint")).toBeVisible();
+    await expect(page.getByTestId("card-hint")).toBeHidden();
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getHintUsed("hint-basic-card"))).toBe(false);
+    expect(await page.evaluate((deckId) => JSON.parse(localStorage.getItem(`fc:${deckId}:v1`)), HINT_DECK.id)).toEqual({
+      "hint-basic-card": "missed",
+    });
   });
 });
 
