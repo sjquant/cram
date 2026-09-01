@@ -13,6 +13,7 @@
       --rule: #ddd5c4;
       --rule-strong: #c4bAa4;
       --accent: #b5342b;
+      --positive: #356b4a;
       --serif: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino,
         Georgia, AppleMyungjo, "Nanum Myeongjo", Batang, "Hiragino Mincho ProN",
         "Yu Mincho", serif;
@@ -37,6 +38,7 @@
         --rule: #302b23;
         --rule-strong: #473f33;
         --accent: #e0645a;
+        --positive: #8fc9a1;
       }
     }
 
@@ -186,6 +188,7 @@
     .player__progress-bar::-moz-progress-bar { background: var(--accent); }
 
     .player__main {
+      position: relative;
       display: flex;
       flex: 1;
       flex-direction: column;
@@ -623,6 +626,19 @@
 
     .player__score-screen[hidden] { display: none; }
 
+    .player__review-scroll-overlay {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 1;
+      height: 3.25rem;
+      background: linear-gradient(to bottom, transparent, var(--paper));
+      pointer-events: none;
+    }
+
+    .player__review-scroll-overlay[hidden] { display: none; }
+
     .player__score-header {
       padding-bottom: var(--s4);
       border-bottom: 1px solid var(--rule);
@@ -652,9 +668,132 @@
       color: var(--ink-soft);
     }
 
-    .player__reset-button {
+    .player__score-meter {
+      display: flex;
+      width: 100%;
+      height: 0.55rem;
       margin-top: var(--s3);
-      padding-inline: 0;
+      overflow: hidden;
+      border-radius: 999px;
+      background: var(--rule);
+    }
+
+    .player__score-meter-segment {
+      flex: 0 0 0;
+      transition: flex-basis 380ms cubic-bezier(0.2, 0.7, 0.3, 1);
+    }
+
+    .player__score-meter-segment--correct { background: var(--positive); }
+
+    .player__score-meter-segment--missed { background: var(--accent); }
+
+    .player__score-meter-key {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: var(--s1) var(--s3);
+      margin-top: 0.6rem;
+      color: var(--ink-soft);
+      font-size: 0.8rem;
+    }
+
+    .player__score-meter-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .player__score-meter-swatch {
+      width: 0.55rem;
+      height: 0.55rem;
+      flex: none;
+      border-radius: 50%;
+    }
+
+    .player__score-meter-swatch--correct { background: var(--positive); }
+
+    .player__score-meter-swatch--missed { background: var(--accent); }
+
+    .player__score-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--s2);
+      margin-top: var(--s3);
+    }
+
+    .player__review-scroll-cue {
+      position: absolute;
+      right: var(--s2);
+      bottom: var(--s2);
+      z-index: 2;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      min-height: 2rem;
+      border: 1px solid var(--rule-strong);
+      border-radius: 999px;
+      padding: 0.35rem 0.7rem;
+      color: var(--ink-soft);
+      background: var(--paper);
+      box-shadow: 0 0.25rem 1rem rgb(31 28 24 / 14%);
+      font-size: 0.78rem;
+      pointer-events: auto;
+    }
+
+    .player__review-scroll-cue:hover:not(:disabled) {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .player__review-scroll-cue[hidden] { display: none; }
+
+    .player__score-button {
+      min-height: 2.75rem;
+      border: 1px solid var(--rule-strong);
+      padding: 0.65rem 1rem;
+    }
+
+    .player__score-button--primary {
+      border-color: var(--ink);
+      color: var(--paper);
+      background: var(--ink);
+    }
+
+    .player__score-button--primary:not(:disabled):hover {
+      border-color: var(--accent);
+      color: var(--paper);
+      background: var(--accent);
+    }
+
+    .player__score-button--secondary {
+      color: var(--ink-soft);
+      background: transparent;
+    }
+
+    .player__score-button--secondary:hover:not(:disabled) {
+      border-color: var(--ink-soft);
+      color: var(--ink);
+    }
+
+    .player__score-button[hidden] {
+      display: none;
+    }
+
+    @media (max-width: 32rem) {
+      .player__review-scroll-cue {
+        right: 0.75rem;
+        bottom: 0.75rem;
+      }
+
+      .player__score-actions {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .player__score-button {
+        width: 100%;
+      }
     }
 
     .player__review-section { padding-top: var(--s4); }
@@ -674,7 +813,8 @@
     }
 
     .player__missed-card {
-      padding-left: var(--s1);
+      border-left: 2px solid var(--accent);
+      padding-left: var(--s2);
     }
 
     .player__missed-prompt {
@@ -713,6 +853,23 @@
       clip: rect(0, 0, 0, 0);
       white-space: nowrap;
       border: 0;
+    }
+
+    .player[data-state="results"] .player__status {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      min-height: 0;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .player__score-meter-segment { transition: none; }
     }
 
     /* Paper grain, painted behind the text so it adds tactility without
@@ -803,13 +960,30 @@
         </div>
       </article>
 
-      <section class="player__score-screen" id="score-screen" data-testid="score-screen" hidden aria-labelledby="score-title">
+      <section class="player__score-screen" id="score-screen" data-testid="score-screen" tabindex="-1" hidden aria-labelledby="score-title">
         <header class="player__score-header">
-          <span class="player__card-type">Session complete</span>
+          <span class="player__card-type">Results</span>
           <h2 class="player__score-title" id="score-title" tabindex="-1">Session complete</h2>
           <p class="player__score-value" id="score-value" data-testid="score-value">0/0</p>
-          <p class="player__score-summary" id="score-summary">Score: 0/0</p>
-          <button type="button" class="player__reset-button" id="reset-progress" data-testid="reset-progress" data-action="reset-progress">Reset progress</button>
+          <p class="player__score-summary" id="score-summary" data-testid="score-summary">0 correct · Nothing to review</p>
+          <div class="player__score-meter" id="score-meter" data-testid="score-meter" aria-hidden="true">
+            <span class="player__score-meter-segment player__score-meter-segment--correct" id="score-correct-segment"></span>
+            <span class="player__score-meter-segment player__score-meter-segment--missed" id="score-missed-segment"></span>
+          </div>
+          <div class="player__score-meter-key" aria-label="Score breakdown">
+            <span class="player__score-meter-label">
+              <span class="player__score-meter-swatch player__score-meter-swatch--correct" aria-hidden="true"></span>
+              <span id="score-correct-label" data-testid="score-correct-label">0 correct</span>
+            </span>
+            <span class="player__score-meter-label">
+              <span class="player__score-meter-swatch player__score-meter-swatch--missed" aria-hidden="true"></span>
+              <span id="score-missed-label" data-testid="score-missed-label">Nothing to review</span>
+            </span>
+          </div>
+          <div class="player__score-actions">
+            <button type="button" class="player__score-button player__score-button--primary" id="retry-missed" data-testid="retry-missed" data-action="retry-missed">Retry missed cards</button>
+            <button type="button" class="player__score-button player__score-button--secondary" id="reset-progress" data-testid="reset-progress" data-action="reset-progress">Reset progress</button>
+          </div>
         </header>
         <section class="player__review-section" aria-labelledby="missed-heading">
           <h3 class="player__review-heading" id="missed-heading">Review missed cards</h3>
@@ -817,6 +991,12 @@
           <p class="player__no-missed-cards" id="no-missed-cards" data-testid="no-missed-cards" hidden>Perfect score — nothing to review.</p>
         </section>
       </section>
+
+      <div class="player__review-scroll-overlay" id="review-scroll-overlay" hidden>
+        <button type="button" class="player__review-scroll-cue" id="review-scroll-cue" data-testid="review-scroll-cue" data-action="scroll-review" aria-controls="missed-cards" aria-label="Scroll down to see more missed cards">
+          More cards below <span aria-hidden="true">↓</span>
+        </button>
+      </div>
 
       <footer class="player__footer">
         <nav class="player__navigation" aria-label="Card navigation">
@@ -870,6 +1050,13 @@
         scoreTitle: document.getElementById("score-title"),
         scoreValue: document.getElementById("score-value"),
         scoreSummary: document.getElementById("score-summary"),
+        scoreCorrectSegment: document.getElementById("score-correct-segment"),
+        scoreMissedSegment: document.getElementById("score-missed-segment"),
+        scoreCorrectLabel: document.getElementById("score-correct-label"),
+        scoreMissedLabel: document.getElementById("score-missed-label"),
+        reviewScrollOverlay: document.getElementById("review-scroll-overlay"),
+        reviewScrollCue: document.getElementById("review-scroll-cue"),
+        retryMissed: document.getElementById("retry-missed"),
         missedCards: document.getElementById("missed-cards"),
         noMissedCards: document.getElementById("no-missed-cards"),
         navigation: document.querySelector(".player__navigation"),
@@ -886,6 +1073,8 @@
       const deckCardMaps = new WeakMap();
       const state = {
         deck: null,
+        sessionCards: [],
+        isRetry: false,
         index: 0,
         cleanup: () => {},
         grades: Object.create(null),
@@ -950,7 +1139,7 @@
         // immediately if that module is loaded after the player has started.
         if (state.deck && refs.player.dataset.state === "results") {
           renderScoreScreen();
-        } else if (state.deck && state.deck.cards[state.index]?.type === type) {
+        } else if (state.deck && state.sessionCards[state.index]?.type === type) {
           renderCurrentCard();
         }
       }
@@ -961,6 +1150,8 @@
           return;
         }
         state.deck = deck;
+        state.sessionCards = deck.cards;
+        state.isRetry = false;
         state.index = 0;
         state.persistenceWarning = "";
         state.grades = progressStore.load(deck);
@@ -976,6 +1167,8 @@
         state.grades = Object.create(null);
         state.hintsUsed = Object.create(null);
         state.persistenceWarning = "";
+        state.sessionCards = state.deck.cards;
+        state.isRetry = false;
         state.index = 0;
         setViewState("ready");
         renderCurrentCard();
@@ -986,12 +1179,12 @@
       }
 
       function moveCard(delta) {
-        if (!state.deck || refs.player.dataset.state === "results") return;
-        if (delta > 0 && state.index === state.deck.cards.length - 1) {
+        if (!state.deck || !state.sessionCards.length || refs.player.dataset.state === "results") return;
+        if (delta > 0 && state.index === state.sessionCards.length - 1) {
           showScoreScreen();
           return;
         }
-        const nextIndex = Math.max(0, Math.min(state.deck.cards.length - 1, state.index + delta));
+        const nextIndex = Math.max(0, Math.min(state.sessionCards.length - 1, state.index + delta));
         if (nextIndex === state.index) return;
         state.index = nextIndex;
         renderCurrentCard();
@@ -1002,7 +1195,7 @@
         state.cleanup();
         state.cleanup = () => {};
         state.persistenceWarning = "";
-        const card = state.deck.cards[state.index];
+        const card = state.sessionCards[state.index];
         const type = typeof card.type === "string" && card.type.trim() ? card.type : "unknown";
         const cardType = cardTypes[type];
         const renderer = cardType ? cardType.renderer : renderUnsupportedCard;
@@ -1037,7 +1230,7 @@
         return {
           card,
           index: state.index,
-          total: state.deck.cards.length,
+          total: state.sessionCards.length,
           createElement,
           createPromptElement,
           setStatus,
@@ -1557,12 +1750,21 @@
         return Boolean(state.hintsUsed[cardId]);
       }
 
+      // Renderers see a fresh attempt for a missed card during retry, while the
+      // public grade API and score calculations retain the persisted value.
+      function getRendererGrade(cardId) {
+        const grade = getGrade(cardId);
+        const card = state.sessionCards[state.index];
+        if (!state.isRetry || !card || card.id !== cardId) return grade;
+        return isPositiveGrade(card, grade) ? grade : undefined;
+      }
+
       // Renderers can grade their own card, track hint use, and restore those values,
       // but they cannot replace the active deck, mutate the registry, or inspect shell
       // state.
       const rendererPlayer = Object.freeze({
         recordGrade,
-        getGrade,
+        getGrade: getRendererGrade,
         recordHintUsed,
         getHintUsed
       });
@@ -1571,6 +1773,8 @@
         state.cleanup();
         state.cleanup = () => {};
         state.deck = null;
+        state.sessionCards = [];
+        state.isRetry = false;
         setViewState("error");
         state.hintsUsed = Object.create(null);
         refs.title.textContent = "Unable to load deck";
@@ -1607,7 +1811,7 @@
       }
 
       function updateProgress() {
-        const total = state.deck.cards.length;
+        const total = state.sessionCards.length;
         const position = state.index + 1;
         const percent = Math.round((position / total) * 100);
         refs.progress.max = total;
@@ -1620,7 +1824,7 @@
           `${String(position).padStart(width, "0")}/${total}`;
         const focused = document.activeElement;
         refs.previous.disabled = state.index === 0;
-        const card = state.deck.cards[state.index];
+        const card = state.sessionCards[state.index];
         const atLastCard = state.index === total - 1;
         const isSkip = !atLastCard && isAnswerRequiredCard(card) && !state.grades[card.id];
         refs.next.disabled = false;
@@ -1648,13 +1852,29 @@
       }
 
       function renderScoreScreen() {
-        const { deck, grades } = state;
-        const total = deck.cards.length;
-        const score = deck.cards.filter((card) => isPositiveGrade(card, grades[card.id])).length;
-        const missedCards = deck.cards.filter((card) => !isPositiveGrade(card, grades[card.id]));
+        const { grades, sessionCards } = state;
+        const total = sessionCards.length;
+        const score = sessionCards.filter((card) => isPositiveGrade(card, grades[card.id])).length;
+        const missedCards = getMissedCards(sessionCards, grades);
 
         refs.scoreValue.textContent = `${score}/${total}`;
-        refs.scoreSummary.textContent = `Score: ${score}/${total}`;
+        const missedCount = missedCards.length;
+        refs.scoreSummary.textContent = missedCount
+          ? `${score} correct · ${missedCount} to review`
+          : `All ${total} correct · Nothing to review`;
+        const correctShare = total ? (score / total) * 100 : 0;
+        const missedShare = total ? (missedCount / total) * 100 : 0;
+        refs.scoreCorrectSegment.style.flexBasis = `${correctShare}%`;
+        refs.scoreMissedSegment.style.flexBasis = `${missedShare}%`;
+        refs.scoreCorrectLabel.textContent = `${score} correct`;
+        refs.scoreMissedLabel.textContent = missedCount
+          ? `${missedCount} to review`
+          : "Nothing to review";
+        refs.retryMissed.disabled = missedCount === 0;
+        refs.retryMissed.hidden = missedCount === 0;
+        refs.retryMissed.textContent = missedCount
+          ? `Retry ${missedCount} missed card${missedCount === 1 ? "" : "s"}`
+          : "Retry missed cards";
         refs.missedCards.replaceChildren(...missedCards.map(createMissedCard));
         refs.missedCards.hidden = missedCards.length === 0;
         refs.noMissedCards.hidden = missedCards.length !== 0;
@@ -1664,8 +1884,31 @@
         refs.progressLabel.textContent = `Session complete: ${score} of ${total}`;
         refs.progressPercent.textContent = "100%";
         refs.announcer.textContent = `Session complete. Score ${score}/${total}.`;
+        updateReviewScrollCue();
 
         return { score, total };
+      }
+
+      function retryMissedCards() {
+        if (!state.deck || refs.player.dataset.state !== "results") return;
+        const missedCards = getMissedCards(state.sessionCards, state.grades);
+        if (!missedCards.length) {
+          refs.retryMissed.disabled = true;
+          setStatus("Nothing to retry.");
+          return;
+        }
+
+        state.sessionCards = missedCards;
+        state.isRetry = true;
+        state.index = 0;
+        setViewState("ready");
+        renderCurrentCard();
+        refs.cardFrame.focus();
+        setStatus(`Retrying ${missedCards.length} missed card${missedCards.length === 1 ? "" : "s"}.`);
+      }
+
+      function getMissedCards(cards, grades) {
+        return cards.filter((card) => !isPositiveGrade(card, grades[card.id]));
       }
 
       function isPositiveGrade(card, grade) {
@@ -1710,6 +1953,34 @@
         refs.cardFrame.hidden = showingResults;
         refs.navigation.hidden = showingResults;
         refs.scoreScreen.hidden = !showingResults;
+        if (showingResults) {
+          refs.scoreScreen.scrollTop = 0;
+          updateReviewScrollCue();
+        } else {
+          refs.reviewScrollOverlay.hidden = true;
+        }
+      }
+
+      function updateReviewScrollCue() {
+        const panel = refs.scoreScreen;
+        const maxScrollTop = Math.max(0, panel.scrollHeight - panel.clientHeight);
+        const hasReviewCards = refs.missedCards.children.length > 0;
+        const hasMore = hasReviewCards && maxScrollTop > 1 && panel.scrollTop < maxScrollTop - 1;
+        refs.reviewScrollOverlay.hidden = !hasMore;
+      }
+
+      function scrollReview() {
+        if (refs.scoreScreen.hidden) return;
+        refs.scoreScreen.focus({ preventScroll: true });
+        const maxScrollTop = Math.max(0, refs.scoreScreen.scrollHeight - refs.scoreScreen.clientHeight);
+        const targetTop = Math.min(
+          maxScrollTop,
+          refs.scoreScreen.scrollTop + refs.scoreScreen.clientHeight * 0.85
+        );
+        refs.scoreScreen.scrollTo({
+          top: targetTop,
+          behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"
+        });
       }
 
       // Reaching the first or last card disables the button that got you there, which
@@ -1724,7 +1995,7 @@
 
       function announceCard() {
         const position = state.index + 1;
-        const total = state.deck.cards.length;
+        const total = state.sessionCards.length;
         refs.announcer.textContent = `Card ${position} of ${total}. ${refs.cardContent.textContent}`;
       }
 
@@ -1915,7 +2186,7 @@
         getState: () => ({
           deck: state.deck,
           index: state.index,
-          total: state.deck ? state.deck.cards.length : 0,
+          total: state.sessionCards.length,
           grades: { ...state.grades },
           hintsUsed: { ...state.hintsUsed }
         })
@@ -1959,12 +2230,17 @@
         if (!button) return;
         if (button.dataset.action === "previous") moveCard(-1);
         if (button.dataset.action === "next") moveCard(1);
+        if (button.dataset.action === "retry-missed") retryMissedCards();
         if (button.dataset.action === "reset-progress") resetProgress();
+        if (button.dataset.action === "scroll-review") scrollReview();
       });
+
+      refs.scoreScreen.addEventListener("scroll", updateReviewScrollCue, { passive: true });
+      window.addEventListener("resize", updateReviewScrollCue);
 
       window.addEventListener("storage", (event) => {
         if (!state.deck) return;
-        const currentCard = state.deck.cards[state.index];
+        const currentCard = state.sessionCards[state.index];
         const previousGrade = currentCard && state.grades[currentCard.id];
         const grades = progressStore.sync(state.deck, state.grades, event);
         if (!grades) return;
