@@ -662,6 +662,67 @@ test.describe("hints", () => {
   });
 });
 
+test.describe("card controls", () => {
+  test("uses state-aware keyboard shortcuts for help, answers, and navigation", async ({ page }) => {
+    await openPlayer(page, HINT_DECK);
+
+    // Given: the current card advertises its help and navigation shortcuts.
+    await expect(page.getByTestId("show-hint")).toHaveAttribute("aria-keyshortcuts", "H");
+    await expect(page.getByTestId("reveal-answer")).toHaveAttribute("aria-keyshortcuts", "A");
+    await expect(page.getByTestId("previous-card")).toHaveAttribute("aria-keyshortcuts", "P ArrowLeft");
+    await expect(page.getByTestId("next-card")).toHaveAttribute("aria-keyshortcuts", "N ArrowRight");
+    await expect(page.getByRole("group", { name: "Optional hint" })).toBeVisible();
+    await expect(page.getByRole("group", { name: "Answer actions" })).toBeVisible();
+
+    // When: the learner uses the card shortcuts instead of pointer clicks.
+    await page.keyboard.press("h");
+    await page.keyboard.press("a");
+
+    // Then: the same hint and answer state is reached without changing grading.
+    await expect(page.getByTestId("card-hint")).toBeVisible();
+    await expect(page.getByTestId("card-answer")).toBeVisible();
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getGrade("hint-basic-card"))).toBeUndefined();
+
+    // And: mnemonic navigation follows the same bounds as the arrow keys.
+    await page.keyboard.press("n");
+    await expect(page.getByTestId("card-prompt")).toHaveText(HINT_DECK.cards[1].prompt);
+    await page.keyboard.press("p");
+    await expect(page.getByTestId("card-prompt")).toHaveText(HINT_DECK.cards[0].prompt);
+  });
+
+  test("does not trigger global shortcuts while typing a cloze answer", async ({ page }) => {
+    await openPlayer(page, HINT_DECK);
+
+    // Given: the learner has navigated to a cloze card with an available hint.
+    await page.keyboard.press("n");
+    await page.keyboard.press("n");
+    const input = page.getByTestId("cloze-input").first();
+
+    // When: the learner types the shortcut letter into the answer field.
+    await input.focus();
+    await page.keyboard.press("h");
+
+    // Then: the input receives the character and the hint remains hidden.
+    await expect(input).toHaveValue("h");
+    await expect(page.getByTestId("card-hint")).toBeHidden();
+  });
+
+  test("reveals the MCQ primary action after the learner chooses an option", async ({ page }) => {
+    await openPlayer(page, HINT_DECK);
+
+    // Given: the learner is on an MCQ card before making a choice.
+    await page.keyboard.press("n");
+    await expect(page.getByTestId("mcq-check-answer")).toBeHidden();
+
+    // When: the learner selects an option.
+    await page.getByTestId("mcq-option").first().click();
+
+    // Then: only the now-relevant check action is presented as the next step.
+    await expect(page.getByTestId("mcq-check-answer")).toBeVisible();
+    await expect(page.getByRole("group", { name: "Answer actions" })).toBeVisible();
+  });
+});
+
 test("renders a fallback for unsupported card types", async ({ page }) => {
   await openPlayer(page, UNSUPPORTED_DECK);
 

@@ -115,6 +115,19 @@
       background: none;
     }
 
+    /* Keep one response action visually stronger than optional card help. */
+    .player__primary-action {
+      align-self: flex-end;
+      color: var(--paper);
+      background: var(--ink);
+      padding-inline: 1.1rem;
+    }
+
+    .player__primary-action:hover:not(:disabled) {
+      color: var(--paper);
+      background: var(--accent);
+    }
+
     a { color: var(--accent); }
 
     .player {
@@ -260,7 +273,55 @@
       min-width: 0;
     }
 
-    /* Content fills the card frame; action buttons keep their intrinsic width. */
+    .player__action-rail {
+      display: flex;
+      width: 100%;
+      flex-direction: column;
+      gap: var(--s2);
+      margin-top: var(--s3);
+    }
+
+    .player__support-actions {
+      display: flex;
+      width: 100%;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.35rem;
+    }
+
+    .player__support-actions .player__hint {
+      margin: 0;
+    }
+
+    .player__hint-button {
+      align-self: flex-start;
+      margin: 0;
+      padding-inline: 0;
+      font-size: 0.84rem;
+    }
+
+    .player__response-actions {
+      display: flex;
+      width: 100%;
+      flex-direction: column;
+      align-items: stretch;
+      gap: var(--s2);
+    }
+
+    .player__shortcut {
+      margin-left: 0.35rem;
+      padding: 0.05rem 0.28rem;
+      border: 1px solid var(--rule);
+      border-radius: 0.2rem;
+      color: var(--ink-soft);
+      background: var(--paper);
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+
+    /* Content and action rails span the card; individual controls keep their width. */
     .player__card-content > :not(button) {
       width: 100%;
       max-width: none;
@@ -292,11 +353,6 @@
       overflow-wrap: anywhere;
     }
 
-    .player__hint-button {
-      align-self: flex-end;
-      margin: var(--s3) 0 0;
-    }
-
     .mcq__options {
       display: flex;
       flex-direction: column;
@@ -309,7 +365,7 @@
       display: flex;
       flex-direction: column;
       align-items: stretch;
-      margin: var(--s3) 0 0;
+      margin: 0;
     }
 
     .mcq__option {
@@ -362,15 +418,7 @@
     }
 
     .mcq__check-button {
-      align-self: flex-end;
-      margin: var(--s3) 0 0;
-      color: var(--paper);
-      background: var(--ink);
-    }
-
-    .mcq__check-button:hover:not(:disabled) {
-      color: var(--paper);
-      background: var(--accent);
+      margin: 0;
     }
 
     .cloze__input {
@@ -397,15 +445,7 @@
     }
 
     .cloze__check-button {
-      align-self: flex-end;
-      margin: var(--s3) 0 0;
-      color: var(--paper);
-      background: var(--ink);
-    }
-
-    .cloze__check-button:hover:not(:disabled) {
-      color: var(--paper);
-      background: var(--accent);
+      margin: 0;
     }
 
     .cloze__feedback {
@@ -442,7 +482,7 @@
     }
 
     .basic__answer {
-      margin: var(--s3) 0 0;
+      margin: 0;
       padding-top: var(--s2);
       border-top: 1px solid var(--rule);
       font-family: var(--serif);
@@ -453,23 +493,31 @@
     }
 
     .basic__reveal-button {
-      align-self: flex-end;
-      margin: var(--s3) 0 0;
+      margin: 0;
     }
 
     .basic__grading-buttons {
-      display: flex;
+      display: grid;
+      width: min(100%, 22rem);
+      align-self: flex-end;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: var(--s2);
-      justify-content: flex-end;
-      margin: var(--s3) 0 0;
+      margin: 0;
     }
 
     .basic__grading-buttons[hidden] {
       display: none;
     }
 
+    .basic__grade-button {
+      min-height: 2.75rem;
+      border: 1px solid var(--rule);
+      color: var(--ink);
+    }
+
     .basic__grade-button[aria-pressed="true"] {
       color: var(--accent);
+      border-color: var(--accent);
     }
 
     .player__footer {
@@ -692,6 +740,11 @@
         --shell-gutter: clamp(1.5rem, 6vh, 3rem);
       }
       .player__card { min-height: 12rem; }
+      .player__response-actions > .player__primary-action,
+      .basic__grading-buttons {
+        align-self: stretch;
+        width: 100%;
+      }
       /* The navigation hint is intentionally hidden on compact screens. Collapse
          it too, so the action row ends at the same shell gutter as the header starts. */
       .player__status--navigation-hint { display: none; }
@@ -748,8 +801,8 @@
 
       <footer class="player__footer">
         <nav class="player__navigation" aria-label="Card navigation">
-          <button type="button" id="previous-card" data-testid="previous-card" data-action="previous" aria-label="Previous card" disabled>← Previous</button>
-          <button type="button" id="next-card" data-testid="next-card" class="player__next-button player__next-button--skip" data-action="next" aria-label="Next card" disabled>Skip →</button>
+          <button type="button" id="previous-card" data-testid="previous-card" data-action="previous" aria-label="Previous card" aria-keyshortcuts="P ArrowLeft" disabled>← Previous</button>
+          <button type="button" id="next-card" data-testid="next-card" class="player__next-button player__next-button--skip" data-action="next" aria-label="Next card" aria-keyshortcuts="N ArrowRight" disabled>Skip →</button>
         </nav>
         <p class="player__status" id="player-status" role="status" aria-live="polite"></p>
       </footer>
@@ -807,7 +860,7 @@
         announcer: document.getElementById("card-announcer")
       };
 
-      const NAVIGATION_HINT = "Use the buttons or your left and right arrow keys to move through the deck.";
+      const NAVIGATION_HINT = "H shows a hint, A reveals a basic answer, and N/P or the arrow keys move through the deck.";
       const PROMPT_ID = "card-prompt";
 
       const cardTypes = Object.create(null);
@@ -981,16 +1034,17 @@
         const fragment = document.createDocumentFragment();
         fragment.append(createPromptElement(card.prompt || "This card has no prompt."));
         const hint = createHintControls(card, player, createElement, setStatus);
-        if (hint) fragment.append(hint);
 
         const answer = createElement("p", "basic__answer", card.answer || "This card has no answer.");
         answer.dataset.testid = "card-answer";
         answer.hidden = true;
 
-        const reveal = createElement("button", "basic__reveal-button", "Show answer");
+        const reveal = createElement("button", "basic__reveal-button player__primary-action", "Show answer");
         reveal.type = "button";
         reveal.dataset.testid = "reveal-answer";
         reveal.setAttribute("aria-expanded", "false");
+        reveal.setAttribute("aria-keyshortcuts", "A");
+        appendShortcutLabel(reveal, "A");
 
         function createGradeButton(grade, label) {
           const button = createElement("button", "basic__grade-button", label);
@@ -1010,13 +1064,23 @@
         grading.hidden = true;
         grading.append(missed, known);
 
-        fragment.append(answer, reveal, grading);
+        const actionRail = createElement("div", "player__action-rail");
+        if (hint) {
+          const supportActions = createActionGroup(createElement, "player__support-actions", "Optional hint");
+          supportActions.append(hint);
+          actionRail.append(supportActions);
+        }
+        const responseActions = createActionGroup(createElement, "player__response-actions", "Answer actions");
+        responseActions.append(answer, reveal, grading);
+        actionRail.append(responseActions);
+        fragment.append(actionRail);
 
-        function revealAnswer() {
+        function revealAnswer(shouldScroll = false) {
           answer.hidden = false;
           reveal.hidden = true;
           reveal.setAttribute("aria-expanded", "true");
           grading.hidden = false;
+          if (shouldScroll) grading.scrollIntoView({ block: "nearest" });
         }
 
         // Pure UI update, safe to call while restoring a prior grade on mount
@@ -1038,7 +1102,7 @@
           setStatus(grade === BASIC_GRADES.KNOWN ? "Marked as known." : "Marked as missed.");
         }
 
-        reveal.addEventListener("click", revealAnswer);
+        reveal.addEventListener("click", () => revealAnswer(true));
         missed.addEventListener("click", () => handleGradeClick(BASIC_GRADES.MISSED));
         known.addEventListener("click", () => handleGradeClick(BASIC_GRADES.KNOWN));
 
@@ -1057,7 +1121,6 @@
         const fragment = document.createDocumentFragment();
         fragment.append(createPromptElement(card.prompt || "This card has no prompt."));
         const hint = createHintControls(card, player, createElement, setStatus);
-        if (hint) fragment.append(hint);
 
         const answer = typeof card.answer === "string" && card.answer
           ? card.answer
@@ -1085,9 +1148,10 @@
           options.append(button);
         });
 
-        const checkAnswer = createElement("button", "mcq__check-button", "Check answer");
+        const checkAnswer = createElement("button", "mcq__check-button player__primary-action", "Check answer");
         checkAnswer.type = "button";
         checkAnswer.dataset.testid = "mcq-check-answer";
+        checkAnswer.hidden = true;
         checkAnswer.disabled = true;
 
         const feedback = createElement("p", "mcq__feedback");
@@ -1106,17 +1170,29 @@
 
         const response = createElement("div", "mcq__response");
         response.append(options, checkAnswer);
-        fragment.append(response, feedback);
+        const actionRail = createElement("div", "player__action-rail");
+        if (hint) {
+          const supportActions = createActionGroup(createElement, "player__support-actions", "Optional hint");
+          supportActions.append(hint);
+          actionRail.append(supportActions);
+        }
+        response.setAttribute("role", "group");
+        response.setAttribute("aria-label", "Answer actions");
+        actionRail.append(response);
+        fragment.append(actionRail, feedback);
         if (explanation) fragment.append(explanation);
 
         let selected = null;
 
         function applySelection(selection) {
           selected = selection;
+          const hasSelection = selection !== null;
           optionButtons.forEach(({ button }) => {
-            button.setAttribute("aria-pressed", String(selection !== null && button === selection.button));
+            button.setAttribute("aria-pressed", String(hasSelection && button === selection.button));
           });
-          checkAnswer.disabled = selection === null;
+          checkAnswer.hidden = !hasSelection;
+          checkAnswer.disabled = !hasSelection;
+          if (hasSelection) checkAnswer.scrollIntoView({ block: "nearest" });
         }
 
         function applyAnsweredUI(grade, selectedButton = null) {
@@ -1205,9 +1281,8 @@
         prompt.append(document.createTextNode(promptText.slice(cursor)));
         fragment.append(prompt);
         const hint = createHintControls(card, player, createElement, setStatus);
-        if (hint) fragment.append(hint);
 
-        const checkAnswer = createElement("button", "cloze__check-button", "Check answers");
+        const checkAnswer = createElement("button", "cloze__check-button player__primary-action", "Check answers");
         checkAnswer.type = "button";
         checkAnswer.dataset.testid = "cloze-check-answer";
 
@@ -1236,7 +1311,16 @@
           explanation.hidden = true;
         }
 
-        fragment.append(checkAnswer, feedback);
+        const actionRail = createElement("div", "player__action-rail");
+        if (hint) {
+          const supportActions = createActionGroup(createElement, "player__support-actions", "Optional hint");
+          supportActions.append(hint);
+          actionRail.append(supportActions);
+        }
+        const responseActions = createActionGroup(createElement, "player__response-actions", "Answer actions");
+        responseActions.append(checkAnswer);
+        actionRail.append(responseActions);
+        fragment.append(actionRail, feedback);
         if (explanation) fragment.append(explanation);
 
         function handleCheckAnswer() {
@@ -1342,6 +1426,8 @@
         reveal.type = "button";
         reveal.dataset.testid = "show-hint";
         reveal.setAttribute("aria-expanded", "false");
+        reveal.setAttribute("aria-keyshortcuts", "H");
+        appendShortcutLabel(reveal, "H");
 
         function applyHintUI() {
           hint.hidden = false;
@@ -1363,6 +1449,19 @@
         if (player.getHintUsed(card.id)) applyHintUI();
         fragment.append(hint, reveal);
         return fragment;
+      }
+
+      function appendShortcutLabel(button, shortcut) {
+        const label = createElement("kbd", "player__shortcut", shortcut);
+        label.setAttribute("aria-hidden", "true");
+        button.append(label);
+      }
+
+      function createActionGroup(createElement, className, label) {
+        const group = createElement("div", className);
+        group.setAttribute("role", "group");
+        group.setAttribute("aria-label", label);
+        return group;
       }
 
       function renderPromptCard({ card }) {
@@ -1863,14 +1962,39 @@
         if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target.isContentEditable) {
           return;
         }
-        if (event.key === "ArrowLeft") {
+        if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) {
+          return;
+        }
+
+        const key = event.key.toLowerCase();
+        if (key === "h" && triggerCardShortcut("H")) {
+          event.preventDefault();
+        } else if (key === "a" && triggerCardShortcut("A")) {
+          event.preventDefault();
+        } else if (key === "p" || event.key === "ArrowLeft") {
           event.preventDefault();
           moveCard(-1);
-        } else if (event.key === "ArrowRight") {
+        } else if (key === "n" || event.key === "ArrowRight") {
           event.preventDefault();
           moveCard(1);
         }
       });
+
+      // Renderers declare keyboard actions through the standard aria-keyshortcuts
+      // attribute, so the shell never needs to know their private test ids or markup.
+      function triggerCardShortcut(shortcut) {
+        const expected = shortcut.toLowerCase();
+        const button = [...refs.cardContent.querySelectorAll("button[aria-keyshortcuts]")]
+          .find((candidate) => {
+            const shortcuts = candidate.getAttribute("aria-keyshortcuts")
+              .toLowerCase()
+              .split(/\s+/);
+            return shortcuts.includes(expected) && !candidate.hidden && !candidate.disabled;
+          });
+        if (!button) return false;
+        button.click();
+        return true;
+      }
 
       const injectedDeck = window.__DECK__;
       setDeck(injectedDeck === null || injectedDeck === undefined ? previewDeck : injectedDeck);
