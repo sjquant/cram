@@ -44,6 +44,18 @@ const HINT_DECK = {
     },
   ],
 };
+const SAME_CARD_ID_DECK = {
+  id: "hint-browser-other-deck",
+  title: "Other hint browser deck",
+  cards: [
+    {
+      id: "hint-basic-card",
+      type: "basic",
+      prompt: "The same card id in another deck",
+      answer: "A separate answer.",
+    },
+  ],
+};
 const UNSUPPORTED_DECK = JSON.parse(
   fs.readFileSync(path.join(ROOT, "fixtures/invalid/unknown-card-type.json"), "utf8")
 );
@@ -523,6 +535,9 @@ test.describe("hints", () => {
     // Given/When: the cloze learner requests its hint and submits an incorrect answer.
     await page.getByTestId("next-card").click();
     await page.getByTestId("show-hint").click();
+    await expect(page.getByTestId("card-hint")).toHaveText(HINT_DECK.cards[2].hint);
+    await expect(page.getByTestId("card-hint")).toBeVisible();
+    await expect(page.getByTestId("show-hint")).toBeHidden();
     await page.getByTestId("cloze-input").fill("wrong");
     await page.getByTestId("cloze-check-answer").click();
     expect(await page.evaluate(() => window.CRAM_PLAYER.getHintUsed("hint-cloze-card"))).toBe(true);
@@ -538,7 +553,19 @@ test.describe("hints", () => {
     // And: the missed-card review identifies exactly the cards that needed hints.
     await expect(page.getByTestId("score-value")).toHaveText("0/4");
     await expect(page.getByTestId("missed-hint")).toHaveCount(3);
-    await expect(page.getByTestId("missed-hint").first()).toHaveText("Hint: Needed a hint");
+    const missedCards = page.getByTestId("missed-card");
+    await expect(
+      missedCards.filter({ hasText: HINT_DECK.cards[0].prompt }).getByTestId("missed-hint")
+    ).toHaveCount(1);
+    await expect(
+      missedCards.filter({ hasText: HINT_DECK.cards[1].prompt }).getByTestId("missed-hint")
+    ).toHaveCount(1);
+    await expect(
+      missedCards.filter({ hasText: HINT_DECK.cards[2].prompt }).getByTestId("missed-hint")
+    ).toHaveCount(1);
+    await expect(
+      missedCards.filter({ hasText: HINT_DECK.cards[3].prompt }).getByTestId("missed-hint")
+    ).toHaveCount(0);
     expect(await page.evaluate(() => window.CRAM_PLAYER.getState().hintsUsed)).toEqual({
       "hint-basic-card": true,
       "hint-mcq-card": true,
@@ -551,6 +578,58 @@ test.describe("hints", () => {
     // Then: the session-only hint state is cleared with the rest of the session.
     await expect(page.getByTestId("show-hint")).toBeVisible();
     await expect(page.getByTestId("card-hint")).toBeHidden();
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getState().hintsUsed)).toEqual({});
+  });
+
+  test("clears hint usage when switching to another deck with the same card id", async ({ page }) => {
+    await openPlayer(page, HINT_DECK);
+
+    // Given: the current deck has recorded a hint for its first card.
+    await page.getByTestId("show-hint").click();
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getHintUsed("hint-basic-card"))).toBe(true);
+
+    // When: another deck reuses that card id.
+    await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), SAME_CARD_ID_DECK);
+
+    // Then: hint state belongs to the selected deck and does not leak across ids.
+    await expect(page.getByTestId("show-hint")).toHaveCount(0);
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getHintUsed("hint-basic-card"))).toBe(false);
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getState().hintsUsed)).toEqual({});
+  });
+
+  test("rejects hint usage for cards without a hint", async ({ page }) => {
+    await openPlayer(page, HINT_DECK);
+
+    // When: a caller tries to record a hint for a card that has no hint field.
+    const message = await page.evaluate(() => {
+      try {
+        window.CRAM_PLAYER.recordHintUsed("without-hint-card");
+        return null;
+      } catch (error) {
+        return error instanceof Error ? error.message : String(error);
+      }
+    });
+
+    // Then: the invalid request is rejected without creating hint state.
+    expect(message).toBe("That card does not have a hint.");
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getState().hintsUsed)).toEqual({});
+  });
+
+  test("rejects hint usage for cards outside the active deck", async ({ page }) => {
+    await openPlayer(page, HINT_DECK);
+
+    // When: a caller tries to record a hint for an unknown card id.
+    const message = await page.evaluate(() => {
+      try {
+        window.CRAM_PLAYER.recordHintUsed("not-in-this-deck");
+        return null;
+      } catch (error) {
+        return error instanceof Error ? error.message : String(error);
+      }
+    });
+
+    // Then: the invalid request is rejected without changing public state.
+    expect(message).toBe("That card is not in the current deck.");
     expect(await page.evaluate(() => window.CRAM_PLAYER.getState().hintsUsed)).toEqual({});
   });
 

@@ -1427,6 +1427,9 @@
         if (state.deck) {
           const card = state.deck.cards.find((candidate) => candidate && candidate.id === cardId);
           if (!card) throw new Error("That card is not in the current deck.");
+          if (typeof card.hint !== "string" || !card.hint.trim()) {
+            throw new Error("That card does not have a hint.");
+          }
         }
         state.hintsUsed[cardId] = true;
         return true;
