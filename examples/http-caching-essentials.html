@@ -515,8 +515,29 @@
     .player__navigation[hidden] { display: none; }
 
     .player__score-screen {
-      min-height: clamp(18rem, 44vh, 28rem);
+      flex: 1;
+      min-height: 0;
       padding: var(--s4) 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: var(--rule-strong) transparent;
+    }
+
+    .player__score-screen::-webkit-scrollbar { width: 0.45rem; }
+
+    .player__score-screen::-webkit-scrollbar-track { background: transparent; }
+
+    .player__score-screen::-webkit-scrollbar-thumb {
+      border: 0.1rem solid transparent;
+      border-radius: 999px;
+      background: var(--rule-strong);
+      background-clip: content-box;
+    }
+
+    .player__score-screen::-webkit-scrollbar-thumb:hover {
+      background: var(--ink-soft);
+      background-clip: content-box;
     }
 
     .player__score-screen[hidden] { display: none; }

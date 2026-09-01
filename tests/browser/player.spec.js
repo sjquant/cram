@@ -326,6 +326,37 @@ test.describe("basic cards", () => {
     });
   });
 
+  test("scrolls a long score review inside the results panel", async ({ page }) => {
+    await openPlayer(page, ALL_TYPES_DECK);
+
+    // Given: every card is graded so the score screen contains a review item for each card.
+    await page.evaluate((deck) => {
+      const grades = { basic: "missed", mcq: "incorrect", cloze: "incorrect" };
+      deck.cards.forEach((card) => window.CRAM_PLAYER.recordGrade(card.id, grades[card.type]));
+      for (let index = 0; index < deck.cards.length; index += 1) {
+        document.querySelector("#next-card").click();
+      }
+    }, ALL_TYPES_DECK);
+    await expect(page.getByTestId("score-screen")).toBeVisible();
+
+    // When: the learner scrolls to the end of the review list.
+    const scrollState = await page.evaluate(() => {
+      const panel = document.querySelector("#score-screen");
+      const lastCard = document.querySelector("#missed-cards > li:last-child");
+      panel.scrollTop = panel.scrollHeight;
+      const panelBounds = panel.getBoundingClientRect();
+      const cardBounds = lastCard.getBoundingClientRect();
+      return {
+        canScroll: panel.scrollHeight > panel.clientHeight,
+        moved: panel.scrollTop > 0,
+        lastCardVisible: cardBounds.bottom <= panelBounds.bottom && cardBounds.top >= panelBounds.top,
+      };
+    });
+
+    // Then: the final missed card is reachable without relying on page-level scrolling.
+    expect(scrollState).toEqual({ canScroll: true, moved: true, lastCardVisible: true });
+  });
+
   test("reports reset storage failures without resurrecting stale grades", async ({ page }) => {
     await openPlayer(page, BASIC_DECK);
 
