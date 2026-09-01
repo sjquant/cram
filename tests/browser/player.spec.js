@@ -452,6 +452,7 @@ test.describe("basic cards", () => {
     await expect(page.getByTestId("progress-label")).toHaveText("Card 1 of 1");
 
     // When: the learner corrects the card and finishes the retry session.
+    await page.getByTestId("reveal-answer").click();
     await page.getByTestId("grade-known").click();
     await page.getByTestId("next-card").click();
 

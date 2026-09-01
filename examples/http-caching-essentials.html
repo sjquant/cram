@@ -1046,7 +1046,6 @@
           card,
           index: state.index,
           total: state.sessionCards.length,
-          isRetry: state.isRetry,
           createElement,
           createPromptElement,
           setStatus,
@@ -1145,7 +1144,7 @@
 
       const MCQ_GRADES = Object.freeze({ CORRECT: "correct", INCORRECT: "incorrect" });
 
-      function renderMcqCard({ card, player, createElement, createPromptElement, setStatus, isRetry }) {
+      function renderMcqCard({ card, player, createElement, createPromptElement, setStatus }) {
         const fragment = document.createDocumentFragment();
         fragment.append(createPromptElement(card.prompt || "This card has no prompt."));
         const hint = createHintControls(card, player, createElement, setStatus);
@@ -1270,7 +1269,7 @@
         checkAnswer.addEventListener("click", handleCheckAnswer);
 
         const existingGrade = player.getGrade(card.id);
-        if (existingGrade === MCQ_GRADES.CORRECT || (existingGrade === MCQ_GRADES.INCORRECT && !isRetry)) {
+        if (existingGrade === MCQ_GRADES.CORRECT || existingGrade === MCQ_GRADES.INCORRECT) {
           applyAnsweredUI(existingGrade);
         }
 
@@ -1279,7 +1278,7 @@
 
       const CLOZE_GRADES = Object.freeze({ CORRECT: "correct", INCORRECT: "incorrect" });
 
-      function renderClozeCard({ card, player, createElement, createPromptElement, setStatus, isRetry }) {
+      function renderClozeCard({ card, player, createElement, createPromptElement, setStatus }) {
         const fragment = document.createDocumentFragment();
         const prompt = createPromptElement("");
         const blanks = [];
@@ -1432,7 +1431,7 @@
         checkAnswer.addEventListener("click", handleCheckAnswer);
 
         const existingGrade = player.getGrade(card.id);
-        if (existingGrade === CLOZE_GRADES.CORRECT || (existingGrade === CLOZE_GRADES.INCORRECT && !isRetry)) {
+        if (existingGrade === CLOZE_GRADES.CORRECT || existingGrade === CLOZE_GRADES.INCORRECT) {
           applyAnsweredUI(existingGrade);
         }
 
@@ -1566,12 +1565,21 @@
         return Boolean(state.hintsUsed[cardId]);
       }
 
+      // Renderers see a fresh attempt for a missed card during retry, while the
+      // public grade API and score calculations retain the persisted value.
+      function getRendererGrade(cardId) {
+        const grade = getGrade(cardId);
+        const card = state.sessionCards[state.index];
+        if (!state.isRetry || !card || card.id !== cardId) return grade;
+        return isPositiveGrade(card, grade) ? grade : undefined;
+      }
+
       // Renderers can grade their own card, track hint use, and restore those values,
       // but they cannot replace the active deck, mutate the registry, or inspect shell
       // state.
       const rendererPlayer = Object.freeze({
         recordGrade,
-        getGrade,
+        getGrade: getRendererGrade,
         recordHintUsed,
         getHintUsed
       });
