@@ -95,6 +95,31 @@ test.describe("basic cards", () => {
     await expect(page.locator("#player-status")).toHaveText("Marked as known.");
   });
 
+  test("aligns the mobile footer action with the header shell gutter", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openPlayer(page, BASIC_DECK);
+
+    // Given: a fresh mobile card hides the non-essential navigation hint.
+    const gutters = await page.evaluate(() => {
+      const player = document.querySelector("#player");
+      const header = document.querySelector(".player__header");
+      const navigation = document.querySelector(".player__navigation");
+      const playerBounds = player.getBoundingClientRect();
+      const headerBounds = header.getBoundingClientRect();
+      const navigationBounds = navigation.getBoundingClientRect();
+      const styles = getComputedStyle(player);
+      return {
+        headerTop: headerBounds.top - playerBounds.top,
+        navigationBottom: playerBounds.bottom - navigationBounds.bottom,
+        shellPaddingBottom: Number.parseFloat(styles.paddingBottom),
+      };
+    });
+
+    // Then: the visible footer action and header use the same outer gutter.
+    expect(gutters.headerTop).toBeCloseTo(gutters.navigationBottom, 1);
+    expect(gutters.navigationBottom).toBeCloseTo(gutters.shellPaddingBottom, 1);
+  });
+
   test("restores a basic-card grade after Next and Previous navigation", async ({ page }) => {
     await openPlayer(page, BASIC_DECK);
 

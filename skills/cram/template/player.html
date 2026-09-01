@@ -678,7 +678,9 @@
         --shell-gutter: clamp(1.5rem, 6vh, 3rem);
       }
       .player__card { min-height: 12rem; }
-      .player__status--navigation-hint { visibility: hidden; }
+      /* The navigation hint is intentionally hidden on compact screens. Collapse
+         it too, so the action row ends at the same shell gutter as the header starts. */
+      .player__status--navigation-hint { display: none; }
     }
 
     @media (prefers-reduced-motion: reduce) {
