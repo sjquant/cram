@@ -652,9 +652,55 @@
       color: var(--ink-soft);
     }
 
-    .player__reset-button {
+    .player__score-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--s2);
       margin-top: var(--s3);
-      padding-inline: 0;
+    }
+
+    .player__score-button {
+      min-height: 2.75rem;
+      border: 1px solid var(--rule-strong);
+      padding: 0.65rem 1rem;
+    }
+
+    .player__score-button--primary {
+      border-color: var(--ink);
+      color: var(--paper);
+      background: var(--ink);
+    }
+
+    .player__score-button--primary:not(:disabled):hover {
+      border-color: var(--accent);
+      color: var(--paper);
+      background: var(--accent);
+    }
+
+    .player__score-button--secondary {
+      color: var(--ink-soft);
+      background: transparent;
+    }
+
+    .player__score-button--secondary:hover:not(:disabled) {
+      border-color: var(--ink-soft);
+      color: var(--ink);
+    }
+
+    .player__score-button[hidden] {
+      display: none;
+    }
+
+    @media (max-width: 32rem) {
+      .player__score-actions {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .player__score-button {
+        width: 100%;
+      }
     }
 
     .player__review-section { padding-top: var(--s4); }
@@ -808,9 +854,11 @@
           <span class="player__card-type">Session complete</span>
           <h2 class="player__score-title" id="score-title" tabindex="-1">Session complete</h2>
           <p class="player__score-value" id="score-value" data-testid="score-value">0/0</p>
-          <p class="player__score-summary" id="score-summary">Score: 0/0</p>
-          <button type="button" class="player__reset-button" id="retry-missed" data-testid="retry-missed" data-action="retry-missed">Retry missed cards</button>
-          <button type="button" class="player__reset-button" id="reset-progress" data-testid="reset-progress" data-action="reset-progress">Reset progress</button>
+          <p class="player__score-summary" id="score-summary" data-testid="score-summary">Score: 0/0</p>
+          <div class="player__score-actions">
+            <button type="button" class="player__score-button player__score-button--primary" id="retry-missed" data-testid="retry-missed" data-action="retry-missed">Retry missed cards</button>
+            <button type="button" class="player__score-button player__score-button--secondary" id="reset-progress" data-testid="reset-progress" data-action="reset-progress">Reset progress</button>
+          </div>
         </header>
         <section class="player__review-section" aria-labelledby="missed-heading">
           <h3 class="player__review-heading" id="missed-heading">Review missed cards</h3>
@@ -1673,8 +1721,15 @@
         const missedCards = getMissedCards(sessionCards, grades);
 
         refs.scoreValue.textContent = `${score}/${total}`;
-        refs.scoreSummary.textContent = `Score: ${score}/${total}`;
-        refs.retryMissed.disabled = missedCards.length === 0;
+        const missedCount = missedCards.length;
+        refs.scoreSummary.textContent = missedCount
+          ? `Score: ${score}/${total} · ${missedCount} to review`
+          : `Score: ${score}/${total} · Perfect score`;
+        refs.retryMissed.disabled = missedCount === 0;
+        refs.retryMissed.hidden = missedCount === 0;
+        refs.retryMissed.textContent = missedCount
+          ? `Retry ${missedCount} missed card${missedCount === 1 ? "" : "s"}`
+          : "Retry missed cards";
         refs.missedCards.replaceChildren(...missedCards.map(createMissedCard));
         refs.missedCards.hidden = missedCards.length === 0;
         refs.noMissedCards.hidden = missedCards.length !== 0;
