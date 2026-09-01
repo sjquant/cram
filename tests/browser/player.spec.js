@@ -8,6 +8,24 @@ const PLAYER_URL = pathToFileURL(path.join(ROOT, "skills/cram/template/player.ht
 const BASIC_DECK = JSON.parse(
   fs.readFileSync(path.join(ROOT, "fixtures/valid/basic-only.json"), "utf8")
 );
+const RETRY_DECK = {
+  id: "retry-browser-check",
+  title: "Retry browser check",
+  cards: [
+    {
+      id: "retry-known-card",
+      type: "basic",
+      prompt: "A card answered correctly",
+      answer: "Known answer",
+    },
+    {
+      id: "retry-missed-card",
+      type: "basic",
+      prompt: "A card answered incorrectly",
+      answer: "Missed answer",
+    },
+  ],
+};
 const ALL_TYPES_DECK = JSON.parse(
   fs.readFileSync(path.join(ROOT, "fixtures/valid/all-types.json"), "utf8")
 );
@@ -394,6 +412,60 @@ test.describe("basic cards", () => {
     expect(await page.evaluate((deckId) => JSON.parse(localStorage.getItem(`fc:${deckId}:v1`)), OTHER_DECK.id)).toEqual({
       [OTHER_DECK.cards[0].id]: "known",
     });
+  });
+
+  test("retries only missed cards and persists a corrected grade", async ({ page }) => {
+    await openPlayer(page, RETRY_DECK);
+
+    // Given: the learner completes the deck with one known card and one missed card.
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-missed").click();
+    await page.getByTestId("next-card").click();
+    await expect(page.getByTestId("score-value")).toHaveText("1/2");
+
+    // When: the learner starts a retry from the score screen.
+    await page.getByTestId("retry-missed").click();
+
+    // Then: the retry session contains only the missed card.
+    await expect(page.getByTestId("card-prompt")).toHaveText(RETRY_DECK.cards[1].prompt);
+    await expect(page.getByTestId("progress-label")).toHaveText("Card 1 of 1");
+
+    // When: the learner corrects the card and finishes the retry session.
+    await page.getByTestId("grade-known").click();
+    await page.getByTestId("next-card").click();
+
+    // Then: the retry score is scoped to one card and the original deck progress is updated.
+    await expect(page.getByTestId("score-value")).toHaveText("1/1");
+    await expect(page.getByTestId("no-missed-cards")).toBeVisible();
+    await expect(page.getByTestId("retry-missed")).toBeDisabled();
+    expect(await page.evaluate((deckId) => JSON.parse(localStorage.getItem(`fc:${deckId}:v1`)), RETRY_DECK.id)).toEqual({
+      [RETRY_DECK.cards[0].id]: "known",
+      [RETRY_DECK.cards[1].id]: "known",
+    });
+
+    // And: selecting the original deck again counts the corrected card as positive.
+    await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), RETRY_DECK);
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("next-card").click();
+    await expect(page.getByTestId("score-value")).toHaveText("2/2");
+  });
+
+  test("disables retry when the completed session has no missed cards", async ({ page }) => {
+    await openPlayer(page, BASIC_DECK);
+
+    // Given: every card is graded positively.
+    for (let index = 0; index < BASIC_DECK.cards.length; index += 1) {
+      await page.getByTestId("reveal-answer").click();
+      await page.getByTestId("grade-known").click();
+      await page.getByTestId("next-card").click();
+    }
+
+    // Then: the perfect-score empty state is shown and retry is unavailable.
+    await expect(page.getByTestId("no-missed-cards")).toBeVisible();
+    await expect(page.getByTestId("retry-missed")).toBeDisabled();
   });
 
   test("scrolls a long score review inside the results panel", async ({ page }) => {
