@@ -1713,7 +1713,9 @@
         "cloze",
         renderClozeCard,
         {
-          gradeValidator: (grade) => grade === CLOZE_GRADES.CORRECT || grade === CLOZE_GRADES.INCORRECT
+          gradeValidator: (grade) => grade === CLOZE_GRADES.CORRECT || grade === CLOZE_GRADES.INCORRECT,
+          positiveGradeValidator: (grade) => grade === CLOZE_GRADES.CORRECT,
+          requiresGrade: true
         }
       );
       window.CRAM_PLAYER = api;
