@@ -443,7 +443,9 @@ test.describe("basic cards", () => {
     await page.getByTestId("grade-missed").click();
     await page.getByTestId("next-card").click();
     await expect(page.getByTestId("score-value")).toHaveText("1/2");
-    await expect(page.getByTestId("score-summary")).toHaveText("Score: 1/2 · 1 to review");
+    await expect(page.getByTestId("score-summary")).toHaveText("1 correct · 1 to review");
+    await expect(page.getByTestId("score-correct-label")).toHaveText("1 correct");
+    await expect(page.getByTestId("score-missed-label")).toHaveText("1 to review");
     await expect(page.getByTestId("retry-missed")).toHaveText("Retry 1 missed card");
 
     // When: the learner starts a retry from the score screen.
@@ -483,7 +485,8 @@ test.describe("basic cards", () => {
     await page.getByTestId("cloze-check-answer").click();
     await page.getByTestId("next-card").click();
     await expect(page.getByTestId("score-value")).toHaveText("0/2");
-    await expect(page.getByTestId("score-summary")).toHaveText("Score: 0/2 · 2 to review");
+    await expect(page.getByTestId("score-summary")).toHaveText("0 correct · 2 to review");
+    await expect(page.getByTestId("score-missed-label")).toHaveText("2 to review");
     await expect(page.getByTestId("retry-missed")).toHaveText("Retry 2 missed cards");
 
     // When: the learner starts a retry session.
@@ -524,6 +527,10 @@ test.describe("basic cards", () => {
 
     // Then: the perfect-score empty state is shown and retry is unavailable.
     await expect(page.getByTestId("no-missed-cards")).toBeVisible();
+    await expect(page.getByTestId("score-summary")).toHaveText(
+      `All ${BASIC_DECK.cards.length} correct · Nothing to review`
+    );
+    await expect(page.getByTestId("score-missed-label")).toHaveText("Nothing to review");
     await expect(page.getByTestId("retry-missed")).toBeDisabled();
     await expect(page.getByTestId("retry-missed")).toBeHidden();
   });

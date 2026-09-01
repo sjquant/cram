@@ -13,6 +13,7 @@
       --rule: #ddd5c4;
       --rule-strong: #c4bAa4;
       --accent: #b5342b;
+      --positive: #356b4a;
       --serif: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino,
         Georgia, AppleMyungjo, "Nanum Myeongjo", Batang, "Hiragino Mincho ProN",
         "Yu Mincho", serif;
@@ -37,6 +38,7 @@
         --rule: #302b23;
         --rule-strong: #473f33;
         --accent: #e0645a;
+        --positive: #8fc9a1;
       }
     }
 
@@ -633,6 +635,52 @@
       color: var(--ink-soft);
     }
 
+    .player__score-meter {
+      display: flex;
+      width: 100%;
+      height: 0.55rem;
+      margin-top: var(--s3);
+      overflow: hidden;
+      border-radius: 999px;
+      background: var(--rule);
+    }
+
+    .player__score-meter-segment {
+      flex: 0 0 0;
+      transition: flex-basis 380ms cubic-bezier(0.2, 0.7, 0.3, 1);
+    }
+
+    .player__score-meter-segment--correct { background: var(--positive); }
+
+    .player__score-meter-segment--missed { background: var(--accent); }
+
+    .player__score-meter-key {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: var(--s1) var(--s3);
+      margin-top: 0.6rem;
+      color: var(--ink-soft);
+      font-size: 0.8rem;
+    }
+
+    .player__score-meter-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .player__score-meter-swatch {
+      width: 0.55rem;
+      height: 0.55rem;
+      flex: none;
+      border-radius: 50%;
+    }
+
+    .player__score-meter-swatch--correct { background: var(--positive); }
+
+    .player__score-meter-swatch--missed { background: var(--accent); }
+
     .player__score-actions {
       display: flex;
       flex-wrap: wrap;
@@ -701,7 +749,8 @@
     }
 
     .player__missed-card {
-      padding-left: var(--s1);
+      border-left: 2px solid var(--accent);
+      padding-left: var(--s2);
     }
 
     .player__missed-prompt {
@@ -740,6 +789,23 @@
       clip: rect(0, 0, 0, 0);
       white-space: nowrap;
       border: 0;
+    }
+
+    .player[data-state="results"] .player__status {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      min-height: 0;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .player__score-meter-segment { transition: none; }
     }
 
     /* Paper grain, painted behind the text so it adds tactility without
@@ -832,10 +898,24 @@
 
       <section class="player__score-screen" id="score-screen" data-testid="score-screen" hidden aria-labelledby="score-title">
         <header class="player__score-header">
-          <span class="player__card-type">Session complete</span>
+          <span class="player__card-type">Results</span>
           <h2 class="player__score-title" id="score-title" tabindex="-1">Session complete</h2>
           <p class="player__score-value" id="score-value" data-testid="score-value">0/0</p>
-          <p class="player__score-summary" id="score-summary" data-testid="score-summary">Score: 0/0</p>
+          <p class="player__score-summary" id="score-summary" data-testid="score-summary">0 correct · Nothing to review</p>
+          <div class="player__score-meter" id="score-meter" data-testid="score-meter" aria-hidden="true">
+            <span class="player__score-meter-segment player__score-meter-segment--correct" id="score-correct-segment"></span>
+            <span class="player__score-meter-segment player__score-meter-segment--missed" id="score-missed-segment"></span>
+          </div>
+          <div class="player__score-meter-key" aria-label="Score breakdown">
+            <span class="player__score-meter-label">
+              <span class="player__score-meter-swatch player__score-meter-swatch--correct" aria-hidden="true"></span>
+              <span id="score-correct-label" data-testid="score-correct-label">0 correct</span>
+            </span>
+            <span class="player__score-meter-label">
+              <span class="player__score-meter-swatch player__score-meter-swatch--missed" aria-hidden="true"></span>
+              <span id="score-missed-label" data-testid="score-missed-label">Nothing to review</span>
+            </span>
+          </div>
           <div class="player__score-actions">
             <button type="button" class="player__score-button player__score-button--primary" id="retry-missed" data-testid="retry-missed" data-action="retry-missed">Retry missed cards</button>
             <button type="button" class="player__score-button player__score-button--secondary" id="reset-progress" data-testid="reset-progress" data-action="reset-progress">Reset progress</button>
@@ -900,6 +980,10 @@
         scoreTitle: document.getElementById("score-title"),
         scoreValue: document.getElementById("score-value"),
         scoreSummary: document.getElementById("score-summary"),
+        scoreCorrectSegment: document.getElementById("score-correct-segment"),
+        scoreMissedSegment: document.getElementById("score-missed-segment"),
+        scoreCorrectLabel: document.getElementById("score-correct-label"),
+        scoreMissedLabel: document.getElementById("score-missed-label"),
         retryMissed: document.getElementById("retry-missed"),
         missedCards: document.getElementById("missed-cards"),
         noMissedCards: document.getElementById("no-missed-cards"),
@@ -1704,8 +1788,16 @@
         refs.scoreValue.textContent = `${score}/${total}`;
         const missedCount = missedCards.length;
         refs.scoreSummary.textContent = missedCount
-          ? `Score: ${score}/${total} · ${missedCount} to review`
-          : `Score: ${score}/${total} · Perfect score`;
+          ? `${score} correct · ${missedCount} to review`
+          : `All ${total} correct · Nothing to review`;
+        const correctShare = total ? (score / total) * 100 : 0;
+        const missedShare = total ? (missedCount / total) * 100 : 0;
+        refs.scoreCorrectSegment.style.flexBasis = `${correctShare}%`;
+        refs.scoreMissedSegment.style.flexBasis = `${missedShare}%`;
+        refs.scoreCorrectLabel.textContent = `${score} correct`;
+        refs.scoreMissedLabel.textContent = missedCount
+          ? `${missedCount} to review`
+          : "Nothing to review";
         refs.retryMissed.disabled = missedCount === 0;
         refs.retryMissed.hidden = missedCount === 0;
         refs.retryMissed.textContent = missedCount
