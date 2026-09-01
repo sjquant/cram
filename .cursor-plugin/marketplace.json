@@ -1,0 +1,33 @@
+{
+  "name": "cram",
+  "owner": {
+    "name": "sjquant"
+  },
+  "metadata": {
+    "description": "Offline flashcard quizzes from source material",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "cram",
+      "source": "./",
+      "description": "Turn source material into an interactive, self-contained offline flashcard quiz.",
+      "version": "0.1.0",
+      "author": {
+        "name": "sjquant"
+      },
+      "homepage": "https://github.com/sjquant/cram",
+      "repository": "https://github.com/sjquant/cram",
+      "license": "MIT",
+      "keywords": [
+        "flashcards",
+        "quiz",
+        "study",
+        "learning",
+        "html"
+      ],
+      "category": "Education",
+      "skills": "skills/"
+    }
+  ]
+}

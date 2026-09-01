@@ -1,0 +1,18 @@
+{
+  "name": "cram",
+  "owner": {
+    "name": "sjquant"
+  },
+  "metadata": {
+    "description": "Offline flashcard quizzes from source material",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "cram",
+      "description": "Turn source material into an interactive, self-contained offline flashcard quiz.",
+      "version": "0.1.0",
+      "source": "./"
+    }
+  ]
+}

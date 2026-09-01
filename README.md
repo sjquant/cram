@@ -35,6 +35,47 @@ ask Claude Code to make flashcards or an interactive quiz from your material.
 For the complete extraction, deck-format, and rendering workflow, see the
 [skill guide](skills/cram/SKILL.md).
 
+## Use with other AI tools
+
+The skill payload follows the portable [Agent Plugins](https://agent-plugins.org/)
+format and lives in `skills/cram/`. The [`npx skills`](https://github.com/vercel-labs/skills)
+installer can place it in any supported agent's skill directory (using a
+symlink by default, or copies when requested):
+
+```sh
+npx skills add sjquant/cram --skill cram
+```
+
+To target agents explicitly, repeat `--agent`, for example:
+
+```sh
+npx skills add sjquant/cram --skill cram \
+  --agent codex \
+  --agent cursor \
+  --agent github-copilot \
+  --agent grok \
+  --agent kiro-cli \
+  --agent antigravity-cli
+```
+
+This repository also includes native marketplace metadata where the format is
+documented: Claude Code (`.claude-plugin/`), Codex (`.codex-plugin/` and
+`.agents/plugins/`), Cursor (`.cursor-plugin/`), and GitHub Copilot
+(`.github/plugin/`). Codex and Copilot can be installed from their respective
+marketplace catalogs:
+
+```text
+codex plugin marketplace add sjquant/cram
+codex plugin add cram@cram
+
+copilot plugin marketplace add sjquant/cram
+copilot plugin install cram@cram
+```
+
+Kiro Powers and Cursor's public marketplace require their own import or
+review/publish flow; Antigravity and Grok can use the portable skill, and Grok
+also reads Claude-compatible plugin marketplaces.
+
 ## Requirements
 
 For skill users, system `python3` is enough—there is nothing to install with
