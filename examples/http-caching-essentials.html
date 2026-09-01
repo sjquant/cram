@@ -188,6 +188,7 @@
     .player__progress-bar::-moz-progress-bar { background: var(--accent); }
 
     .player__main {
+      position: relative;
       display: flex;
       flex: 1;
       flex-direction: column;
@@ -625,6 +626,19 @@
 
     .player__score-screen[hidden] { display: none; }
 
+    .player__review-scroll-overlay {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 1;
+      height: 3.25rem;
+      background: linear-gradient(to bottom, transparent, var(--paper));
+      pointer-events: none;
+    }
+
+    .player__review-scroll-overlay[hidden] { display: none; }
+
     .player__score-header {
       padding-bottom: var(--s4);
       border-bottom: 1px solid var(--rule);
@@ -708,6 +722,32 @@
       margin-top: var(--s3);
     }
 
+    .player__review-scroll-cue {
+      position: absolute;
+      right: var(--s2);
+      bottom: var(--s2);
+      z-index: 2;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      min-height: 2rem;
+      border: 1px solid var(--rule-strong);
+      border-radius: 999px;
+      padding: 0.35rem 0.7rem;
+      color: var(--ink-soft);
+      background: var(--paper);
+      box-shadow: 0 0.25rem 1rem rgb(31 28 24 / 14%);
+      font-size: 0.78rem;
+      pointer-events: auto;
+    }
+
+    .player__review-scroll-cue:hover:not(:disabled) {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .player__review-scroll-cue[hidden] { display: none; }
+
     .player__score-button {
       min-height: 2.75rem;
       border: 1px solid var(--rule-strong);
@@ -741,6 +781,11 @@
     }
 
     @media (max-width: 32rem) {
+      .player__review-scroll-cue {
+        right: 0.75rem;
+        bottom: 0.75rem;
+      }
+
       .player__score-actions {
         align-items: stretch;
         flex-direction: column;
@@ -915,7 +960,7 @@
         </div>
       </article>
 
-      <section class="player__score-screen" id="score-screen" data-testid="score-screen" hidden aria-labelledby="score-title">
+      <section class="player__score-screen" id="score-screen" data-testid="score-screen" tabindex="-1" hidden aria-labelledby="score-title">
         <header class="player__score-header">
           <span class="player__card-type">Results</span>
           <h2 class="player__score-title" id="score-title" tabindex="-1">Session complete</h2>
@@ -946,6 +991,12 @@
           <p class="player__no-missed-cards" id="no-missed-cards" data-testid="no-missed-cards" hidden>Perfect score — nothing to review.</p>
         </section>
       </section>
+
+      <div class="player__review-scroll-overlay" id="review-scroll-overlay" hidden>
+        <button type="button" class="player__review-scroll-cue" id="review-scroll-cue" data-testid="review-scroll-cue" data-action="scroll-review" aria-controls="missed-cards" aria-label="Scroll down to see more missed cards">
+          More cards below <span aria-hidden="true">↓</span>
+        </button>
+      </div>
 
       <footer class="player__footer">
         <nav class="player__navigation" aria-label="Card navigation">
@@ -1003,6 +1054,8 @@
         scoreMissedSegment: document.getElementById("score-missed-segment"),
         scoreCorrectLabel: document.getElementById("score-correct-label"),
         scoreMissedLabel: document.getElementById("score-missed-label"),
+        reviewScrollOverlay: document.getElementById("review-scroll-overlay"),
+        reviewScrollCue: document.getElementById("review-scroll-cue"),
         retryMissed: document.getElementById("retry-missed"),
         missedCards: document.getElementById("missed-cards"),
         noMissedCards: document.getElementById("no-missed-cards"),
@@ -1831,6 +1884,7 @@
         refs.progressLabel.textContent = `Session complete: ${score} of ${total}`;
         refs.progressPercent.textContent = "100%";
         refs.announcer.textContent = `Session complete. Score ${score}/${total}.`;
+        updateReviewScrollCue();
 
         return { score, total };
       }
@@ -1899,6 +1953,34 @@
         refs.cardFrame.hidden = showingResults;
         refs.navigation.hidden = showingResults;
         refs.scoreScreen.hidden = !showingResults;
+        if (showingResults) {
+          refs.scoreScreen.scrollTop = 0;
+          updateReviewScrollCue();
+        } else {
+          refs.reviewScrollOverlay.hidden = true;
+        }
+      }
+
+      function updateReviewScrollCue() {
+        const panel = refs.scoreScreen;
+        const maxScrollTop = Math.max(0, panel.scrollHeight - panel.clientHeight);
+        const hasReviewCards = refs.missedCards.children.length > 0;
+        const hasMore = hasReviewCards && maxScrollTop > 1 && panel.scrollTop < maxScrollTop - 1;
+        refs.reviewScrollOverlay.hidden = !hasMore;
+      }
+
+      function scrollReview() {
+        if (refs.scoreScreen.hidden) return;
+        refs.scoreScreen.focus({ preventScroll: true });
+        const maxScrollTop = Math.max(0, refs.scoreScreen.scrollHeight - refs.scoreScreen.clientHeight);
+        const targetTop = Math.min(
+          maxScrollTop,
+          refs.scoreScreen.scrollTop + refs.scoreScreen.clientHeight * 0.85
+        );
+        refs.scoreScreen.scrollTo({
+          top: targetTop,
+          behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"
+        });
       }
 
       // Reaching the first or last card disables the button that got you there, which
@@ -2150,7 +2232,11 @@
         if (button.dataset.action === "next") moveCard(1);
         if (button.dataset.action === "retry-missed") retryMissedCards();
         if (button.dataset.action === "reset-progress") resetProgress();
+        if (button.dataset.action === "scroll-review") scrollReview();
       });
+
+      refs.scoreScreen.addEventListener("scroll", updateReviewScrollCue, { passive: true });
+      window.addEventListener("resize", updateReviewScrollCue);
 
       window.addEventListener("storage", (event) => {
         if (!state.deck) return;

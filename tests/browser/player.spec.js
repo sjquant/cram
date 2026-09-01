@@ -465,6 +465,7 @@ test.describe("basic cards", () => {
     await expect(page.getByTestId("no-missed-cards")).toBeVisible();
     await expect(page.getByTestId("retry-missed")).toBeDisabled();
     await expect(page.getByTestId("retry-missed")).toBeHidden();
+    await expect(page.getByTestId("review-scroll-cue")).toBeHidden();
 
     // And: selecting the original deck again counts the corrected card as positive.
     await page.reload();
@@ -533,6 +534,7 @@ test.describe("basic cards", () => {
     await expect(page.getByTestId("score-missed-label")).toHaveText("Nothing to review");
     await expect(page.getByTestId("retry-missed")).toBeDisabled();
     await expect(page.getByTestId("retry-missed")).toBeHidden();
+    await expect(page.getByTestId("review-scroll-cue")).toBeHidden();
   });
 
   test("scrolls a long score review inside the results panel", async ({ page }) => {
@@ -547,6 +549,17 @@ test.describe("basic cards", () => {
       }
     }, ALL_TYPES_DECK);
     await expect(page.getByTestId("score-screen")).toBeVisible();
+    await expect(page.getByTestId("review-scroll-cue")).toBeVisible();
+
+    // When: the learner uses the compact cue to reveal more of the review list.
+    await page.getByTestId("review-scroll-cue").click();
+    await expect.poll(() => page.evaluate(() => document.querySelector("#score-screen").scrollTop)).toBeGreaterThan(0);
+    const cuePlacement = await page.evaluate(() => {
+      const panelBounds = document.querySelector("#score-screen").getBoundingClientRect();
+      const cueBounds = document.querySelector("#review-scroll-cue").getBoundingClientRect();
+      return { cueBottom: cueBounds.bottom, panelBottom: panelBounds.bottom };
+    });
+    expect(cuePlacement.cueBottom).toBeGreaterThan(cuePlacement.panelBottom - 100);
 
     // When: the learner scrolls to the end of the review list.
     const scrollState = await page.evaluate(() => {
@@ -564,6 +577,7 @@ test.describe("basic cards", () => {
 
     // Then: the final missed card is reachable without relying on page-level scrolling.
     expect(scrollState).toEqual({ canScroll: true, moved: true, lastCardVisible: true });
+    await expect(page.getByTestId("review-scroll-cue")).toBeHidden();
   });
 
   test("reports reset storage failures without resurrecting stale grades", async ({ page }) => {
