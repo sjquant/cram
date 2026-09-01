@@ -55,6 +55,23 @@ const CUSTOM_DECK = {
     },
   ],
 };
+const REQUIRED_CUSTOM_DECK = {
+  id: "required-custom-browser-check",
+  title: "Required custom browser check",
+  cards: [
+    {
+      id: "required-custom-card",
+      type: "custom",
+      prompt: "A required custom card",
+    },
+    {
+      id: "required-custom-basic-card",
+      type: "basic",
+      prompt: "A basic card",
+      answer: "An answer",
+    },
+  ],
+};
 
 test.describe("basic cards", () => {
   test("reveals a basic-card answer and records the selected grade", async ({ page }) => {
@@ -228,6 +245,35 @@ test.describe("basic cards", () => {
     });
   });
 
+  test("retries earlier unsaved grades with a later successful save", async ({ page }) => {
+    await openPlayer(page, BASIC_DECK);
+
+    // Given: the first grade is kept in memory while storage is unavailable.
+    await page.evaluate(() => {
+      window.__originalSetItem = Storage.prototype.setItem;
+      Storage.prototype.setItem = function setItem(key, value) {
+        if (key.startsWith("fc:")) throw new Error("storage unavailable");
+        return window.__originalSetItem.call(this, key, value);
+      };
+    });
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+
+    // When: storage recovers and the learner records another card.
+    await page.evaluate(() => {
+      Storage.prototype.setItem = window.__originalSetItem;
+    });
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-missed").click();
+
+    // Then: the store flushes both the earlier and current session grades.
+    expect(await page.evaluate((deckId) => JSON.parse(localStorage.getItem(`fc:${deckId}:v1`)), BASIC_DECK.id)).toEqual({
+      [BASIC_DECK.cards[0].id]: "known",
+      [BASIC_DECK.cards[1].id]: "missed",
+    });
+  });
+
   test("keeps progress isolated between deck ids", async ({ page }) => {
     await openPlayer(page, BASIC_DECK);
 
@@ -373,8 +419,10 @@ test("persists grades for a renderer supplied through the public registry", asyn
     window.CRAM_PLAYER.registerCardRenderer(
       "custom",
       customRenderer,
-      (grade) => grade === "remembered",
-      (grade) => grade === "remembered"
+      {
+        gradeValidator: (grade) => grade === "remembered",
+        positiveGradeValidator: (grade) => grade === "remembered"
+      }
     );
     window.CRAM_PLAYER.setDeck(deck);
 
@@ -398,8 +446,10 @@ test("persists grades for a renderer supplied through the public registry", asyn
     window.CRAM_PLAYER.registerCardRenderer(
       "custom",
       customRenderer,
-      (grade) => grade === "remembered",
-      (grade) => grade === "remembered"
+      {
+        gradeValidator: (grade) => grade === "remembered",
+        positiveGradeValidator: (grade) => grade === "remembered"
+      }
     );
   });
 
@@ -422,11 +472,44 @@ test("persists grades for a renderer supplied through the public registry", asyn
     window.CRAM_PLAYER.registerCardRenderer(
       "custom",
       customRenderer,
-      (grade) => grade === "remembered",
-      (grade) => grade === "remembered"
+      {
+        gradeValidator: (grade) => grade === "remembered",
+        positiveGradeValidator: (grade) => grade === "remembered"
+      }
     );
   });
   expect(await page.evaluate(() => window.CRAM_PLAYER.getState().grades)).toEqual({});
+});
+
+test("gives custom renderers a narrow player facade and navigation metadata", async ({ page }) => {
+  await openPlayer(page, REQUIRED_CUSTOM_DECK);
+
+  // Given: a custom renderer declares that its card requires a grade to advance.
+  await page.evaluate(() => {
+    const customRenderer = ({ card, createPromptElement, player }) => {
+      window.__rendererFacade = {
+        canSetDeck: typeof player.setDeck === "function",
+        canRegisterCardRenderer: typeof player.registerCardRenderer === "function",
+        canReadShellState: typeof player.getState === "function",
+        canRecordGrade: typeof player.recordGrade === "function",
+        canReadGrade: typeof player.getGrade === "function",
+      };
+      return createPromptElement(card.prompt);
+    };
+    window.CRAM_PLAYER.registerCardRenderer("custom", customRenderer, {
+      requiresGrade: true,
+    });
+  });
+
+  // Then: the shell exposes only grading methods and applies the declared policy.
+  await expect(page.getByTestId("next-card")).toHaveText("Skip →");
+  expect(await page.evaluate(() => window.__rendererFacade)).toEqual({
+    canSetDeck: false,
+    canRegisterCardRenderer: false,
+    canReadShellState: false,
+    canRecordGrade: true,
+    canReadGrade: true,
+  });
 });
 
 test("does not partially install a renderer whose validator throws", async ({ page }) => {
@@ -439,9 +522,7 @@ test("does not partially install a renderer whose validator throws", async ({ pa
       window.CRAM_PLAYER.registerCardRenderer(
         "custom",
         ({ card, createPromptElement }) => createPromptElement(card.prompt),
-        () => {
-          throw new Error("validator failed");
-        }
+        { gradeValidator: () => { throw new Error("validator failed"); } }
       );
       return null;
     } catch (error) {
@@ -497,14 +578,6 @@ test("checks cloze blanks with exact alternatives and restores aggregate feedbac
   await expect(page.getByTestId("cloze-feedback")).toBeHidden();
 
   // When: one blank is exact (with case/whitespace normalization) and the other is a near miss.
-  await page.evaluate(() => {
-    window.__recordGradeCalls = 0;
-    window.__originalRecordGrade = window.CRAM_PLAYER.recordGrade;
-    window.CRAM_PLAYER.recordGrade = (...args) => {
-      window.__recordGradeCalls += 1;
-      return window.__originalRecordGrade(...args);
-    };
-  });
   await page.getByTestId("cloze-input").nth(0).fill("  if-none-match ");
   await page.getByTestId("cloze-input").nth(1).fill("304 Not Modifie");
   await page.getByTestId("cloze-check-answer").click();
@@ -516,7 +589,6 @@ test("checks cloze blanks with exact alternatives and restores aggregate feedbac
   await expect(page.getByTestId("cloze-blank-feedback").nth(1)).toContainText(
     "Correct answer: 304 / 304 Not Modified"
   );
-  expect(await page.evaluate(() => window.__recordGradeCalls)).toBe(1);
   expect(await page.evaluate(() => window.CRAM_PLAYER.getGrade("cloze-card"))).toBe("incorrect");
 
   // Returning to the card shows only the aggregate result because the shell stores one grade.
@@ -527,9 +599,6 @@ test("checks cloze blanks with exact alternatives and restores aggregate feedbac
   await expect(page.getByTestId("cloze-input").nth(0)).not.toHaveAttribute("data-result");
 
   // A fresh attempt accepts the pipe-separated alternative with case/whitespace normalization.
-  await page.evaluate(() => {
-    window.CRAM_PLAYER.recordGrade = window.__originalRecordGrade;
-  });
   await openPlayer(page, CLOZE_DECK);
   await page.getByTestId("cloze-input").nth(0).fill("If-None-Match");
   await page.getByTestId("cloze-input").nth(1).fill(" 304 NOT MODIFIED ");
