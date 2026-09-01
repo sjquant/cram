@@ -166,9 +166,66 @@ test.describe("basic cards", () => {
     await page.getByTestId("reveal-answer").click();
     await page.getByTestId("grade-known").click();
 
-    // Then: the session reports the failed save and does not claim the grade was saved.
+    // Then: the session reports the failed save but keeps the grade for this session.
     await expect(page.locator("#player-status")).toHaveText("Progress could not be saved. Try again.");
+    await expect(page.getByTestId("grade-known")).toHaveAttribute("aria-pressed", "true");
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getState().grades)).toEqual({
+      [BASIC_DECK.cards[0].id]: "known",
+    });
+  });
+
+  test("rejects grades for cards outside the active deck", async ({ page }) => {
+    await openPlayer(page, BASIC_DECK);
+
+    // When: a caller tries to grade an id that is not in the selected deck.
+    const message = await page.evaluate(() => {
+      try {
+        window.CRAM_PLAYER.recordGrade("not-in-this-deck", "known");
+        return null;
+      } catch (error) {
+        return error instanceof Error ? error.message : String(error);
+      }
+    });
+
+    // Then: the public state and stored progress remain unchanged.
+    expect(message).toBe("That card is not in the current deck.");
     expect(await page.evaluate(() => window.CRAM_PLAYER.getState().grades)).toEqual({});
+    expect(await page.evaluate((deckId) => localStorage.getItem(`fc:${deckId}:v1`), BASIC_DECK.id)).toBeNull();
+  });
+
+  test("keeps a replacement grade in the session when saving fails", async ({ page }) => {
+    await openPlayer(page, BASIC_DECK);
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+
+    // Given: a card already has a saved grade and the next storage write fails.
+    await page.evaluate(() => {
+      window.__originalSetItem = Storage.prototype.setItem;
+      Storage.prototype.setItem = function setItem(key, value) {
+        if (key.startsWith("fc:")) throw new Error("storage unavailable");
+        return window.__originalSetItem.call(this, key, value);
+      };
+    });
+
+    // When: the learner tries to replace that grade.
+    await page.getByTestId("grade-missed").click();
+
+    // Then: the replacement remains usable in memory while storage keeps the old value.
+    await expect(page.locator("#player-status")).toHaveText("Progress could not be saved. Try again.");
+    await expect(page.getByTestId("grade-missed")).toHaveAttribute("aria-pressed", "true");
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getState().grades)).toEqual({
+      [BASIC_DECK.cards[0].id]: "missed",
+    });
+    expect(await page.evaluate((deckId) => JSON.parse(localStorage.getItem(`fc:${deckId}:v1`)), BASIC_DECK.id)).toEqual({
+      [BASIC_DECK.cards[0].id]: "known",
+    });
+    await page.evaluate(() => {
+      Storage.prototype.setItem = window.__originalSetItem;
+    });
+    await page.getByTestId("grade-missed").click();
+    expect(await page.evaluate((deckId) => JSON.parse(localStorage.getItem(`fc:${deckId}:v1`)), BASIC_DECK.id)).toEqual({
+      [BASIC_DECK.cards[0].id]: "missed",
+    });
   });
 
   test("keeps progress isolated between deck ids", async ({ page }) => {
@@ -223,6 +280,48 @@ test.describe("basic cards", () => {
     });
   });
 
+  test("reports reset storage failures without resurrecting stale grades", async ({ page }) => {
+    await openPlayer(page, BASIC_DECK);
+
+    // Given: both cards have saved grades before storage removal becomes unavailable.
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-missed").click();
+    for (let index = 1; index < BASIC_DECK.cards.length; index += 1) {
+      await page.getByTestId("next-card").click();
+    }
+    await page.evaluate(() => {
+      window.__originalRemoveItem = Storage.prototype.removeItem;
+      Storage.prototype.removeItem = function removeItem(key) {
+        if (key.startsWith("fc:")) throw new Error("storage unavailable");
+        return window.__originalRemoveItem.call(this, key);
+      };
+    });
+
+    // When: the learner resets the completed deck.
+    await page.getByTestId("reset-progress").click();
+
+    // Then: the session warns about the failed removal and keeps no stale memory.
+    await expect(page.locator("#player-status")).toHaveText(
+      "Progress reset for this session, but saved progress could not be cleared."
+    );
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getState().grades)).toEqual({});
+
+    // And: the next successful write replaces, rather than merges, the stale entry.
+    await page.evaluate(() => {
+      Storage.prototype.removeItem = window.__originalRemoveItem;
+    });
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+    await page.reload();
+    await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), BASIC_DECK);
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getState().grades)).toEqual({
+      [BASIC_DECK.cards[0].id]: "known",
+    });
+  });
+
   test("discards malformed or old-shaped stored progress", async ({ page }) => {
     await page.goto(PLAYER_URL);
     const key = `fc:${BASIC_DECK.id}:v1`;
@@ -274,6 +373,7 @@ test("persists grades for a renderer supplied through the public registry", asyn
     window.CRAM_PLAYER.registerCardRenderer(
       "custom",
       customRenderer,
+      (grade) => grade === "remembered",
       (grade) => grade === "remembered"
     );
     window.CRAM_PLAYER.setDeck(deck);
@@ -281,6 +381,12 @@ test("persists grades for a renderer supplied through the public registry", asyn
     // When: the renderer records its opaque grade through the shared player API.
     window.CRAM_PLAYER.recordGrade("custom-card", "remembered");
   }, CUSTOM_DECK);
+  await expect(page.getByTestId("card-prompt")).toHaveText(CUSTOM_DECK.cards[0].prompt);
+  await expect(
+    page.getByText("The “custom” card renderer is not installed yet.")
+  ).toHaveCount(0);
+  await page.getByTestId("next-card").click();
+  await expect(page.getByTestId("score-value")).toHaveText("1/1");
 
   // When: the page reloads and the deck is selected before its renderer is registered.
   await page.reload();
@@ -292,6 +398,7 @@ test("persists grades for a renderer supplied through the public registry", asyn
     window.CRAM_PLAYER.registerCardRenderer(
       "custom",
       customRenderer,
+      (grade) => grade === "remembered",
       (grade) => grade === "remembered"
     );
   });
@@ -301,12 +408,84 @@ test("persists grades for a renderer supplied through the public registry", asyn
     "custom-card": "remembered",
   });
 
-  // And: a value outside that renderer's vocabulary is discarded as malformed.
+  // And: a value loaded before registration is discarded when the renderer validates it.
+  await page.reload();
   await page.evaluate((deck) => {
     localStorage.setItem(`fc:${deck.id}:v1`, JSON.stringify({ "custom-card": "forgotten" }));
     window.CRAM_PLAYER.setDeck(deck);
   }, CUSTOM_DECK);
+  expect(await page.evaluate(() => window.CRAM_PLAYER.getState().grades)).toEqual({
+    "custom-card": "forgotten",
+  });
+  await page.evaluate(() => {
+    const customRenderer = ({ card, createPromptElement }) => createPromptElement(card.prompt);
+    window.CRAM_PLAYER.registerCardRenderer(
+      "custom",
+      customRenderer,
+      (grade) => grade === "remembered",
+      (grade) => grade === "remembered"
+    );
+  });
   expect(await page.evaluate(() => window.CRAM_PLAYER.getState().grades)).toEqual({});
+});
+
+test("does not partially install a renderer whose validator throws", async ({ page }) => {
+  await openPlayer(page, CUSTOM_DECK);
+  await page.evaluate((deck) => window.CRAM_PLAYER.recordGrade("custom-card", "opaque"), CUSTOM_DECK);
+
+  // When: registration fails while validating the already-selected deck's grades.
+  const message = await page.evaluate(() => {
+    try {
+      window.CRAM_PLAYER.registerCardRenderer(
+        "custom",
+        ({ card, createPromptElement }) => createPromptElement(card.prompt),
+        () => {
+          throw new Error("validator failed");
+        }
+      );
+      return null;
+    } catch (error) {
+      return error instanceof Error ? error.message : String(error);
+    }
+  });
+
+  // Then: the failed registration leaves the fallback renderer intact.
+  expect(message).toBe("validator failed");
+  await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), CUSTOM_DECK);
+  await expect(
+    page.getByTestId("card-content").getByText("The “custom” card renderer is not installed yet.")
+  ).toBeVisible();
+});
+
+test("updates an open player when another tab changes the same deck", async ({ page, context }) => {
+  await openPlayer(page, BASIC_DECK);
+  const otherPage = await context.newPage();
+  try {
+    await otherPage.goto(PLAYER_URL);
+    await otherPage.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), BASIC_DECK);
+
+    // Given: two open players are viewing the same deck.
+    await otherPage.evaluate((cardId) => {
+      window.CRAM_PLAYER.recordGrade(cardId, "known");
+    }, BASIC_DECK.cards[0].id);
+
+    // Then: the first player refreshes only the changed card and shows its grade.
+    await expect(page.getByTestId("grade-known")).toHaveAttribute("aria-pressed", "true");
+    for (let index = 0; index < BASIC_DECK.cards.length; index += 1) {
+      await page.getByTestId("next-card").click();
+    }
+    await expect(page.getByTestId("score-value")).toHaveText(`1/${BASIC_DECK.cards.length}`);
+
+    // When: the second player grades the remaining card.
+    await otherPage.evaluate((cardId) => {
+      window.CRAM_PLAYER.recordGrade(cardId, "known");
+    }, BASIC_DECK.cards[1].id);
+
+    // Then: the results view in the first player reflects the remote update.
+    await expect(page.getByTestId("score-value")).toHaveText(`2/${BASIC_DECK.cards.length}`);
+  } finally {
+    await otherPage.close();
+  }
 });
 
 test("checks cloze blanks with exact alternatives and restores aggregate feedback", async ({ page }) => {
