@@ -515,8 +515,29 @@
     .player__navigation[hidden] { display: none; }
 
     .player__score-screen {
-      min-height: clamp(18rem, 44vh, 28rem);
+      flex: 1;
+      min-height: 0;
       padding: var(--s4) 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: var(--rule-strong) transparent;
+    }
+
+    .player__score-screen::-webkit-scrollbar { width: 0.45rem; }
+
+    .player__score-screen::-webkit-scrollbar-track { background: transparent; }
+
+    .player__score-screen::-webkit-scrollbar-thumb {
+      border: 0.1rem solid transparent;
+      border-radius: 999px;
+      background: var(--rule-strong);
+      background-clip: content-box;
+    }
+
+    .player__score-screen::-webkit-scrollbar-thumb:hover {
+      background: var(--ink-soft);
+      background-clip: content-box;
     }
 
     .player__score-screen[hidden] { display: none; }
@@ -548,6 +569,11 @@
     .player__score-summary {
       margin: var(--s2) 0 0;
       color: var(--ink-soft);
+    }
+
+    .player__reset-button {
+      margin-top: var(--s3);
+      padding-inline: 0;
     }
 
     .player__review-section { padding-top: var(--s4); }
@@ -652,7 +678,9 @@
         --shell-gutter: clamp(1.5rem, 6vh, 3rem);
       }
       .player__card { min-height: 12rem; }
-      .player__status--navigation-hint { visibility: hidden; }
+      /* The navigation hint is intentionally hidden on compact screens. Collapse
+         it too, so the action row ends at the same shell gutter as the header starts. */
+      .player__status--navigation-hint { display: none; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -695,6 +723,7 @@
           <h2 class="player__score-title" id="score-title" tabindex="-1">Session complete</h2>
           <p class="player__score-value" id="score-value" data-testid="score-value">0/0</p>
           <p class="player__score-summary" id="score-summary">Score: 0/0</p>
+          <button type="button" class="player__reset-button" id="reset-progress" data-testid="reset-progress" data-action="reset-progress">Reset progress</button>
         </header>
         <section class="player__review-section" aria-labelledby="missed-heading">
           <h3 class="player__review-heading" id="missed-heading">Review missed cards</h3>
@@ -767,26 +796,74 @@
       const NAVIGATION_HINT = "Use the buttons or your left and right arrow keys to move through the deck.";
       const PROMPT_ID = "card-prompt";
 
-      const renderers = Object.create(null);
+      const cardTypes = Object.create(null);
+      const deckCardMaps = new WeakMap();
       const state = {
         deck: null,
         index: 0,
         cleanup: () => {},
-        grades: Object.create(null)
+        grades: Object.create(null),
+        persistenceWarning: ""
       };
 
-      function registerCardRenderer(type, renderer) {
+      // Renderer options keep grade vocabulary, scoring, and navigation policy with the
+      // card type. A renderer may omit grade validation when its values are intentionally
+      // opaque; persistence then accepts non-empty strings.
+      function registerCardRenderer(
+        type,
+        renderer,
+        options = {}
+      ) {
         if (typeof type !== "string" || !type.trim()) {
           throw new TypeError("A card renderer needs a non-empty type.");
         }
         if (typeof renderer !== "function") {
           throw new TypeError(`The renderer for ${type} must be a function.`);
         }
-        renderers[type] = renderer;
+        if (!options || typeof options !== "object" || Array.isArray(options)) {
+          throw new TypeError(`The options for ${type} must be an object.`);
+        }
+        const {
+          gradeValidator = null,
+          positiveGradeValidator = null,
+          requiresGrade = false
+        } = options;
+        if (gradeValidator !== null && typeof gradeValidator !== "function") {
+          throw new TypeError(`The grade validator for ${type} must be a function.`);
+        }
+        if (positiveGradeValidator !== null && typeof positiveGradeValidator !== "function") {
+          throw new TypeError(`The positive grade validator for ${type} must be a function.`);
+        }
+        if (typeof requiresGrade !== "boolean") {
+          throw new TypeError(`The requiresGrade option for ${type} must be a boolean.`);
+        }
+
+        const previousCardType = cardTypes[type];
+        cardTypes[type] = Object.freeze({
+          renderer,
+          gradeValidator,
+          positiveGradeValidator,
+          requiresGrade
+        });
+
+        // A renderer can be loaded after a deck has already been selected. Re-run
+        // validation so grades read before its validator was available cannot leak into
+        // the renderer's state.
+        try {
+          if (state.deck) {
+            state.grades = sanitizeGrades(state.deck, state.grades) || Object.create(null);
+          }
+        } catch (error) {
+          if (previousCardType) cardTypes[type] = previousCardType;
+          else delete cardTypes[type];
+          throw error;
+        }
 
         // A card type may be registered by a later, self-contained module. Repaint
         // immediately if that module is loaded after the player has started.
-        if (state.deck && state.deck.cards[state.index]?.type === type) {
+        if (state.deck && refs.player.dataset.state === "results") {
+          renderScoreScreen();
+        } else if (state.deck && state.deck.cards[state.index]?.type === type) {
           renderCurrentCard();
         }
       }
@@ -798,10 +875,25 @@
         }
         state.deck = deck;
         state.index = 0;
-        state.grades = Object.create(null);
+        state.persistenceWarning = "";
+        state.grades = progressStore.load(deck);
         setViewState("ready");
         refs.title.textContent = deck.title;
         renderCurrentCard();
+      }
+
+      function resetProgress() {
+        if (!state.deck) return;
+        const cleared = progressStore.reset(state.deck);
+        state.grades = Object.create(null);
+        state.persistenceWarning = "";
+        state.index = 0;
+        setViewState("ready");
+        renderCurrentCard();
+        refs.cardFrame.focus();
+        setStatus(cleared
+          ? "Progress reset. Start again."
+          : "Progress reset for this session, but saved progress could not be cleared.", !cleared);
       }
 
       function moveCard(delta) {
@@ -820,9 +912,11 @@
         if (!state.deck) return;
         state.cleanup();
         state.cleanup = () => {};
+        state.persistenceWarning = "";
         const card = state.deck.cards[state.index];
         const type = typeof card.type === "string" && card.type.trim() ? card.type : "unknown";
-        const renderer = renderers[type] || renderUnsupportedCard;
+        const cardType = cardTypes[type];
+        const renderer = cardType ? cardType.renderer : renderUnsupportedCard;
 
         refs.cardFrame.classList.remove("player__card--empty");
         refs.cardType.textContent = type;
@@ -858,7 +952,7 @@
           createElement,
           createPromptElement,
           setStatus,
-          player: api
+          player: rendererPlayer
         };
       }
 
@@ -1229,10 +1323,9 @@
 
       // Grades are keyed by card id rather than index, so they survive deck
       // navigation and stay meaningful to a later score screen (B3) even if
-      // cards are ever reordered. The value itself is opaque to the shell:
-      // each card type defines and interprets its own grade vocabulary
-      // (the basic renderer below uses "known"/"missed"; mcq or cloze are
-      // free to use something else, e.g. "correct"/"incorrect").
+      // cards are ever reordered. Each renderer defines and interprets its own grade
+      // vocabulary; persistence restores only grades that belong to the current deck
+      // and pass the registered renderer validator.
       function recordGrade(cardId, grade) {
         if (typeof cardId !== "string" || !cardId) {
           throw new TypeError("A grade needs a card id.");
@@ -1240,13 +1333,35 @@
         if (typeof grade !== "string" || !grade) {
           throw new TypeError("A grade needs a non-empty value.");
         }
+        if (state.deck) {
+          const card = state.deck.cards.find((candidate) => candidate && candidate.id === cardId);
+          if (!card) throw new Error("That card is not in the current deck.");
+          if (!isValidStoredGrade(card, grade)) {
+            throw new Error(`The grade is not valid for the ${card.type || "unknown"} card.`);
+          }
+        }
         state.grades[cardId] = grade;
-        if (state.deck) updateProgress();
+        if (state.deck) {
+          const persisted = progressStore.saveGrade(state.deck, { [cardId]: grade });
+          if (persisted) {
+            state.persistenceWarning = "";
+          } else {
+            state.persistenceWarning = "Progress could not be saved. Try again.";
+            setStatus(state.persistenceWarning, true);
+          }
+          updateProgress();
+          return persisted;
+        }
+        return true;
       }
 
       function getGrade(cardId) {
         return state.grades[cardId];
       }
+
+      // Renderers can grade their own card and restore its grade, but they cannot
+      // replace the active deck, mutate the registry, or inspect shell state.
+      const rendererPlayer = Object.freeze({ recordGrade, getGrade });
 
       function showDeckError(message) {
         state.cleanup();
@@ -1274,7 +1389,11 @@
       }
 
       function setStatus(message, isError = false) {
-        const text = message || "";
+        let text = message || "";
+        if (state.persistenceWarning && !isError) {
+          text = state.persistenceWarning;
+          isError = true;
+        }
         // Rewriting a live region re-announces it, so an unchanged hint stays untouched
         // rather than repeating itself on every card change.
         if (refs.status.textContent !== text) refs.status.textContent = text;
@@ -1310,16 +1429,9 @@
       }
 
       function isAnswerRequiredCard(card) {
-        return card.type === "basic" || card.type === "mcq";
+        const cardType = cardTypes[card.type];
+        return Boolean(cardType && cardType.requiresGrade);
       }
-
-      // Grade values are owned by card renderers. The score screen only needs to know
-      // which values represent a positive result for each renderer it understands.
-      // Add a card type here as its renderer defines a new grade vocabulary.
-      const POSITIVE_GRADES_BY_TYPE = Object.freeze({
-        basic: Object.freeze(["known"]),
-        mcq: Object.freeze(["correct"])
-      });
 
       function showScoreScreen() {
         state.cleanup();
@@ -1331,7 +1443,7 @@
       }
 
       function renderScoreScreen() {
-        const { deck, grades } = api.getState();
+        const { deck, grades } = state;
         const total = deck.cards.length;
         const score = deck.cards.filter((card) => isPositiveGrade(card, grades[card.id])).length;
         const missedCards = deck.cards.filter((card) => !isPositiveGrade(card, grades[card.id]));
@@ -1352,8 +1464,13 @@
       }
 
       function isPositiveGrade(card, grade) {
-        const positiveGrades = POSITIVE_GRADES_BY_TYPE[card.type];
-        return Array.isArray(positiveGrades) && positiveGrades.includes(grade);
+        const cardType = cardTypes[card.type];
+        if (!cardType || typeof cardType.positiveGradeValidator !== "function") return false;
+        try {
+          return Boolean(cardType.positiveGradeValidator(grade, card));
+        } catch {
+          return false;
+        }
       }
 
       function createMissedCard(card) {
@@ -1414,6 +1531,158 @@
         return candidate.cards.every((card) => card && typeof card === "object");
       }
 
+      function sanitizeGrades(deck, grades) {
+        if (!grades || typeof grades !== "object" || Array.isArray(grades)) return null;
+        const cardsById = getCardsById(deck);
+        const sanitized = Object.create(null);
+        for (const [cardId, grade] of Object.entries(grades)) {
+          const card = cardsById[cardId];
+          if (!card) continue;
+          if (!isValidStoredGrade(card, grade)) return null;
+          sanitized[cardId] = grade;
+        }
+        return sanitized;
+      }
+
+      function getCardsById(deck) {
+        const cached = deckCardMaps.get(deck);
+        if (cached && cached.cards === deck.cards) return cached.byId;
+        const byId = Object.create(null);
+        deck.cards.forEach((card) => {
+          if (card && typeof card.id === "string" && card.id) byId[card.id] = card;
+        });
+        deckCardMaps.set(deck, { cards: deck.cards, byId });
+        return byId;
+      }
+
+      function isValidStoredGrade(card, grade) {
+        const cardType = cardTypes[card.type];
+        const gradeValidator = cardType && cardType.gradeValidator;
+        if (typeof gradeValidator !== "function") {
+          return typeof grade === "string" && Boolean(grade);
+        }
+        return Boolean(gradeValidator(grade, card));
+      }
+
+      // This boundary owns localStorage keys, validation, conflict retries, and the
+      // recovery path after a failed reset. The player only sees load/save/reset/sync.
+      function createProgressStore() {
+        const pendingWrites = new WeakMap();
+
+        return Object.freeze({ load, saveGrade, reset, sync });
+
+        function load(deck) {
+          const key = getProgressKey(deck);
+          if (!key) return Object.create(null);
+          try {
+            const stored = window.localStorage.getItem(key);
+            if (stored === null) return Object.create(null);
+            const parsed = JSON.parse(stored);
+            if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+              return Object.create(null);
+            }
+            return sanitizeGrades(deck, parsed) || Object.create(null);
+          } catch {
+            return Object.create(null);
+          }
+        }
+
+        function saveGrade(deck, gradePatch) {
+          if (!getProgressKey(deck)) return false;
+          const currentGrades = sanitizeGrades(deck, gradePatch);
+          if (!currentGrades) return false;
+          const pending = pendingWrites.get(deck);
+          const queued = pending
+            ? Object.assign(pending.grades, currentGrades)
+            : currentGrades;
+          const replaceStored = Boolean(pending && pending.replaceStored);
+          const persisted = writeMerged(deck, queued, replaceStored);
+          if (persisted) pendingWrites.delete(deck);
+          else pendingWrites.set(deck, { grades: queued, replaceStored });
+          return persisted;
+        }
+
+        function reset(deck) {
+          const key = getProgressKey(deck);
+          if (!key) return false;
+          const cleared = clear(key);
+          if (cleared) pendingWrites.delete(deck);
+          else pendingWrites.set(deck, { grades: Object.create(null), replaceStored: true });
+          return cleared;
+        }
+
+        function sync(deck, localGrades, event) {
+          const key = getProgressKey(deck);
+          if (!key || (event.key !== null && event.key !== key)) return null;
+
+          const storageWasCleared = event.key === null || event.newValue === null;
+          const loadedGrades = load(deck);
+          if (storageWasCleared) {
+            pendingWrites.delete(deck);
+            return loadedGrades;
+          }
+
+          const pending = pendingWrites.get(deck);
+          if (pending) {
+            const authoritativeGrades = sanitizeGrades(
+              deck,
+              Object.assign(Object.create(null), localGrades, pending.grades)
+            ) || Object.create(null);
+            const persisted = writeMerged(deck, authoritativeGrades, pending.replaceStored);
+            if (persisted) pendingWrites.delete(deck);
+            else pendingWrites.set(deck, { grades: authoritativeGrades, replaceStored: pending.replaceStored });
+            return authoritativeGrades;
+          }
+
+          const mergedGrades = Object.assign(Object.create(null), localGrades, loadedGrades);
+          const missingGrades = Object.create(null);
+          for (const [cardId, grade] of Object.entries(mergedGrades)) {
+            if (!(cardId in loadedGrades)) missingGrades[cardId] = grade;
+          }
+          if (Object.keys(missingGrades).length) {
+            const persisted = writeMerged(deck, missingGrades, false);
+            if (!persisted) pendingWrites.set(deck, { grades: missingGrades, replaceStored: false });
+          }
+          return mergedGrades;
+        }
+
+        function writeMerged(deck, gradePatch, replaceStored) {
+          const key = getProgressKey(deck);
+          if (!key) return false;
+          try {
+            const currentGrades = sanitizeGrades(deck, gradePatch);
+            if (!currentGrades) return false;
+            for (let attempt = 0; attempt < 3; attempt += 1) {
+              const persistedGrades = replaceStored ? Object.create(null) : load(deck);
+              const serialized = JSON.stringify(
+                Object.assign(Object.create(null), persistedGrades, currentGrades)
+              );
+              window.localStorage.setItem(key, serialized);
+              if (window.localStorage.getItem(key) === serialized) return true;
+            }
+            return false;
+          } catch {
+            return false;
+          }
+        }
+
+        function clear(key) {
+          try {
+            window.localStorage.removeItem(key);
+            return true;
+          } catch {
+            return false;
+          }
+        }
+
+        function getProgressKey(deck) {
+          if (!deck || typeof deck.id !== "string" || !deck.id.trim()) return null;
+          return `fc:${deck.id}:v1`;
+        }
+      }
+
+      const progressStore = createProgressStore();
+
       // Every renderer should build its prompt with this: the card frame is labelled by
       // the element's id, so a renderer that rolls its own leaves the card unnamed.
       function createPromptElement(text) {
@@ -1445,9 +1714,33 @@
 
       // The shell owns this registry and navigation. Each card-type issue can add
       // or replace exactly one renderer without changing the shell or other types.
-      registerCardRenderer("basic", renderBasicCard);
-      registerCardRenderer("mcq", renderMcqCard);
-      registerCardRenderer("cloze", renderClozeCard);
+      registerCardRenderer(
+        "basic",
+        renderBasicCard,
+        {
+          gradeValidator: (grade) => grade === BASIC_GRADES.KNOWN || grade === BASIC_GRADES.MISSED,
+          positiveGradeValidator: (grade) => grade === BASIC_GRADES.KNOWN,
+          requiresGrade: true
+        }
+      );
+      registerCardRenderer(
+        "mcq",
+        renderMcqCard,
+        {
+          gradeValidator: (grade) => grade === MCQ_GRADES.CORRECT || grade === MCQ_GRADES.INCORRECT,
+          positiveGradeValidator: (grade) => grade === MCQ_GRADES.CORRECT,
+          requiresGrade: true
+        }
+      );
+      registerCardRenderer(
+        "cloze",
+        renderClozeCard,
+        {
+          gradeValidator: (grade) => grade === CLOZE_GRADES.CORRECT || grade === CLOZE_GRADES.INCORRECT,
+          positiveGradeValidator: (grade) => grade === CLOZE_GRADES.CORRECT,
+          requiresGrade: true
+        }
+      );
       window.CRAM_PLAYER = api;
 
       refs.player.addEventListener("click", (event) => {
@@ -1457,6 +1750,21 @@
         if (!button) return;
         if (button.dataset.action === "previous") moveCard(-1);
         if (button.dataset.action === "next") moveCard(1);
+        if (button.dataset.action === "reset-progress") resetProgress();
+      });
+
+      window.addEventListener("storage", (event) => {
+        if (!state.deck) return;
+        const currentCard = state.deck.cards[state.index];
+        const previousGrade = currentCard && state.grades[currentCard.id];
+        const grades = progressStore.sync(state.deck, state.grades, event);
+        if (!grades) return;
+        state.grades = grades;
+        if (refs.player.dataset.state === "results") {
+          renderScoreScreen();
+        } else if (currentCard && previousGrade !== state.grades[currentCard.id]) {
+          renderCurrentCard();
+        }
       });
 
       document.addEventListener("keydown", (event) => {
