@@ -1210,7 +1210,7 @@
         grades: Object.create(null),
         hintsUsed: Object.create(null),
         drillStreaks: Object.create(null),
-        cardsNeedingDrill: Object.create(null),
+        drilledCards: Object.create(null),
         freshAttempts: new Set(),
         processedAttempts: new Map(),
         persistenceWarning: ""
@@ -1418,22 +1418,31 @@
         if (state.isRetry) return;
         const card = state.sessionCards[state.index];
         const isFreshAttempt = state.freshAttempts.has(state.index);
+        const cardType = card && cardTypes[card.type];
         // A fresh duplicate has no answer until its renderer records one. An
         // initial card with a stored grade is seeded as already processed below,
         // so persisted D1 grades do not silently start D3 drilling.
         const grade = card && (isFreshAttempt ? undefined : state.grades[card.id]);
-        if (!card || !grade || state.processedAttempts.get(state.index) === grade) return;
+        // Opaque custom grades have no mastery semantics, so preserve their
+        // one-pass behavior instead of treating every grade as a miss forever.
+        if (
+          !card ||
+          !grade ||
+          !cardType ||
+          typeof cardType.positiveGradeValidator !== "function" ||
+          state.processedAttempts.get(state.index) === grade
+        ) return;
         state.processedAttempts.set(state.index, grade);
 
         if (isPositiveGrade(card, grade)) {
-          if (!state.cardsNeedingDrill[card.id]) return;
+          if (!state.drilledCards[card.id]) return;
           const streak = (state.drillStreaks[card.id] || 0) + 1;
           state.drillStreaks[card.id] = streak;
           if (streak < REQUIRED_DRILL_STREAK) appendDrillCard(card);
           return;
         }
 
-        state.cardsNeedingDrill[card.id] = true;
+        state.drilledCards[card.id] = true;
         state.drillStreaks[card.id] = 0;
         appendDrillCard(card);
       }
@@ -1445,7 +1454,7 @@
 
       function resetDrillState() {
         state.drillStreaks = Object.create(null);
-        state.cardsNeedingDrill = Object.create(null);
+        state.drilledCards = Object.create(null);
         state.freshAttempts = new Set();
         state.processedAttempts = new Map();
       }

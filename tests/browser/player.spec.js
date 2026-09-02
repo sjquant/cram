@@ -1193,6 +1193,26 @@ test("persists grades for a renderer supplied through the public registry", asyn
   expect(await page.evaluate(() => window.CRAM_PLAYER.getState().grades)).toEqual({});
 });
 
+test("completes opaque custom cards without adaptive requeueing", async ({ page }) => {
+  await openPlayer(page, CUSTOM_DECK);
+
+  // Given: a custom renderer accepts an opaque grade but does not declare mastery semantics.
+  await page.evaluate((deck) => {
+    const customRenderer = ({ card, createPromptElement }) => createPromptElement(card.prompt);
+    window.CRAM_PLAYER.registerCardRenderer("custom", customRenderer, {
+      gradeValidator: (grade) => grade === "opaque",
+    });
+    window.CRAM_PLAYER.setDeck(deck);
+
+    // When: the renderer records its opaque grade through the shared player API.
+    window.CRAM_PLAYER.recordGrade("custom-card", "opaque");
+  }, CUSTOM_DECK);
+
+  // Then: the session retires the card instead of creating an endless drill queue.
+  await page.getByTestId("next-card").click();
+  await expect(page.getByTestId("score-value")).toHaveText("0/1");
+});
+
 test("gives custom renderers a narrow player facade and navigation metadata", async ({ page }) => {
   await openPlayer(page, REQUIRED_CUSTOM_DECK);
 
