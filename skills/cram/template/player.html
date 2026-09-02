@@ -1402,9 +1402,17 @@
 
       function toggleSettings() {
         const shouldOpen = refs.settingsPanel.hidden;
-        refs.settingsPanel.hidden = !shouldOpen;
-        refs.settingsToggle.setAttribute("aria-expanded", String(shouldOpen));
-        const label = shouldOpen ? "Close settings" : "Open settings";
+        setSettingsVisibility(shouldOpen);
+      }
+
+      function closeSettings() {
+        setSettingsVisibility(false);
+      }
+
+      function setSettingsVisibility(isOpen) {
+        refs.settingsPanel.hidden = !isOpen;
+        refs.settingsToggle.setAttribute("aria-expanded", String(isOpen));
+        const label = isOpen ? "Close settings" : "Open settings";
         refs.settingsToggle.setAttribute("aria-label", label);
         refs.settingsToggle.title = label;
       }
@@ -2679,6 +2687,15 @@
         if (event.target === refs.cramModeToggle) setCramMode(event.target.checked);
       });
 
+      document.addEventListener("click", (event) => {
+        if (refs.settingsPanel.hidden) return;
+        const target = event.target;
+        if (target instanceof Node && (
+          refs.settingsToggle.contains(target) || refs.settingsPanel.contains(target)
+        )) return;
+        closeSettings();
+      });
+
       refs.scoreScreen.addEventListener("scroll", updateReviewScrollCue, { passive: true });
       window.addEventListener("resize", updateReviewScrollCue);
 
@@ -2697,6 +2714,12 @@
       });
 
       document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !refs.settingsPanel.hidden) {
+          event.preventDefault();
+          closeSettings();
+          refs.settingsToggle.focus();
+          return;
+        }
         const target = event.target;
         if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target.isContentEditable) {
           return;

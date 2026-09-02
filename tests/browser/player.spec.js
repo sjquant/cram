@@ -342,6 +342,30 @@ test.describe("basic cards", () => {
     await expect(page.getByTestId("score-screen")).toBeVisible();
   });
 
+  test("closes the settings panel with Escape or an outside click", async ({ page }) => {
+    await openPlayer(page, BASIC_DECK);
+
+    // Given: the learner has opened the settings panel.
+    await page.getByTestId("settings-toggle").click();
+    await expect(page.getByTestId("settings-panel")).toBeVisible();
+
+    // When: the learner presses Escape.
+    await page.keyboard.press("Escape");
+
+    // Then: the panel closes and focus returns to its toggle.
+    await expect(page.getByTestId("settings-panel")).toBeHidden();
+    await expect(page.getByTestId("settings-toggle")).toHaveAttribute("aria-expanded", "false");
+    await expect(page.getByTestId("settings-toggle")).toBeFocused();
+
+    // When: the learner reopens the panel and clicks outside it.
+    await page.getByTestId("settings-toggle").click();
+    await page.getByTestId("deck-title").click();
+
+    // Then: the outside click closes the panel as well.
+    await expect(page.getByTestId("settings-panel")).toBeHidden();
+    await expect(page.getByTestId("settings-toggle")).toHaveAttribute("aria-expanded", "false");
+  });
+
   test("aligns the mobile footer action with the header shell gutter", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await openPlayer(page, BASIC_DECK);
@@ -873,6 +897,8 @@ test("overrides the system color scheme and persists a separate theme preference
   );
 
   // When: the learner toggles to light mode and then back to dark mode.
+  await page.getByTestId("settings-toggle").click();
+  await expect(page.getByTestId("settings-panel")).toBeVisible();
   await page.getByTestId("theme-toggle").click();
 
   // Then: explicit light mode overrides the dark system preference.
