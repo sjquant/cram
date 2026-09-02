@@ -44,6 +44,30 @@ const RETRY_TYPES_DECK = {
     },
   ],
 };
+const ADAPTIVE_TYPES_DECK = {
+  id: "adaptive-types-browser-check",
+  title: "Adaptive card types browser check",
+  cards: [
+    {
+      id: "adaptive-basic-card",
+      type: "basic",
+      prompt: "What does this basic card test?",
+      answer: "Same-session drilling",
+    },
+    {
+      id: "adaptive-mcq-card",
+      type: "mcq",
+      prompt: "Which option should be requeued?",
+      answer: "The missed one",
+      distractors: ["The skipped one"],
+    },
+    {
+      id: "adaptive-cloze-card",
+      type: "cloze",
+      prompt: "A missed {{card}} returns later.",
+    },
+  ],
+};
 const ALL_TYPES_DECK = JSON.parse(
   fs.readFileSync(path.join(ROOT, "fixtures/valid/all-types.json"), "utf8")
 );
@@ -174,6 +198,84 @@ test.describe("basic cards", () => {
     await expect(page.getByTestId("grade-known")).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByTestId("grade-missed")).toHaveAttribute("aria-pressed", "false");
     await expect(page.locator("#player-status")).toHaveText("Marked as known.");
+  });
+
+  test("requeues missed cards in the same session until their correct streak is mastered", async ({ page }) => {
+    await openPlayer(page, BASIC_DECK);
+
+    // Given: the learner answers the first card correctly and the second card incorrectly.
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-missed").click();
+
+    // When: the learner advances through the remaining first-pass cards.
+    await page.getByTestId("next-card").click();
+    await expect(page.getByTestId("card-prompt")).toHaveText(BASIC_DECK.cards[2].prompt);
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+    await page.getByTestId("next-card").click();
+
+    // Then: the missed card returns without a score-screen round trip or stale answer UI.
+    await expect(page.getByTestId("score-screen")).toBeHidden();
+    await expect(page.getByTestId("card-prompt")).toHaveText(BASIC_DECK.cards[1].prompt);
+    await expect(page.getByTestId("card-answer")).toBeHidden();
+    await expect(page.getByTestId("grading-buttons")).toBeHidden();
+
+    // When: the learner answers the requeued card correctly twice in a row.
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      await page.getByTestId("reveal-answer").click();
+      await page.getByTestId("grade-known").click();
+      await page.getByTestId("next-card").click();
+      if (attempt === 0) {
+        await expect(page.getByTestId("card-prompt")).toHaveText(BASIC_DECK.cards[1].prompt);
+        await expect(page.getByTestId("card-answer")).toBeHidden();
+      }
+    }
+
+    // Then: results appear only after the drill queue is retired, with one score per card.
+    await expect(page.getByTestId("score-screen")).toBeVisible();
+    await expect(page.getByTestId("score-value")).toHaveText(`${BASIC_DECK.cards.length}/${BASIC_DECK.cards.length}`);
+    await expect(page.getByTestId("retry-missed")).toBeHidden();
+    expect(await page.evaluate((deckId) => JSON.parse(localStorage.getItem(`fc:${deckId}:v1`)), BASIC_DECK.id)).toEqual(
+      Object.fromEntries(BASIC_DECK.cards.map((card) => [card.id, "known"]))
+    );
+  });
+
+  test("applies same-session requeue behavior to every built-in card type", async ({ page }) => {
+    await openPlayer(page, ADAPTIVE_TYPES_DECK);
+
+    // Given: the learner answers a basic, MCQ, and cloze card incorrectly.
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-missed").click();
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("mcq-option").filter({ hasText: "The skipped one" }).click();
+    await page.getByTestId("mcq-check-answer").click();
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("cloze-input").fill("wrong");
+    await page.getByTestId("cloze-check-answer").click();
+    await page.getByTestId("next-card").click();
+
+    // Then: each missed type returns as a fresh attempt before results can appear.
+    await expect(page.getByTestId("card-prompt")).toHaveText(ADAPTIVE_TYPES_DECK.cards[0].prompt);
+    await expect(page.getByTestId("card-answer")).toBeHidden();
+    await page.getByTestId("next-card").click();
+    await expect(page.getByTestId("mcq-check-answer")).toBeHidden();
+    await page.getByTestId("next-card").click();
+    await expect(page.getByTestId("cloze-input")).toBeEnabled();
+    await expect(page.getByTestId("score-screen")).toBeHidden();
+    await page.getByTestId("next-card").click();
+
+    // And: the unique-card score waits for the entire adaptive queue.
+    await expect(page.getByTestId("score-value")).toHaveText("0/3");
+    await expect(page.getByTestId("retry-missed")).toHaveText("Retry 3 missed cards");
   });
 
   test("aligns the mobile footer action with the header shell gutter", async ({ page }) => {
@@ -435,20 +537,26 @@ test.describe("basic cards", () => {
   test("retries only missed cards and persists a corrected grade", async ({ page }) => {
     await openPlayer(page, RETRY_DECK);
 
-    // Given: the learner completes the deck with one known card and one missed card.
+    // Given: the learner answers one card correctly and one card incorrectly.
     await page.getByTestId("reveal-answer").click();
     await page.getByTestId("grade-known").click();
     await page.getByTestId("next-card").click();
     await page.getByTestId("reveal-answer").click();
     await page.getByTestId("grade-missed").click();
     await page.getByTestId("next-card").click();
+
+    // When: the missed card is fed back into the same session automatically.
+    await expect(page.getByTestId("card-prompt")).toHaveText(RETRY_DECK.cards[1].prompt);
+    await page.getByTestId("next-card").click();
+
+    // Then: skipping that follow-up leaves a missed card for the separate retry action.
     await expect(page.getByTestId("score-value")).toHaveText("1/2");
     await expect(page.getByTestId("score-summary")).toHaveText("1 correct · 1 to review");
     await expect(page.getByTestId("score-correct-label")).toHaveText("1 correct");
     await expect(page.getByTestId("score-missed-label")).toHaveText("1 to review");
     await expect(page.getByTestId("retry-missed")).toHaveText("Retry 1 missed card");
 
-    // When: the learner starts a retry from the score screen.
+    // When: the learner starts a new retry session from the score screen.
     await page.getByTestId("retry-missed").click();
 
     // Then: the retry session contains only the missed card.
@@ -485,6 +593,14 @@ test.describe("basic cards", () => {
     await page.getByTestId("cloze-input").fill("wrong");
     await page.getByTestId("cloze-check-answer").click();
     await page.getByTestId("next-card").click();
+
+    // When: the missed MCQ and cloze cards return to the same session queue.
+    await expect(page.getByTestId("mcq-check-answer")).toBeHidden();
+    await page.getByTestId("next-card").click();
+    await expect(page.getByTestId("cloze-check-answer")).toBeVisible();
+    await page.getByTestId("next-card").click();
+
+    // Then: skipping those fresh attempts reaches the score screen with both cards missed.
     await expect(page.getByTestId("score-value")).toHaveText("0/2");
     await expect(page.getByTestId("score-summary")).toHaveText("0 correct · 2 to review");
     await expect(page.getByTestId("score-missed-label")).toHaveText("2 to review");
@@ -545,7 +661,7 @@ test.describe("basic cards", () => {
     await page.evaluate((deck) => {
       const grades = { basic: "missed", mcq: "incorrect", cloze: "incorrect" };
       deck.cards.forEach((card) => window.CRAM_PLAYER.recordGrade(card.id, grades[card.type]));
-      for (let index = 0; index < deck.cards.length; index += 1) {
+      for (let index = 0; index < deck.cards.length * 2; index += 1) {
         document.querySelector("#next-card").click();
       }
     }, ALL_TYPES_DECK);
@@ -590,7 +706,7 @@ test.describe("basic cards", () => {
     await page.getByTestId("next-card").click();
     await page.getByTestId("reveal-answer").click();
     await page.getByTestId("grade-missed").click();
-    for (let index = 1; index < BASIC_DECK.cards.length; index += 1) {
+    for (let index = 1; index <= BASIC_DECK.cards.length; index += 1) {
       await page.getByTestId("next-card").click();
     }
     await page.evaluate(() => {
@@ -762,6 +878,9 @@ test.describe("hints", () => {
     await page.getByTestId("reveal-answer").click();
     await page.getByTestId("grade-missed").click();
     await page.getByTestId("next-card").click();
+    for (let index = 0; index < HINT_DECK.cards.length; index += 1) {
+      await page.getByTestId("next-card").click();
+    }
 
     // And: the missed-card review identifies exactly the cards that needed hints.
     await expect(page.getByTestId("score-value")).toHaveText("0/4");
