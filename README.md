@@ -14,9 +14,12 @@ The generated player supports:
 
 ## Try the demo
 
-The repository includes a small HTTP caching deck. Browse the [deck
-source](examples/http-caching-essentials.json), or open the already-rendered
-[offline quiz](examples/http-caching-essentials.html) directly in your browser.
+**[Open the live demo →](https://sjquant.github.io/cram/examples/http-caching-essentials.html)**
+— no install, nothing to clone, it just runs in your browser.
+
+The repository also includes the deck that generated it: browse the [deck
+source](examples/http-caching-essentials.json), or open the [rendered HTML
+file](examples/http-caching-essentials.html) directly from a local clone.
 
 ## Install in Claude Code
 
