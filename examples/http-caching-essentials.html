@@ -4,6 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Cram player</title>
+  <!-- Both icons are inlined so the rendered player stays a single
+       self-contained file with no external requests. The PNG is a fallback
+       for Safari, which does not render SVG favicons; browsers that do
+       prefer the SVG because of sizes="any". Mirrors docs/logo.svg. -->
+  <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAABPklEQVR42mNgGAVDCWw10VYAYgcgbgDi+UC8H4r7oWLo2AEJC5BikQEQB0ANWQ+15D+F2IFYy6lhGTbcMNAOmD/QDtg/0A54TzMH7PV2+n80ORKOL7bVgGksagWIccB9dI0gA++snP//yYFtcPzl/RO8GKSerJyAzYfEWIiOQXqwmFUw0A7op4kDPjy+gRI9N+ZO/n+2qoC8nIDNAaD4RI/fnQ7m5OSE+2Q54MqkDhQHgPjkZsch4YD7hBwAimNkeVB0IJcDoPgH6QGVD+Q4AKMgAhmKnuhAmFBOwFYYEeOAfkIOIBaT64CGgXZAALaynpiCB4ZB2RSUBsh1gAO21AurYGAYWwKjSi7AlRWphYl1wPuBdsD+gXbAelq0iEhpljVQYNF9pL5CAcl9AjydEXScgNQBSSC63T8KBhsAAEPWegMGWEZgAAAAAElFTkSuQmCC">
+  <link rel="icon" type="image/svg+xml" sizes="any" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 128 128%27%3E%3Cg transform=%27rotate(-4 64 64)%27%3E%3Cpath fill=%27%23b5342b%27 d=%27M20,17 L64,13 L108,18 L112,63 L109,110 L64,114 L19,109 L16,64 Z%27/%3E%3Cpath fill=%27%23f4efe4%27 d=%27M38,40 H92 V56 H54 V72 H92 V88 H38 Z%27/%3E%3C/g%3E%3C/svg%3E">
   <style>
     :root {
       color-scheme: light dark;
@@ -608,7 +614,7 @@
       left: 0;
       z-index: 2;
       width: min(100% - 3rem, 46rem);
-      margin: 0;
+      margin: 0 auto;
       color: var(--ink-soft);
       font-size: 0.72rem;
       text-align: center;

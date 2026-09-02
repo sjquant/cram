@@ -2,6 +2,8 @@
 
 # Cram
 
+**Turn any document into a self-graded flashcard quiz — no server, no accounts, just one HTML file.**
+
 Cram turns pasted, attached, local, or web material into a validated deck and
 a self-contained, offline flashcard quiz in a single HTML file you can open in
 any browser.
