@@ -529,14 +529,19 @@
 
     .player__attribution {
       position: fixed;
-      right: 1.5rem;
-      bottom: max(0.75rem, env(safe-area-inset-bottom));
-      left: 1.5rem;
+      right: 0;
+      bottom: max(1rem, env(safe-area-inset-bottom));
+      left: 0;
       z-index: 2;
+      width: min(100% - 3rem, 46rem);
       margin: 0;
       color: var(--ink-soft);
       font-size: 0.72rem;
       text-align: center;
+    }
+
+    .player__attribution small {
+      font-size: inherit;
     }
 
     .player__attribution a {
@@ -1014,9 +1019,9 @@
     </main>
   </div>
 
-  <p class="player__attribution">
-    <a href="https://github.com/sjquant/cram">Made with Cram</a>
-  </p>
+  <footer class="player__attribution">
+    <small><a href="https://github.com/sjquant/cram">Made with Cram</a></small>
+  </footer>
 
   <!--
     A3 replaces only the value after the /*INJECT*/ marker with the deck JSON. Keep this
