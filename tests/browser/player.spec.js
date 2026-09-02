@@ -652,6 +652,65 @@ test.describe("basic cards", () => {
   });
 });
 
+test("overrides the system color scheme and persists a separate theme preference", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "dark" });
+  await openPlayer(page, BASIC_DECK);
+
+  // Given: the learner has not chosen a theme, so the dark system preference applies.
+  const systemTheme = await page.evaluate(() => ({
+    rootTheme: document.documentElement.getAttribute("data-theme"),
+    paper: getComputedStyle(document.documentElement).getPropertyValue("--paper").trim()
+  }));
+  expect(systemTheme.rootTheme).toBeNull();
+  expect(systemTheme.paper).toBe("#151310");
+
+  // When: the operating-system preference changes while the player stays in system mode.
+  await page.emulateMedia({ colorScheme: "light" });
+
+  // Then: the system-driven UI follows the new effective theme.
+  await expect(page.getByTestId("theme-toggle")).toHaveAttribute("aria-label", "Switch to dark mode");
+  await page.emulateMedia({ colorScheme: "dark" });
+  await expect(page.getByTestId("theme-toggle")).toHaveAttribute("aria-label", "Switch to light mode");
+
+  // Given: progress belongs to the deck-specific store before the theme changes.
+  await page.getByTestId("reveal-answer").click();
+  await page.getByTestId("grade-known").click();
+  const progressBeforeThemeChange = await page.evaluate(
+    (deckId) => localStorage.getItem(`fc:${deckId}:v1`),
+    BASIC_DECK.id
+  );
+
+  // When: the learner toggles to light mode and then back to dark mode.
+  await page.getByTestId("theme-toggle").click();
+
+  // Then: explicit light mode overrides the dark system preference.
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  await expect(page.getByTestId("theme-toggle")).toHaveAttribute("aria-label", "Switch to dark mode");
+  await expect.poll(() => page.evaluate(() => (
+    getComputedStyle(document.documentElement).getPropertyValue("--paper").trim()
+  ))).toBe("#f4efe4");
+
+  await page.getByTestId("theme-toggle").click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await expect(page.getByTestId("theme-toggle")).toHaveAttribute("aria-label", "Switch to light mode");
+
+  // Then: the global theme key persists independently of deck progress.
+  const storedTheme = await page.evaluate((deckId) => ({
+    theme: localStorage.getItem("cram:theme:v1"),
+    progress: localStorage.getItem(`fc:${deckId}:v1`)
+  }), BASIC_DECK.id);
+  expect(storedTheme.theme).toBe("dark");
+  expect(storedTheme.progress).toBe(progressBeforeThemeChange);
+
+  // When: the file:// player is reloaded.
+  await page.reload();
+
+  // Then: the explicit theme remains applied without changing the deck session machinery.
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  expect(await page.evaluate((deckId) => localStorage.getItem(`fc:${deckId}:v1`), BASIC_DECK.id))
+    .toBe(progressBeforeThemeChange);
+});
+
 test.describe("hints", () => {
   test("reveals and records hints across basic, MCQ, and cloze cards", async ({ page }) => {
     await openPlayer(page, HINT_DECK);
