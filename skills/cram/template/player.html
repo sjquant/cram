@@ -527,6 +527,26 @@
       flex: none;
     }
 
+    .player__attribution {
+      position: fixed;
+      right: 1.5rem;
+      bottom: max(0.75rem, env(safe-area-inset-bottom));
+      left: 1.5rem;
+      z-index: 2;
+      margin: 0;
+      color: var(--ink-soft);
+      font-size: 0.72rem;
+      text-align: center;
+    }
+
+    .player__attribution a {
+      color: inherit;
+    }
+
+    .player__attribution a:hover {
+      color: var(--accent);
+    }
+
     .player[data-state="loading"] .player__navigation {
       visibility: hidden;
     }
@@ -993,6 +1013,10 @@
       <p class="player__visually-hidden" id="card-announcer" role="status" aria-live="polite"></p>
     </main>
   </div>
+
+  <p class="player__attribution">
+    <a href="https://github.com/sjquant/cram">Made with Cram</a>
+  </p>
 
   <!--
     A3 replaces only the value after the /*INJECT*/ marker with the deck JSON. Keep this
