@@ -8,6 +8,8 @@ Cram turns pasted, attached, local, or web material into a validated deck and
 a self-contained, offline flashcard quiz in a single HTML file you can open in
 any browser.
 
+![Cram player demo: reveal a card, grade the answer, advance, and review the score](docs/demo.gif)
+
 The generated player supports:
 
 - basic, multiple-choice (MCQ), and cloze cards;

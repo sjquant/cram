@@ -4,7 +4,8 @@
     "node": ">=20"
   },
   "scripts": {
-    "test:browser": "playwright test tests/browser"
+    "test:browser": "playwright test tests/browser",
+    "capture:demo": "node scripts/capture-demo.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1"
