@@ -42,6 +42,28 @@
       }
     }
 
+    [data-theme="light"] {
+      color-scheme: light;
+      --paper: #f4efe4;
+      --ink: #1f1c18;
+      --ink-soft: #6a6357;
+      --rule: #ddd5c4;
+      --rule-strong: #c4bAa4;
+      --accent: #b5342b;
+      --positive: #356b4a;
+    }
+
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --paper: #151310;
+      --ink: #ece5d8;
+      --ink-soft: #98907f;
+      --rule: #302b23;
+      --rule-strong: #473f33;
+      --accent: #e0645a;
+      --positive: #8fc9a1;
+    }
+
     * { box-sizing: border-box; }
 
     html {
@@ -145,10 +167,17 @@
     }
 
     .player__header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--s2);
       margin-bottom: var(--s3);
     }
 
     .player__title {
+      flex: 1 1 auto;
+      min-width: 0;
       max-width: 24ch;
       margin: 0;
       font-family: var(--serif);
@@ -157,6 +186,23 @@
       font-weight: 500;
       line-height: 1.2;
       overflow-wrap: anywhere;
+    }
+
+    .player__theme-toggle {
+      flex: 0 0 auto;
+      min-height: 2.5rem;
+      border: 1px solid var(--rule-strong);
+      border-radius: 999px;
+      padding: 0.45rem 0.8rem;
+      color: var(--ink-soft);
+      background: var(--paper);
+      font-size: 0.8rem;
+      white-space: nowrap;
+    }
+
+    .player__theme-toggle:hover:not(:disabled) {
+      border-color: var(--accent);
+      color: var(--accent);
     }
 
     .player__progress-panel { margin: 0; }
@@ -902,6 +948,16 @@
 
     }
 
+    [data-theme="light"] body::before {
+      mix-blend-mode: multiply;
+      opacity: 0.16;
+    }
+
+    [data-theme="dark"] body::before {
+      mix-blend-mode: screen;
+      opacity: 0.05;
+    }
+
     .player {
       position: relative;
       z-index: 1;
@@ -941,11 +997,24 @@
       }
     }
   </style>
+  <script>
+    (() => {
+      try {
+        const preference = window.localStorage.getItem("cram:theme:v1");
+        if (preference === "light" || preference === "dark") {
+          document.documentElement.dataset.theme = preference;
+        }
+      } catch {
+        // Theme preferences are optional; the system color scheme remains the fallback.
+      }
+    })();
+  </script>
 </head>
 <body>
   <div class="player" id="player" data-testid="player" data-state="loading">
     <header class="player__header">
       <h1 class="player__title" id="deck-title" data-testid="deck-title">Loading deck…</h1>
+      <button type="button" class="player__theme-toggle" id="theme-toggle" data-testid="theme-toggle" data-action="toggle-theme" aria-pressed="false" aria-label="Switch to dark mode">Dark mode</button>
     </header>
 
     <section class="player__progress-panel" aria-label="Deck progress">
@@ -1073,15 +1142,18 @@
         navigation: document.querySelector(".player__navigation"),
         previous: document.getElementById("previous-card"),
         next: document.getElementById("next-card"),
+        themeToggle: document.getElementById("theme-toggle"),
         status: document.getElementById("player-status"),
         announcer: document.getElementById("card-announcer")
       };
 
       const NAVIGATION_HINT = "Use H for a hint, A to reveal a basic answer, or the arrow keys to move through the deck.";
       const PROMPT_ID = "card-prompt";
+      const THEME_STORAGE_KEY = "cram:theme:v1";
 
       const cardTypes = Object.create(null);
       const deckCardMaps = new WeakMap();
+      let themePreference = null;
       const state = {
         deck: null,
         sessionCards: [],
@@ -1092,6 +1164,69 @@
         hintsUsed: Object.create(null),
         persistenceWarning: ""
       };
+
+      function initializeTheme() {
+        themePreference = loadThemePreference();
+        applyTheme(themePreference);
+        updateThemeToggle();
+      }
+
+      function loadThemePreference() {
+        try {
+          const preference = window.localStorage.getItem(THEME_STORAGE_KEY);
+          return preference === "light" || preference === "dark" ? preference : null;
+        } catch {
+          return null;
+        }
+      }
+
+      function applyTheme(preference) {
+        if (preference === "light" || preference === "dark") {
+          document.documentElement.dataset.theme = preference;
+        } else {
+          document.documentElement.removeAttribute("data-theme");
+        }
+      }
+
+      function updateThemeToggle() {
+        const isDark = getEffectiveTheme() === "dark";
+        refs.themeToggle.textContent = isDark ? "Light mode" : "Dark mode";
+        refs.themeToggle.setAttribute(
+          "aria-label",
+          isDark ? "Switch to light mode" : "Switch to dark mode"
+        );
+        refs.themeToggle.setAttribute("aria-pressed", String(isDark));
+      }
+
+      function getEffectiveTheme() {
+        return themePreference || getSystemTheme();
+      }
+
+      function getSystemTheme() {
+        return typeof window.matchMedia === "function"
+          && window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light";
+      }
+
+      function setThemePreference(preference) {
+        themePreference = preference;
+        applyTheme(preference);
+        persistThemePreference(preference);
+        updateThemeToggle();
+      }
+
+      function persistThemePreference(preference) {
+        try {
+          window.localStorage.setItem(THEME_STORAGE_KEY, preference);
+        } catch {
+          // Keep the in-memory choice when browser storage is unavailable.
+        }
+      }
+
+      function toggleTheme() {
+        setThemePreference(getEffectiveTheme() === "dark" ? "light" : "dark");
+      }
 
       // Renderer options keep grade vocabulary, scoring, and navigation policy with the
       // card type. A renderer may omit grade validation when its values are intentionally
@@ -2244,6 +2379,7 @@
         if (button.dataset.action === "retry-missed") retryMissedCards();
         if (button.dataset.action === "reset-progress") resetProgress();
         if (button.dataset.action === "scroll-review") scrollReview();
+        if (button.dataset.action === "toggle-theme") toggleTheme();
       });
 
       refs.scoreScreen.addEventListener("scroll", updateReviewScrollCue, { passive: true });
@@ -2301,6 +2437,8 @@
         button.click();
         return true;
       }
+
+      initializeTheme();
 
       const injectedDeck = window.__DECK__;
       setDeck(injectedDeck === null || injectedDeck === undefined ? previewDeck : injectedDeck);
