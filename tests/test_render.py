@@ -60,6 +60,28 @@ class RendererCliTests(unittest.TestCase):
                     "this only holds if injected '<' characters are escaped",
                 )
 
+    def test_given_a_valid_deck_when_rendered_then_it_includes_only_a_passive_attribution_link(self):
+        """Given a valid deck, when rendered, then attribution is a plain link without external resources."""
+
+        deck_path = fixture_paths("valid")[0]
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "deck.html"
+            result = run_renderer(deck_path, output, Path(directory))
+
+            self.assertEqual(result.returncode, 0, msg=result.stderr or result.stdout)
+            html = output.read_text(encoding="utf-8")
+
+            self.assertIn(
+                '<a href="https://github.com/sjquant/cram">Made with Cram</a>',
+                html,
+            )
+            self.assertNotRegex(
+                html,
+                r"<(?:img|iframe|script|link|source|video|audio|object|embed)\b[^>]*"
+                r"(?:src|href|data)\s*=\s*['\"]https?://",
+                "the attribution must not add a page-load external resource",
+            )
+
     def test_given_an_invalid_deck_when_rendered_then_it_is_rejected_without_html(self):
         """Given an invalid deck, when rendered, then the CLI rejects it without HTML."""
 

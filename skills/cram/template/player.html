@@ -528,6 +528,31 @@
       flex: none;
     }
 
+    .player__attribution {
+      position: fixed;
+      right: 0;
+      bottom: max(1rem, env(safe-area-inset-bottom));
+      left: 0;
+      z-index: 2;
+      width: min(100% - 3rem, 46rem);
+      margin: 0;
+      color: var(--ink-soft);
+      font-size: 0.72rem;
+      text-align: center;
+    }
+
+    .player__attribution small {
+      font-size: inherit;
+    }
+
+    .player__attribution a {
+      color: inherit;
+    }
+
+    .player__attribution a:hover {
+      color: var(--accent);
+    }
+
     .player[data-state="loading"] .player__navigation {
       visibility: hidden;
     }
@@ -982,8 +1007,8 @@
 
       <footer class="player__footer">
         <nav class="player__navigation" aria-label="Card navigation">
-          <button type="button" id="previous-card" data-testid="previous-card" data-action="previous" aria-label="Previous card" aria-keyshortcuts="P ArrowLeft" disabled>← Previous</button>
-          <button type="button" id="next-card" data-testid="next-card" class="player__next-button player__next-button--skip" data-action="next" aria-label="Next card" aria-keyshortcuts="N ArrowRight" disabled>Skip →</button>
+          <button type="button" id="previous-card" data-testid="previous-card" data-action="previous" aria-label="Previous card" aria-keyshortcuts="ArrowLeft" disabled>← Previous</button>
+          <button type="button" id="next-card" data-testid="next-card" class="player__next-button player__next-button--skip" data-action="next" aria-label="Next card" aria-keyshortcuts="ArrowRight" disabled>Skip →</button>
         </nav>
         <p class="player__status" id="player-status" role="status" aria-live="polite"></p>
       </footer>
@@ -994,6 +1019,10 @@
       <p class="player__visually-hidden" id="card-announcer" role="status" aria-live="polite"></p>
     </main>
   </div>
+
+  <footer class="player__attribution">
+    <small><a href="https://github.com/sjquant/cram">Made with Cram</a></small>
+  </footer>
 
   <!--
     A3 replaces only the value after the /*INJECT*/ marker with the deck JSON. Keep this
@@ -1048,7 +1077,7 @@
         announcer: document.getElementById("card-announcer")
       };
 
-      const NAVIGATION_HINT = "H shows a hint, A reveals a basic answer, and N/P or the arrow keys move through the deck.";
+      const NAVIGATION_HINT = "Use H for a hint, A to reveal a basic answer, or the arrow keys to move through the deck.";
       const PROMPT_ID = "card-prompt";
 
       const cardTypes = Object.create(null);
@@ -2248,10 +2277,10 @@
           event.preventDefault();
         } else if (key === "a" && triggerCardShortcut("A")) {
           event.preventDefault();
-        } else if (key === "p" || event.key === "ArrowLeft") {
+        } else if (event.key === "ArrowLeft") {
           event.preventDefault();
           moveCard(-1);
-        } else if (key === "n" || event.key === "ArrowRight") {
+        } else if (event.key === "ArrowRight") {
           event.preventDefault();
           moveCard(1);
         }
