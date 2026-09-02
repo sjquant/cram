@@ -36,13 +36,16 @@ def read_deck(path: Path) -> dict:
     return value
 
 
-def run_renderer(deck: Path, output: Path, cwd: Path) -> subprocess.CompletedProcess:
+def run_renderer(deck: Path, output: Path, cwd: Path, mode: str = "normal") -> subprocess.CompletedProcess:
     """Run the renderer's documented CLI against one deck fixture."""
 
     environment = os.environ.copy()
     environment["CLAUDE_PLUGIN_ROOT"] = str(ROOT)
+    command = [sys.executable, str(RENDERER), str(deck), "-o", str(output)]
+    if mode != "normal":
+        command.extend(["--mode", mode])
     return subprocess.run(
-        [sys.executable, str(RENDERER), str(deck), "-o", str(output)],
+        command,
         cwd=cwd,
         env=environment,
         capture_output=True,

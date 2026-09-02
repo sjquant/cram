@@ -28,6 +28,8 @@ from validator import DeckValidationError, load_deck  # noqa: E402
 PLUGIN_ROOT = Path(os.environ.get("CLAUDE_PLUGIN_ROOT") or str(Path(__file__).resolve().parents[3]))
 TEMPLATE_PATH = PLUGIN_ROOT / "skills" / "cram" / "template" / "player.html"
 INJECTION_MARKER = "/*INJECT*/ null"
+MODE_INJECTION_MARKER = "/*INJECT_MODE*/ false"
+RENDER_MODES = ("normal", "cram")
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -36,6 +38,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("deck", type=Path, help="path to a deck JSON file")
     parser.add_argument("-o", "--output", type=Path, required=True, help="path to write the rendered HTML")
+    parser.add_argument(
+        "--mode",
+        choices=RENDER_MODES,
+        default="normal",
+        help="session mode for the generated player (default: normal)",
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -45,7 +53,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 1
 
     try:
-        html = render_deck(deck)
+        html = render_deck(deck, args.mode)
         _write_output(args.output, html)
     except (OSError, RuntimeError) as error:
         print(error, file=sys.stderr)
@@ -55,15 +63,24 @@ def main(argv: Sequence[str] | None = None) -> int:
     return 0
 
 
-def render_deck(deck: dict) -> str:
+def render_deck(deck: dict, mode: str = "normal") -> str:
     """Inline a validated deck into the player template and return the resulting HTML."""
 
+    if mode not in RENDER_MODES:
+        raise ValueError(f"unsupported player mode: {mode}")
     template = TEMPLATE_PATH.read_text(encoding="utf-8")
     if INJECTION_MARKER not in template:
         raise RuntimeError(f"{TEMPLATE_PATH}: injection marker not found")
+    if MODE_INJECTION_MARKER not in template:
+        raise RuntimeError(f"{TEMPLATE_PATH}: mode injection marker not found")
 
     deck_json = _escape_for_inline_script(json.dumps(deck))
-    return template.replace(INJECTION_MARKER, deck_json, 1)
+    mode_value = "true" if mode == "cram" else "false"
+    return template.replace(INJECTION_MARKER, deck_json, 1).replace(
+        MODE_INJECTION_MARKER,
+        mode_value,
+        1,
+    )
 
 
 def _escape_for_inline_script(deck_json: str) -> str:

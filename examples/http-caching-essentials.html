@@ -1142,6 +1142,7 @@
     contains a closing script tag cannot end this element early and break the page.
   -->
   <script>window.__DECK__ = {"id": "http-caching-essentials", "title": "HTTP caching essentials", "source": "RFC 9111: HTTP Caching", "cards": [{"id": "cache-control-max-age", "type": "basic", "prompt": "What does `Cache-Control: max-age=60` permit a cache to do?", "answer": "Treat a stored response as fresh for 60 seconds after it was generated, so it can be reused without revalidation.", "hint": "Think in terms of a freshness lifetime."}, {"id": "cache-control-no-store", "type": "mcq", "prompt": "Which `Cache-Control` directive prevents a cache from storing a response?", "answer": "`no-store`", "distractors": ["`no-cache`", "`private`", "`max-age=60`"], "explanation": "Use this directive when retaining the response in a cache is not allowed."}, {"id": "cache-control-no-cache", "type": "basic", "prompt": "What does the HTTP `Cache-Control: no-cache` directive mean for a stored response?", "answer": "A cache may store the response, but it must revalidate it with the origin before reusing it.", "hint": "It is different from `no-store`: storage is allowed, reuse without validation is not."}, {"id": "etag-validator", "type": "cloze", "prompt": "Which response header gives a representation an opaque validator that a client can send in `If-None-Match`? The header is `{{ETag}}`.", "explanation": "A validator lets the client ask whether its stored representation is still current without downloading the full representation again."}, {"id": "if-none-match-not-modified", "type": "basic", "prompt": "For a conditional `GET`, what status can an origin return when `If-None-Match` confirms that a cached representation is still current?", "answer": "`304 Not Modified`, allowing the cache to reuse its stored response body."}, {"id": "vary-shared-cache", "type": "basic", "prompt": "What does the HTTP `Vary` response header tell a shared cache?", "answer": "Which request-header fields must match before a stored response can be reused for another request.", "hint": "The response may vary based on fields such as `Accept-Language`."}, {"id": "cache-control-private", "type": "basic", "prompt": "When should a response be marked `Cache-Control: private`?", "answer": "When it may be stored by a private browser cache but must not be stored by a shared cache.", "explanation": "This is useful for user-specific responses that a browser may reuse for that same user."}]};</script>
+  <script>window.__CRAM_MODE__ = false;</script>
   <script>
     (() => {
       "use strict";
@@ -1205,6 +1206,7 @@
         sessionCards: [],
         scoreCards: [],
         isRetry: false,
+        cramMode: false,
         index: 0,
         cleanup: () => {},
         grades: Object.create(null),
@@ -1359,7 +1361,14 @@
         }
       }
 
-      function setDeck(deck) {
+      function setDeck(deck, options = {}) {
+        if (!options || typeof options !== "object" || Array.isArray(options)) {
+          throw new TypeError("Session options must be an object.");
+        }
+        const { cramMode = false } = options;
+        if (typeof cramMode !== "boolean") {
+          throw new TypeError("The cramMode session option must be a boolean.");
+        }
         if (!isRenderableDeck(deck)) {
           showDeckError("The page needs a deck with a title and at least one card.");
           return;
@@ -1368,6 +1377,7 @@
         state.sessionCards = deck.cards.slice();
         state.scoreCards = deck.cards.slice();
         state.isRetry = false;
+        state.cramMode = cramMode;
         state.index = 0;
         state.persistenceWarning = "";
         state.grades = progressStore.load(deck);
@@ -1415,7 +1425,7 @@
       }
 
       function processCurrentAttempt() {
-        if (state.isRetry) return;
+        if (state.isRetry || !state.cramMode) return;
         const card = state.sessionCards[state.index];
         const isFreshAttempt = state.freshAttempts.has(state.index);
         const cardType = card && cardTypes[card.type];
@@ -2064,6 +2074,7 @@
         state.sessionCards = [];
         state.scoreCards = [];
         state.isRetry = false;
+        state.cramMode = false;
         resetDrillState();
         setViewState("error");
         state.hintsUsed = Object.create(null);
@@ -2192,6 +2203,7 @@
         state.sessionCards = missedCards.slice();
         state.scoreCards = missedCards.slice();
         state.isRetry = true;
+        state.cramMode = false;
         state.index = 0;
         resetDrillState();
         setViewState("ready");
@@ -2480,6 +2492,7 @@
           deck: state.deck,
           index: state.index,
           total: state.sessionCards.length,
+          cramMode: state.cramMode,
           grades: { ...state.grades },
           hintsUsed: { ...state.hintsUsed }
         })
@@ -2588,7 +2601,10 @@
       initializeTheme();
 
       const injectedDeck = window.__DECK__;
-      setDeck(injectedDeck === null || injectedDeck === undefined ? previewDeck : injectedDeck);
+      setDeck(
+        injectedDeck === null || injectedDeck === undefined ? previewDeck : injectedDeck,
+        { cramMode: window.__CRAM_MODE__ === true }
+      );
     })();
   </script>
 </body>

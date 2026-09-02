@@ -25,6 +25,14 @@ The repository also includes the deck that generated it: browse the [deck
 source](examples/http-caching-essentials.json), or open the [rendered HTML
 file](examples/http-caching-essentials.html) directly from a local clone.
 
+Rendered decks use a normal linear session by default. Pass `--mode cram` to
+the renderer when you want missed cards to return automatically during the same
+sitting:
+
+```sh
+python3 skills/cram/scripts/render.py deck.json -o deck.html --mode cram
+```
+
 ## Install in Claude Code
 
 Add the Cram marketplace, then install its `cram` plugin:
