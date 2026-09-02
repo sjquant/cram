@@ -1,8 +1,8 @@
 # Cram
 
-Cram turns source material into a self-contained, offline flashcard quiz. It
-is a Claude Code skill for turning pasted, attached, local, or web material
-into a validated deck and a single HTML file you can open in any browser.
+Cram turns pasted, attached, local, or web material into a validated deck and
+a self-contained, offline flashcard quiz in a single HTML file you can open in
+any browser.
 
 The generated player supports:
 
