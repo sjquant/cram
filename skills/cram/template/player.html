@@ -70,6 +70,28 @@
       --positive: #8fc9a1;
     }
 
+    [data-theme="sepia"] {
+      color-scheme: light;
+      --paper: #eadcc5;
+      --ink: #34271f;
+      --ink-soft: #725d4a;
+      --rule: #d0bfa2;
+      --rule-strong: #a98f6e;
+      --accent: #a83f2f;
+      --positive: #356b4a;
+    }
+
+    [data-theme="night-neon"] {
+      color-scheme: dark;
+      --paper: #101820;
+      --ink: #e8eef0;
+      --ink-soft: #9fb2bb;
+      --rule: #283842;
+      --rule-strong: #3d5360;
+      --accent: #ff705f;
+      --positive: #9bd3b0;
+    }
+
     * { box-sizing: border-box; }
 
     html {
@@ -298,21 +320,12 @@
       height: 1.5rem;
     }
 
-    .player__theme-icon [data-theme-icon][hidden] {
-      display: none;
-    }
+    .player__theme-icon path { fill: currentColor; }
 
-    .player__theme-icon [data-theme-icon="moon"] path {
-      fill: currentColor;
-    }
-
-    .player__theme-icon [data-theme-icon="sun"] circle,
-    .player__theme-icon [data-theme-icon="sun"] path {
-      fill: none;
+    .player__theme-icon circle {
+      fill: var(--paper);
       stroke: currentColor;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      stroke-width: 1.75;
+      stroke-width: 1.5;
     }
 
     .player__progress-panel { margin: 0; }
@@ -1068,6 +1081,16 @@
       opacity: 0.05;
     }
 
+    [data-theme="sepia"] body::before {
+      mix-blend-mode: multiply;
+      opacity: 0.14;
+    }
+
+    [data-theme="night-neon"] body::before {
+      mix-blend-mode: screen;
+      opacity: 0.08;
+    }
+
     .player {
       position: relative;
       z-index: 1;
@@ -1110,8 +1133,8 @@
   <script>
     (() => {
       try {
-        const preference = window.localStorage.getItem("cram:theme:v1");
-        if (preference === "light" || preference === "dark") {
+        const preference = window.localStorage.getItem("cram:theme:v2");
+        if (["light", "dark", "sepia", "night-neon"].includes(preference)) {
           document.documentElement.dataset.theme = preference;
         }
       } catch {
@@ -1135,15 +1158,12 @@
           <h2 class="player__settings-heading" id="settings-heading">Settings</h2>
           <div class="player__settings-group">
             <span class="player__settings-label">Theme</span>
-            <button type="button" class="player__theme-toggle" id="theme-toggle" data-testid="theme-toggle" data-action="toggle-theme" aria-pressed="false" aria-label="Switch to dark mode" title="Switch to dark mode">
+            <button type="button" class="player__theme-toggle" id="theme-toggle" data-testid="theme-toggle" data-action="cycle-theme" aria-label="Color theme: System. Switch to Light." title="Color theme: System. Switch to Light.">
               <svg class="player__theme-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <g data-theme-icon="moon">
-                  <path d="M20.5 15.2A8.5 8.5 0 0 1 8.8 3.5a8.5 8.5 0 1 0 11.7 11.7Z"></path>
-                </g>
-                <g data-theme-icon="sun" hidden>
-                  <circle cx="12" cy="12" r="4"></circle>
-                  <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
-                </g>
+                <path d="M12 3.5a8.5 8.5 0 1 0 0 17h1.4a2.1 2.1 0 0 0 1.4-3.66 2.1 2.1 0 0 1 1.4-3.66H18a2.5 2.5 0 0 0 2.5-2.5A8.5 8.5 0 0 0 12 3.5Z"></path>
+                <circle cx="8" cy="9" r="1"></circle>
+                <circle cx="12" cy="7.5" r="1"></circle>
+                <circle cx="15.5" cy="9" r="1"></circle>
               </svg>
             </button>
           </div>
@@ -1293,7 +1313,15 @@
 
       const NAVIGATION_HINT = "Use H for a hint, A to reveal a basic answer, or the arrow keys to move through the deck.";
       const PROMPT_ID = "card-prompt";
-      const THEME_STORAGE_KEY = "cram:theme:v1";
+      const THEME_STORAGE_KEY = "cram:theme:v2";
+      const THEME_ORDER = [null, "light", "dark", "sepia", "night-neon"];
+      const THEME_LABELS = Object.freeze({
+        system: "System",
+        light: "Light",
+        dark: "Dark",
+        sepia: "Sepia",
+        "night-neon": "Night neon"
+      });
       const REQUIRED_DRILL_STREAK = 2;
 
       const cardTypes = Object.create(null);
@@ -1329,14 +1357,14 @@
       function loadThemePreference() {
         try {
           const preference = window.localStorage.getItem(THEME_STORAGE_KEY);
-          return preference === "light" || preference === "dark" ? preference : null;
+          return isNamedTheme(preference) ? preference : null;
         } catch {
           return null;
         }
       }
 
       function applyTheme(preference) {
-        if (preference === "light" || preference === "dark") {
+        if (isNamedTheme(preference)) {
           document.documentElement.dataset.theme = preference;
         } else {
           document.documentElement.removeAttribute("data-theme");
@@ -1344,17 +1372,15 @@
       }
 
       function updateThemeToggle() {
-        const isDark = getEffectiveTheme() === "dark";
-        const themeIcon = refs.themeToggle.querySelector(".player__theme-icon");
-        themeIcon.querySelector('[data-theme-icon="moon"]').toggleAttribute("hidden", isDark);
-        themeIcon.querySelector('[data-theme-icon="sun"]').toggleAttribute("hidden", !isDark);
-        const label = isDark ? "Switch to light mode" : "Switch to dark mode";
-        refs.themeToggle.setAttribute(
-          "aria-label",
-          label
-        );
+        const currentTheme = themePreference || "system";
+        const effectiveTheme = getEffectiveTheme();
+        const currentLabel = themePreference
+          ? THEME_LABELS[currentTheme]
+          : `System (${effectiveTheme})`;
+        const nextLabel = THEME_LABELS[getNextThemePreference() || "system"];
+        const label = `Color theme: ${currentLabel}. Switch to ${nextLabel}.`;
+        refs.themeToggle.setAttribute("aria-label", label);
         refs.themeToggle.title = label;
-        refs.themeToggle.setAttribute("aria-pressed", String(isDark));
       }
 
       function getEffectiveTheme() {
@@ -1368,6 +1394,18 @@
           : "light";
       }
 
+      function isNamedTheme(preference) {
+        return preference === "light"
+          || preference === "dark"
+          || preference === "sepia"
+          || preference === "night-neon";
+      }
+
+      function getNextThemePreference() {
+        const currentIndex = THEME_ORDER.indexOf(themePreference);
+        return THEME_ORDER[(currentIndex + 1) % THEME_ORDER.length];
+      }
+
       function setThemePreference(preference) {
         themePreference = preference;
         applyTheme(preference);
@@ -1377,14 +1415,15 @@
 
       function persistThemePreference(preference) {
         try {
-          window.localStorage.setItem(THEME_STORAGE_KEY, preference);
+          if (preference) window.localStorage.setItem(THEME_STORAGE_KEY, preference);
+          else window.localStorage.removeItem(THEME_STORAGE_KEY);
         } catch {
           // Keep the in-memory choice when browser storage is unavailable.
         }
       }
 
-      function toggleTheme() {
-        setThemePreference(getEffectiveTheme() === "dark" ? "light" : "dark");
+      function cycleTheme() {
+        setThemePreference(getNextThemePreference());
       }
 
       function watchSystemTheme() {
@@ -2680,7 +2719,7 @@
         if (button.dataset.action === "reset-progress") resetProgress();
         if (button.dataset.action === "scroll-review") scrollReview();
         if (button.dataset.action === "toggle-settings") toggleSettings();
-        if (button.dataset.action === "toggle-theme") toggleTheme();
+        if (button.dataset.action === "cycle-theme") cycleTheme();
       });
 
       refs.settingsPanel.addEventListener("change", (event) => {

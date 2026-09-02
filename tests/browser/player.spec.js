@@ -862,7 +862,7 @@ test.describe("basic cards", () => {
   });
 });
 
-test("overrides the system color scheme and persists a separate theme preference", async ({ page }) => {
+test("cycles paper-and-ink themes and persists the explicit choice independently of progress", async ({ page }) => {
   await page.emulateMedia({ colorScheme: "dark" });
   await openPlayer(page, BASIC_DECK);
 
@@ -879,14 +879,24 @@ test("overrides the system color scheme and persists a separate theme preference
   }));
   expect(systemTheme.rootTheme).toBeNull();
   expect(systemTheme.paper).toBe("#151310");
+  await expect(page.getByTestId("theme-toggle")).toHaveAttribute(
+    "aria-label",
+    "Color theme: System (dark). Switch to Light."
+  );
 
   // When: the operating-system preference changes while the player stays in system mode.
   await page.emulateMedia({ colorScheme: "light" });
 
   // Then: the system-driven UI follows the new effective theme.
-  await expect(page.getByTestId("theme-toggle")).toHaveAttribute("aria-label", "Switch to dark mode");
+  await expect(page.getByTestId("theme-toggle")).toHaveAttribute(
+    "aria-label",
+    "Color theme: System (light). Switch to Light."
+  );
   await page.emulateMedia({ colorScheme: "dark" });
-  await expect(page.getByTestId("theme-toggle")).toHaveAttribute("aria-label", "Switch to light mode");
+  await expect(page.getByTestId("theme-toggle")).toHaveAttribute(
+    "aria-label",
+    "Color theme: System (dark). Switch to Light."
+  );
 
   // Given: progress belongs to the deck-specific store before the theme changes.
   await page.getByTestId("reveal-answer").click();
@@ -896,37 +906,117 @@ test("overrides the system color scheme and persists a separate theme preference
     BASIC_DECK.id
   );
 
-  // When: the learner toggles to light mode and then back to dark mode.
-  await page.getByTestId("settings-toggle").click();
-  await expect(page.getByTestId("settings-panel")).toBeVisible();
+  // When: the learner cycles through every named theme.
   await page.getByTestId("theme-toggle").click();
 
-  // Then: explicit light mode overrides the dark system preference.
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
-  await expect(page.getByTestId("theme-toggle")).toHaveAttribute("aria-label", "Switch to dark mode");
-  await expect.poll(() => page.evaluate(() => (
-    getComputedStyle(document.documentElement).getPropertyValue("--paper").trim()
-  ))).toBe("#f4efe4");
-
-  await page.getByTestId("theme-toggle").click();
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  await expect(page.getByTestId("theme-toggle")).toHaveAttribute("aria-label", "Switch to light mode");
+  const namedThemes = [
+    { name: "light", label: "Light", paper: "#f4efe4", next: "Dark" },
+    { name: "dark", label: "Dark", paper: "#151310", next: "Sepia" },
+    { name: "sepia", label: "Sepia", paper: "#eadcc5", next: "Night neon" },
+    { name: "night-neon", label: "Night neon", paper: "#101820", next: "System" }
+  ];
+  for (const theme of namedThemes) {
+    await expect(page.locator("html")).toHaveAttribute("data-theme", theme.name);
+    await expect(page.getByTestId("theme-toggle")).toHaveAttribute(
+      "aria-label",
+      `Color theme: ${theme.label}. Switch to ${theme.next}.`
+    );
+    await expect.poll(() => page.evaluate(() => (
+      getComputedStyle(document.documentElement).getPropertyValue("--paper").trim()
+    ))).toBe(theme.paper);
+    if (theme.name !== "night-neon") await page.getByTestId("theme-toggle").click();
+  }
 
   // Then: the global theme key persists independently of deck progress.
   const storedTheme = await page.evaluate((deckId) => ({
-    theme: localStorage.getItem("cram:theme:v1"),
+    theme: localStorage.getItem("cram:theme:v2"),
     progress: localStorage.getItem(`fc:${deckId}:v1`)
   }), BASIC_DECK.id);
-  expect(storedTheme.theme).toBe("dark");
+  expect(storedTheme.theme).toBe("night-neon");
   expect(storedTheme.progress).toBe(progressBeforeThemeChange);
 
   // When: the file:// player is reloaded.
   await page.reload();
 
   // Then: the explicit theme remains applied without changing the deck session machinery.
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "night-neon");
+  await expect(page.getByTestId("theme-toggle")).toHaveAttribute(
+    "aria-label",
+    "Color theme: Night neon. Switch to System."
+  );
   expect(await page.evaluate((deckId) => localStorage.getItem(`fc:${deckId}:v1`), BASIC_DECK.id))
     .toBe(progressBeforeThemeChange);
+
+  // Returning to system removes the explicit v2 preference and resumes OS following.
+  await page.getByTestId("theme-toggle").click();
+  expect(await page.locator("html").getAttribute("data-theme")).toBeNull();
+  expect(await page.evaluate(() => localStorage.getItem("cram:theme:v2"))).toBeNull();
+  await expect(page.getByTestId("theme-toggle")).toHaveAttribute(
+    "aria-label",
+    "Color theme: System (dark). Switch to Light."
+  );
+});
+
+test("ignores the legacy v1 theme key and keeps every palette legible over its paper", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "dark" });
+  await page.goto(PLAYER_URL);
+  await page.evaluate(() => {
+    localStorage.removeItem("cram:theme:v2");
+    localStorage.setItem("cram:theme:v1", "dark");
+  });
+
+  // Given: only the old G1 key contains an explicit choice.
+  await page.reload();
+  await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), BASIC_DECK);
+
+  // Then: the v1 value is ignored and the system preference remains active.
+  expect(await page.locator("html").getAttribute("data-theme")).toBeNull();
+  expect(await page.getByTestId("theme-toggle").getAttribute("aria-pressed")).toBeNull();
+
+  // When: the picker visits each theme, inspect the public token contract and grain branch.
+  const palettes = [];
+  for (let index = 0; index < 5; index += 1) {
+    palettes.push(await page.evaluate(() => {
+      const root = getComputedStyle(document.documentElement);
+      const paper = root.getPropertyValue("--paper").trim();
+      const luminance = (color) => {
+        const channels = color.slice(1).match(/../g).map((value) => Number.parseInt(value, 16) / 255);
+        const linear = channels.map((channel) => channel <= 0.03928
+          ? channel / 12.92
+          : ((channel + 0.055) / 1.055) ** 2.4);
+        return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
+      };
+      const paperLuminance = luminance(paper);
+      const contrast = (color) => {
+        const colorLuminance = luminance(color);
+        return (Math.max(paperLuminance, colorLuminance) + 0.05)
+          / (Math.min(paperLuminance, colorLuminance) + 0.05);
+      };
+      const grain = getComputedStyle(document.body, "::before");
+      return {
+        theme: document.documentElement.getAttribute("data-theme") || "system",
+        tokens: ["paper", "ink", "ink-soft", "rule", "rule-strong", "accent", "positive"]
+          .reduce((values, token) => ({ ...values, [token]: root.getPropertyValue(`--${token}`).trim() }), {}),
+        contrast: ["ink", "ink-soft", "accent", "positive"].reduce(
+          (values, token) => ({ ...values, [token]: contrast(root.getPropertyValue(`--${token}`).trim()) }),
+          {}
+        ),
+        grain: { mixBlendMode: grain.mixBlendMode, opacity: grain.opacity }
+      };
+    }));
+    if (index < 4) await page.getByTestId("theme-toggle").click();
+  }
+
+  // Then: all seven tokens exist, text-facing colors meet 4.5:1, and grain stays visible.
+  expect(palettes).toHaveLength(5);
+  for (const palette of palettes) {
+    expect(Object.values(palette.tokens).every(Boolean)).toBe(true);
+    for (const ratio of Object.values(palette.contrast)) expect(ratio).toBeGreaterThanOrEqual(4.5);
+    expect(Number.parseFloat(palette.grain.opacity)).toBeGreaterThan(0);
+  }
+  expect(palettes.map(({ theme }) => theme)).toEqual(["system", "light", "dark", "sepia", "night-neon"]);
+  expect(palettes.find(({ theme }) => theme === "sepia").grain.mixBlendMode).toBe("multiply");
+  expect(palettes.find(({ theme }) => theme === "night-neon").grain.mixBlendMode).toBe("screen");
 });
 
 test.describe("hints", () => {
