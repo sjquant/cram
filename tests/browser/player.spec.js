@@ -664,6 +664,14 @@ test("overrides the system color scheme and persists a separate theme preference
   expect(systemTheme.rootTheme).toBeNull();
   expect(systemTheme.paper).toBe("#151310");
 
+  // When: the operating-system preference changes while the player stays in system mode.
+  await page.emulateMedia({ colorScheme: "light" });
+
+  // Then: the system-driven UI follows the new effective theme.
+  await expect(page.getByTestId("theme-toggle")).toHaveAttribute("aria-label", "Switch to dark mode");
+  await page.emulateMedia({ colorScheme: "dark" });
+  await expect(page.getByTestId("theme-toggle")).toHaveAttribute("aria-label", "Switch to light mode");
+
   // Given: progress belongs to the deck-specific store before the theme changes.
   await page.getByTestId("reveal-answer").click();
   await page.getByTestId("grade-known").click();
@@ -677,14 +685,14 @@ test("overrides the system color scheme and persists a separate theme preference
 
   // Then: explicit light mode overrides the dark system preference.
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
-  await expect(page.getByTestId("theme-toggle")).toHaveText("Dark mode");
+  await expect(page.getByTestId("theme-toggle")).toHaveAttribute("aria-label", "Switch to dark mode");
   await expect.poll(() => page.evaluate(() => (
     getComputedStyle(document.documentElement).getPropertyValue("--paper").trim()
   ))).toBe("#f4efe4");
 
   await page.getByTestId("theme-toggle").click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  await expect(page.getByTestId("theme-toggle")).toHaveText("Light mode");
+  await expect(page.getByTestId("theme-toggle")).toHaveAttribute("aria-label", "Switch to light mode");
 
   // Then: the global theme key persists independently of deck progress.
   const storedTheme = await page.evaluate((deckId) => ({
