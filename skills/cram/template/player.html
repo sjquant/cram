@@ -222,14 +222,11 @@
       gap: 0.25rem;
     }
 
-    .player__settings-toggle,
-    .player__theme-toggle {
+    .player__settings-toggle {
       display: inline-flex;
       width: 3rem;
       height: 3rem;
       min-height: 3rem;
-      align-items: center;
-      justify-content: center;
       border: 0;
       border-radius: 50%;
       padding: 0;
@@ -238,10 +235,29 @@
       line-height: 1;
     }
 
+    .player__theme-picker {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .player__theme-select {
+      width: 3rem;
+      height: 3rem;
+      min-height: 3rem;
+      border: 1px solid var(--rule-strong);
+      border-radius: 1.5rem;
+      padding: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-size: 0;
+      text-indent: -9999px;
+      appearance: none;
+      cursor: pointer;
+    }
+
     .player__settings-toggle:hover:not(:disabled),
-    .player__settings-toggle:focus-visible,
-    .player__theme-toggle:hover:not(:disabled),
-    .player__theme-toggle:focus-visible {
+    .player__settings-toggle:focus-visible {
       color: var(--accent);
       background: var(--rule);
     }
@@ -316,8 +332,8 @@
 
     .player__theme-icon {
       display: block;
-      width: 1.5rem;
-      height: 1.5rem;
+      width: 1.1rem;
+      height: 1.1rem;
     }
 
     .player__theme-icon path { fill: currentColor; }
@@ -326,6 +342,28 @@
       fill: var(--paper);
       stroke: currentColor;
       stroke-width: 1.5;
+    }
+
+    .player__theme-icon {
+      position: absolute;
+      left: 0.95rem;
+      pointer-events: none;
+    }
+
+    .player__theme-select:hover {
+      border-color: var(--accent);
+    }
+
+    .player__theme-select:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .player__theme-select option {
+      color: var(--ink);
+      background: var(--paper);
+      font-size: 0.82rem;
+      text-indent: 0;
     }
 
     .player__progress-panel { margin: 0; }
@@ -1158,14 +1196,22 @@
           <h2 class="player__settings-heading" id="settings-heading">Settings</h2>
           <div class="player__settings-group">
             <span class="player__settings-label">Theme</span>
-            <button type="button" class="player__theme-toggle" id="theme-toggle" data-testid="theme-toggle" data-action="cycle-theme" aria-label="Color theme: System. Switch to Light." title="Color theme: System. Switch to Light.">
+            <div class="player__theme-picker">
+              <label class="player__visually-hidden" for="theme-select">Color theme</label>
               <svg class="player__theme-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                 <path d="M12 3.5a8.5 8.5 0 1 0 0 17h1.4a2.1 2.1 0 0 0 1.4-3.66 2.1 2.1 0 0 1 1.4-3.66H18a2.5 2.5 0 0 0 2.5-2.5A8.5 8.5 0 0 0 12 3.5Z"></path>
                 <circle cx="8" cy="9" r="1"></circle>
                 <circle cx="12" cy="7.5" r="1"></circle>
                 <circle cx="15.5" cy="9" r="1"></circle>
               </svg>
-            </button>
+              <select class="player__theme-select" id="theme-select" data-testid="theme-select" aria-label="Color theme">
+                <option value="">System</option>
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="sepia">Sepia</option>
+                <option value="night-neon">Night neon</option>
+              </select>
+            </div>
           </div>
           <label class="player__settings-option">
             <input type="checkbox" id="cram-mode-toggle" data-testid="cram-mode-toggle">
@@ -1175,6 +1221,17 @@
             </span>
           </label>
         </section>
+=======
+      <div class="player__theme-picker">
+        <label class="player__visually-hidden" for="theme-select">Color theme</label>
+        <select class="player__theme-select" id="theme-select" data-testid="theme-select" aria-label="Color theme">
+          <option value="">System</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+          <option value="sepia">Sepia</option>
+          <option value="night-neon">Night neon</option>
+        </select>
+>>>>>>> 8fc1ec3 (feat(player): use a theme selector)
       </div>
     </header>
 
@@ -1305,7 +1362,7 @@
         next: document.getElementById("next-card"),
         settingsToggle: document.getElementById("settings-toggle"),
         settingsPanel: document.getElementById("settings-panel"),
-        themeToggle: document.getElementById("theme-toggle"),
+        themeSelect: document.getElementById("theme-select"),
         cramModeToggle: document.getElementById("cram-mode-toggle"),
         status: document.getElementById("player-status"),
         announcer: document.getElementById("card-announcer")
@@ -1314,14 +1371,7 @@
       const NAVIGATION_HINT = "Use H for a hint, A to reveal a basic answer, or the arrow keys to move through the deck.";
       const PROMPT_ID = "card-prompt";
       const THEME_STORAGE_KEY = "cram:theme:v2";
-      const THEME_ORDER = [null, "light", "dark", "sepia", "night-neon"];
-      const THEME_LABELS = Object.freeze({
-        system: "System",
-        light: "Light",
-        dark: "Dark",
-        sepia: "Sepia",
-        "night-neon": "Night neon"
-      });
+      const THEME_VALUES = Object.freeze(["light", "dark", "sepia", "night-neon"]);
       const REQUIRED_DRILL_STREAK = 2;
 
       const cardTypes = Object.create(null);
@@ -1349,9 +1399,8 @@
       function initializeTheme() {
         themePreference = loadThemePreference();
         applyTheme(themePreference);
-        updateThemeToggle();
         updateCramModeToggle();
-        watchSystemTheme();
+        updateThemePicker();
       }
 
       function loadThemePreference() {
@@ -1371,46 +1420,19 @@
         }
       }
 
-      function updateThemeToggle() {
-        const currentTheme = themePreference || "system";
-        const effectiveTheme = getEffectiveTheme();
-        const currentLabel = themePreference
-          ? THEME_LABELS[currentTheme]
-          : `System (${effectiveTheme})`;
-        const nextLabel = THEME_LABELS[getNextThemePreference() || "system"];
-        const label = `Color theme: ${currentLabel}. Switch to ${nextLabel}.`;
-        refs.themeToggle.setAttribute("aria-label", label);
-        refs.themeToggle.title = label;
-      }
-
-      function getEffectiveTheme() {
-        return themePreference || getSystemTheme();
-      }
-
-      function getSystemTheme() {
-        return typeof window.matchMedia === "function"
-          && window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light";
+      function updateThemePicker() {
+        refs.themeSelect.value = themePreference || "";
       }
 
       function isNamedTheme(preference) {
-        return preference === "light"
-          || preference === "dark"
-          || preference === "sepia"
-          || preference === "night-neon";
-      }
-
-      function getNextThemePreference() {
-        const currentIndex = THEME_ORDER.indexOf(themePreference);
-        return THEME_ORDER[(currentIndex + 1) % THEME_ORDER.length];
+        return THEME_VALUES.includes(preference);
       }
 
       function setThemePreference(preference) {
-        themePreference = preference;
-        applyTheme(preference);
-        persistThemePreference(preference);
-        updateThemeToggle();
+        themePreference = isNamedTheme(preference) ? preference : null;
+        applyTheme(themePreference);
+        persistThemePreference(themePreference);
+        updateThemePicker();
       }
 
       function persistThemePreference(preference) {
@@ -1419,23 +1441,6 @@
           else window.localStorage.removeItem(THEME_STORAGE_KEY);
         } catch {
           // Keep the in-memory choice when browser storage is unavailable.
-        }
-      }
-
-      function cycleTheme() {
-        setThemePreference(getNextThemePreference());
-      }
-
-      function watchSystemTheme() {
-        if (typeof window.matchMedia !== "function") return;
-        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)");
-        const updateForSystemTheme = () => {
-          if (!themePreference) updateThemeToggle();
-        };
-        if (typeof systemTheme.addEventListener === "function") {
-          systemTheme.addEventListener("change", updateForSystemTheme);
-        } else if (typeof systemTheme.addListener === "function") {
-          systemTheme.addListener(updateForSystemTheme);
         }
       }
 
@@ -2719,7 +2724,10 @@
         if (button.dataset.action === "reset-progress") resetProgress();
         if (button.dataset.action === "scroll-review") scrollReview();
         if (button.dataset.action === "toggle-settings") toggleSettings();
-        if (button.dataset.action === "cycle-theme") cycleTheme();
+      });
+
+      refs.themeSelect.addEventListener("change", () => {
+        setThemePreference(refs.themeSelect.value);
       });
 
       refs.settingsPanel.addEventListener("change", (event) => {

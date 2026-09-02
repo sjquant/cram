@@ -862,9 +862,10 @@ test.describe("basic cards", () => {
   });
 });
 
-test("cycles paper-and-ink themes and persists the explicit choice independently of progress", async ({ page }) => {
+test("selects paper-and-ink themes and persists the explicit choice independently of progress", async ({ page }) => {
   await page.emulateMedia({ colorScheme: "dark" });
   await openPlayer(page, BASIC_DECK);
+  const themeSelect = page.getByTestId("theme-select");
 
   // Given: the settings panel starts closed behind the header tools.
   await expect(page.getByTestId("settings-panel")).toBeHidden();
@@ -879,24 +880,29 @@ test("cycles paper-and-ink themes and persists the explicit choice independently
   }));
   expect(systemTheme.rootTheme).toBeNull();
   expect(systemTheme.paper).toBe("#151310");
-  await expect(page.getByTestId("theme-toggle")).toHaveAttribute(
-    "aria-label",
-    "Color theme: System (dark). Switch to Light."
-  );
+  await expect(themeSelect).toHaveRole("combobox", { name: "Color theme" });
+  await expect(themeSelect.locator("option")).toHaveText([
+    "System",
+    "Light",
+    "Dark",
+    "Sepia",
+    "Night neon"
+  ]);
+  await expect(themeSelect).toHaveValue("");
+  await expect(themeSelect).toHaveAttribute("aria-label", "Color theme");
 
   // When: the operating-system preference changes while the player stays in system mode.
   await page.emulateMedia({ colorScheme: "light" });
 
   // Then: the system-driven UI follows the new effective theme.
-  await expect(page.getByTestId("theme-toggle")).toHaveAttribute(
-    "aria-label",
-    "Color theme: System (light). Switch to Light."
-  );
+  await expect(themeSelect).toHaveValue("");
+  await expect.poll(() => page.evaluate(() => (
+    getComputedStyle(document.documentElement).getPropertyValue("--paper").trim()
+  ))).toBe("#f4efe4");
   await page.emulateMedia({ colorScheme: "dark" });
-  await expect(page.getByTestId("theme-toggle")).toHaveAttribute(
-    "aria-label",
-    "Color theme: System (dark). Switch to Light."
-  );
+  await expect.poll(() => page.evaluate(() => (
+    getComputedStyle(document.documentElement).getPropertyValue("--paper").trim()
+  ))).toBe("#151310");
 
   // Given: progress belongs to the deck-specific store before the theme changes.
   await page.getByTestId("reveal-answer").click();
@@ -906,25 +912,21 @@ test("cycles paper-and-ink themes and persists the explicit choice independently
     BASIC_DECK.id
   );
 
-  // When: the learner cycles through every named theme.
-  await page.getByTestId("theme-toggle").click();
+  // When: the learner selects each named theme from the picker.
 
   const namedThemes = [
-    { name: "light", label: "Light", paper: "#f4efe4", next: "Dark" },
-    { name: "dark", label: "Dark", paper: "#151310", next: "Sepia" },
-    { name: "sepia", label: "Sepia", paper: "#eadcc5", next: "Night neon" },
-    { name: "night-neon", label: "Night neon", paper: "#101820", next: "System" }
+    { name: "light", paper: "#f4efe4" },
+    { name: "dark", paper: "#151310" },
+    { name: "sepia", paper: "#eadcc5" },
+    { name: "night-neon", paper: "#101820" }
   ];
   for (const theme of namedThemes) {
+    await themeSelect.selectOption(theme.name);
     await expect(page.locator("html")).toHaveAttribute("data-theme", theme.name);
-    await expect(page.getByTestId("theme-toggle")).toHaveAttribute(
-      "aria-label",
-      `Color theme: ${theme.label}. Switch to ${theme.next}.`
-    );
+    await expect(themeSelect).toHaveValue(theme.name);
     await expect.poll(() => page.evaluate(() => (
       getComputedStyle(document.documentElement).getPropertyValue("--paper").trim()
     ))).toBe(theme.paper);
-    if (theme.name !== "night-neon") await page.getByTestId("theme-toggle").click();
   }
 
   // Then: the global theme key persists independently of deck progress.
@@ -940,21 +942,18 @@ test("cycles paper-and-ink themes and persists the explicit choice independently
 
   // Then: the explicit theme remains applied without changing the deck session machinery.
   await expect(page.locator("html")).toHaveAttribute("data-theme", "night-neon");
-  await expect(page.getByTestId("theme-toggle")).toHaveAttribute(
-    "aria-label",
-    "Color theme: Night neon. Switch to System."
-  );
+  await expect(themeSelect).toHaveValue("night-neon");
   expect(await page.evaluate((deckId) => localStorage.getItem(`fc:${deckId}:v1`), BASIC_DECK.id))
     .toBe(progressBeforeThemeChange);
 
   // Returning to system removes the explicit v2 preference and resumes OS following.
-  await page.getByTestId("theme-toggle").click();
+  await themeSelect.selectOption("");
   expect(await page.locator("html").getAttribute("data-theme")).toBeNull();
   expect(await page.evaluate(() => localStorage.getItem("cram:theme:v2"))).toBeNull();
-  await expect(page.getByTestId("theme-toggle")).toHaveAttribute(
-    "aria-label",
-    "Color theme: System (dark). Switch to Light."
-  );
+  await expect(themeSelect).toHaveValue("");
+  await expect.poll(() => page.evaluate(() => (
+    getComputedStyle(document.documentElement).getPropertyValue("--paper").trim()
+  ))).toBe("#151310");
 });
 
 test("ignores the legacy v1 theme key and keeps every palette legible over its paper", async ({ page }) => {
@@ -971,11 +970,13 @@ test("ignores the legacy v1 theme key and keeps every palette legible over its p
 
   // Then: the v1 value is ignored and the system preference remains active.
   expect(await page.locator("html").getAttribute("data-theme")).toBeNull();
-  expect(await page.getByTestId("theme-toggle").getAttribute("aria-pressed")).toBeNull();
+  await expect(page.getByTestId("theme-select")).toHaveValue("");
 
   // When: the picker visits each theme, inspect the public token contract and grain branch.
   const palettes = [];
+  const themeValues = ["", "light", "dark", "sepia", "night-neon"];
   for (let index = 0; index < 5; index += 1) {
+    if (index > 0) await page.getByTestId("theme-select").selectOption(themeValues[index]);
     palettes.push(await page.evaluate(() => {
       const root = getComputedStyle(document.documentElement);
       const paper = root.getPropertyValue("--paper").trim();
@@ -1004,7 +1005,6 @@ test("ignores the legacy v1 theme key and keeps every palette legible over its p
         grain: { mixBlendMode: grain.mixBlendMode, opacity: grain.opacity }
       };
     }));
-    if (index < 4) await page.getByTestId("theme-toggle").click();
   }
 
   // Then: all seven tokens exist, text-facing colors meet 4.5:1, and grain stays visible.
