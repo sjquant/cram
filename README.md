@@ -1,4 +1,4 @@
-<img src="docs/logo.svg" alt="Cram logo: a paper card stamped with a red ink seal" width="96" height="96">
+<img src="docs/logo.svg" alt="Cram logo: a hand-stamped vermilion seal with a carved C" width="96" height="96">
 
 # Cram
 
