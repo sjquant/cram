@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Cram logo: a hand-stamped vermilion seal with a carved C">
+  <title>Cram</title>
+  <!-- A reader's seal (the player's own card-position badge motif) with a
+       squared, seal-script-style C carved out of it. Colors match the
+       player's paper and accent tokens. -->
+  <g transform="rotate(-4 64 64)">
+    <path fill="#b5342b" d="M20,17 L64,13 L108,18 L112,63 L109,110 L64,114 L19,109 L16,64 Z"/>
+    <path fill="#f4efe4" d="M38,40 H92 V56 H54 V72 H92 V88 H38 Z"/>
+  </g>
+</svg>
