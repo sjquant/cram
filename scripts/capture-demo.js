@@ -11,7 +11,8 @@ const ROOT = path.resolve(__dirname, "..");
 const EXAMPLE_PATH = path.join(ROOT, "examples/http-caching-essentials.html");
 const EXAMPLE_JSON_PATH = path.join(ROOT, "examples/http-caching-essentials.json");
 const OUTPUT_PATH = path.join(ROOT, "docs/demo.gif");
-const VIEWPORT = { width: 800, height: 600 };
+// A portrait tablet canvas keeps the storyboard and the player's lower actions visible.
+const VIEWPORT = { width: 800, height: 900 };
 const VIDEO_START = "0.15";
 const PROMPT_TEXT = "Turn my HTTP caching notes into a self-graded quiz.";
 const EXAMPLE_DECK = JSON.parse(fs.readFileSync(EXAMPLE_JSON_PATH, "utf8"));
@@ -147,9 +148,15 @@ function buildStoryboardMarkup(deck) {
 
     * { box-sizing: border-box; }
 
+    html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
     body {
       min-width: 800px;
-      min-height: 600px;
+      min-height: 900px;
       margin: 0;
       overflow: hidden;
       background: var(--paper);
@@ -159,8 +166,8 @@ function buildStoryboardMarkup(deck) {
     .demo-shell {
       position: relative;
       width: 800px;
-      height: 600px;
-      padding: 34px 48px 26px;
+      height: 900px;
+      padding: 44px 48px 34px;
       overflow: hidden;
     }
 
@@ -253,7 +260,7 @@ function buildStoryboardMarkup(deck) {
 
     .stage-step.is-current .stage-dot { background: currentColor; }
 
-    main { position: relative; height: 465px; }
+    main { position: relative; height: 765px; }
 
     .scene {
       position: absolute;
@@ -513,7 +520,7 @@ function buildStoryboardMarkup(deck) {
     .demo-footer {
       position: absolute;
       right: 48px;
-      bottom: 26px;
+      bottom: 34px;
     }
 
     ${CURSOR_STYLE}
@@ -578,36 +585,36 @@ async function playStoryboard(page) {
     await page.evaluate((value) => {
       document.querySelector("#prompt-text").textContent += value;
     }, character);
-    await pause(12);
+    await pause(24);
   }
-  await pause(220);
+  await pause(400);
   await page.evaluate(() => {
     const status = document.querySelector("#prompt-status");
     status.classList.add("is-visible");
     document.querySelector("#prompt-status-text").textContent = "Reading your source…";
   });
-  await pause(300);
+  await pause(500);
   await page.evaluate(() => {
     const status = document.querySelector("#prompt-status");
     status.classList.add("is-done");
     document.querySelector("#prompt-status-icon").textContent = "✓";
     document.querySelector("#prompt-status-text").textContent = "3 recall questions ready";
   });
-  await pause(220);
+  await pause(450);
   await showStage(page, "deck");
 
   for (let index = 0; index < STORY_CARDS.length; index += 1) {
-    await pause(180);
+    await pause(280);
     await revealGeneratedQuestion(page, index);
   }
   await page.evaluate(() => {
     document.querySelector("#deck-count").textContent = "3 questions ready · Basic · MCQ · Cloze";
   });
-  await pause(300);
+  await pause(450);
   const startStudy = page.locator("#start-study");
   await moveCursor(page, startStudy);
   await triggerCursorClick(page);
-  await pause(180);
+  await pause(300);
 }
 
 async function revealGeneratedQuestion(page, index) {
@@ -630,33 +637,33 @@ async function capturePlayerFlow(page) {
   const gradeKnown = page.getByTestId("grade-known");
   const next = page.getByTestId("next-card");
 
-  await pause(320);
+  await pause(500);
   await clickWithCue(page, reveal);
   await answer.waitFor({ state: "visible" });
-  await pause(380);
+  await pause(600);
   await clickWithCue(page, gradeKnown);
-  await pause(220);
+  await pause(350);
   await clickWithCue(page, next);
   await page.getByTestId("mcq-options").waitFor({ state: "visible" });
-  await pause(350);
+  await pause(500);
   await clickWithCue(page, page.getByTestId("mcq-option").filter({ hasText: "`no-store`" }));
-  await pause(250);
+  await pause(300);
   await clickWithCue(page, page.getByTestId("mcq-check-answer"));
   await page.getByTestId("mcq-feedback").waitFor({ state: "visible" });
-  await pause(330);
+  await pause(450);
   await clickWithCue(page, next);
   const clozeInput = page.getByTestId("cloze-input").first();
   await clozeInput.waitFor({ state: "visible" });
-  await pause(350);
+  await pause(500);
   await moveCursor(page, clozeInput);
-  await clozeInput.pressSequentially("ETag", { delay: 60 });
-  await pause(250);
+  await clozeInput.pressSequentially("ETag", { delay: 70 });
+  await pause(350);
   await clickWithCue(page, page.getByTestId("cloze-check-answer"));
   await page.getByTestId("cloze-feedback").waitFor({ state: "visible" });
-  await pause(320);
+  await pause(450);
   await clickWithCue(page, next);
   await page.getByTestId("score-screen").waitFor({ state: "visible" });
-  await pause(900);
+  await pause(1200);
 }
 
 async function installCursor(page) {
@@ -687,7 +694,7 @@ async function moveCursor(page, locator) {
     cursor.style.left = `${x}px`;
     cursor.style.top = `${y}px`;
   }, { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 });
-  await pause(190);
+  await pause(220);
 }
 
 async function triggerCursorClick(page) {
