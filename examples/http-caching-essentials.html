@@ -296,7 +296,7 @@
       margin: 0;
     }
 
-    .player__support-actions .player__hint-button {
+    .player__hint-button {
       align-self: flex-start;
       margin: 0;
       padding-inline: 0;
@@ -324,7 +324,7 @@
       letter-spacing: 0.02em;
     }
 
-    /* Content fills the card frame; action buttons keep their intrinsic width. */
+    /* Content and action rails span the card; individual controls keep their width. */
     .player__card-content > :not(button) {
       width: 100%;
       max-width: none;
@@ -354,11 +354,6 @@
       color: var(--ink-soft);
       white-space: pre-wrap;
       overflow-wrap: anywhere;
-    }
-
-    .player__hint-button {
-      align-self: flex-end;
-      margin: var(--s3) 0 0;
     }
 
     .mcq__options {
@@ -427,13 +422,6 @@
 
     .mcq__check-button {
       margin: 0;
-      color: var(--paper);
-      background: var(--ink);
-    }
-
-    .mcq__check-button:hover:not(:disabled) {
-      color: var(--paper);
-      background: var(--accent);
     }
 
     .cloze__input {
@@ -461,13 +449,6 @@
 
     .cloze__check-button {
       margin: 0;
-      color: var(--paper);
-      background: var(--ink);
-    }
-
-    .cloze__check-button:hover:not(:disabled) {
-      color: var(--paper);
-      background: var(--accent);
     }
 
     .cloze__feedback {
@@ -1018,7 +999,7 @@
     exact line. Every "<" in the JSON must be escaped as \u003C, so that a card whose text
     contains a closing script tag cannot end this element early and break the page.
   -->
-  <script>window.__DECK__ = {"id": "http-caching-essentials", "title": "HTTP caching essentials", "source": "RFC 9111: HTTP Caching", "cards": [{"id": "cache-control-max-age", "type": "basic", "prompt": "What does `Cache-Control: max-age=60` permit a cache to do?", "answer": "Treat a stored response as fresh for 60 seconds after it was generated, so it can be reused without revalidation.", "hint": "Think in terms of a freshness lifetime."}, {"id": "cache-control-no-store", "type": "basic", "prompt": "What does the HTTP `Cache-Control: no-store` directive require?", "answer": "Caches must not store the response or any part of it.", "explanation": "Use this directive when retaining the response in a cache is not allowed."}, {"id": "cache-control-no-cache", "type": "basic", "prompt": "What does the HTTP `Cache-Control: no-cache` directive mean for a stored response?", "answer": "A cache may store the response, but it must revalidate it with the origin before reusing it.", "hint": "It is different from `no-store`: storage is allowed, reuse without validation is not."}, {"id": "etag-validator", "type": "basic", "prompt": "Which response header gives a representation an opaque validator that a client can send in `If-None-Match`?", "answer": "The `ETag` response header.", "explanation": "A validator lets the client ask whether its stored representation is still current without downloading the full representation again."}, {"id": "if-none-match-not-modified", "type": "basic", "prompt": "For a conditional `GET`, what status can an origin return when `If-None-Match` confirms that a cached representation is still current?", "answer": "`304 Not Modified`, allowing the cache to reuse its stored response body."}, {"id": "vary-shared-cache", "type": "basic", "prompt": "What does the HTTP `Vary` response header tell a shared cache?", "answer": "Which request-header fields must match before a stored response can be reused for another request.", "hint": "The response may vary based on fields such as `Accept-Language`."}, {"id": "cache-control-private", "type": "basic", "prompt": "When should a response be marked `Cache-Control: private`?", "answer": "When it may be stored by a private browser cache but must not be stored by a shared cache.", "explanation": "This is useful for user-specific responses that a browser may reuse for that same user."}]};</script>
+  <script>window.__DECK__ = {"id": "http-caching-essentials", "title": "HTTP caching essentials", "source": "RFC 9111: HTTP Caching", "cards": [{"id": "cache-control-max-age", "type": "basic", "prompt": "What does `Cache-Control: max-age=60` permit a cache to do?", "answer": "Treat a stored response as fresh for 60 seconds after it was generated, so it can be reused without revalidation.", "hint": "Think in terms of a freshness lifetime."}, {"id": "cache-control-no-store", "type": "mcq", "prompt": "Which `Cache-Control` directive prevents a cache from storing a response?", "answer": "`no-store`", "distractors": ["`no-cache`", "`private`", "`max-age=60`"], "explanation": "Use this directive when retaining the response in a cache is not allowed."}, {"id": "cache-control-no-cache", "type": "basic", "prompt": "What does the HTTP `Cache-Control: no-cache` directive mean for a stored response?", "answer": "A cache may store the response, but it must revalidate it with the origin before reusing it.", "hint": "It is different from `no-store`: storage is allowed, reuse without validation is not."}, {"id": "etag-validator", "type": "cloze", "prompt": "Which response header gives a representation an opaque validator that a client can send in `If-None-Match`? The header is `{{ETag}}`.", "explanation": "A validator lets the client ask whether its stored representation is still current without downloading the full representation again."}, {"id": "if-none-match-not-modified", "type": "basic", "prompt": "For a conditional `GET`, what status can an origin return when `If-None-Match` confirms that a cached representation is still current?", "answer": "`304 Not Modified`, allowing the cache to reuse its stored response body."}, {"id": "vary-shared-cache", "type": "basic", "prompt": "What does the HTTP `Vary` response header tell a shared cache?", "answer": "Which request-header fields must match before a stored response can be reused for another request.", "hint": "The response may vary based on fields such as `Accept-Language`."}, {"id": "cache-control-private", "type": "basic", "prompt": "When should a response be marked `Cache-Control: private`?", "answer": "When it may be stored by a private browser cache but must not be stored by a shared cache.", "explanation": "This is useful for user-specific responses that a browser may reuse for that same user."}]};</script>
   <script>
     (() => {
       "use strict";

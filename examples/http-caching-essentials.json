@@ -12,9 +12,14 @@
     },
     {
       "id": "cache-control-no-store",
-      "type": "basic",
-      "prompt": "What does the HTTP `Cache-Control: no-store` directive require?",
-      "answer": "Caches must not store the response or any part of it.",
+      "type": "mcq",
+      "prompt": "Which `Cache-Control` directive prevents a cache from storing a response?",
+      "answer": "`no-store`",
+      "distractors": [
+        "`no-cache`",
+        "`private`",
+        "`max-age=60`"
+      ],
       "explanation": "Use this directive when retaining the response in a cache is not allowed."
     },
     {
@@ -26,9 +31,8 @@
     },
     {
       "id": "etag-validator",
-      "type": "basic",
-      "prompt": "Which response header gives a representation an opaque validator that a client can send in `If-None-Match`?",
-      "answer": "The `ETag` response header.",
+      "type": "cloze",
+      "prompt": "Which response header gives a representation an opaque validator that a client can send in `If-None-Match`? The header is `{{ETag}}`.",
       "explanation": "A validator lets the client ask whether its stored representation is still current without downloading the full representation again."
     },
     {
