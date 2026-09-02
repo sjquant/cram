@@ -183,6 +183,7 @@ test.describe("basic cards", () => {
     await openPlayer(page, BASIC_DECK);
 
     // Given: the first basic card starts with its answer and grades hidden.
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getState().cramMode)).toBe(false);
     await expect(page.getByTestId("card-prompt")).toHaveText(BASIC_DECK.cards[0].prompt);
     await expect(page.getByTestId("card-answer")).toBeHidden();
     await expect(page.getByTestId("grading-buttons")).toBeHidden();
@@ -201,7 +202,8 @@ test.describe("basic cards", () => {
   });
 
   test("requeues missed cards in the same session until their correct streak is mastered", async ({ page }) => {
-    await openPlayer(page, BASIC_DECK, { cramMode: true });
+    await openPlayer(page, BASIC_DECK);
+    await enableCramMode(page);
 
     // Given: the learner answers the first card correctly and the second card incorrectly.
     await page.getByTestId("reveal-answer").click();
@@ -265,7 +267,8 @@ test.describe("basic cards", () => {
   });
 
   test("applies same-session requeue behavior to every built-in card type", async ({ page }) => {
-    await openPlayer(page, ADAPTIVE_TYPES_DECK, { cramMode: true });
+    await openPlayer(page, ADAPTIVE_TYPES_DECK);
+    await enableCramMode(page);
 
     // Given: the learner answers a basic, MCQ, and cloze card incorrectly.
     await page.getByTestId("reveal-answer").click();
@@ -318,6 +321,25 @@ test.describe("basic cards", () => {
     await expect(page.getByTestId("score-screen")).toBeVisible();
     await expect(page.getByTestId("score-value")).toHaveText("3/3");
     await expect(page.getByTestId("retry-missed")).toBeHidden();
+  });
+
+  test("keeps Cram mode session-only and allows the learner to turn it off", async ({ page }) => {
+    await openPlayer(page, BASIC_DECK);
+    await enableCramMode(page);
+
+    // When: the learner turns Cram mode off before selecting another deck.
+    await page.getByTestId("cram-mode-toggle").uncheck();
+    await expect(page.getByTestId("cram-mode-toggle")).not.toBeChecked();
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getState().cramMode)).toBe(false);
+
+    // Then: selecting a new deck keeps the default off and a missed card ends normally.
+    await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), OTHER_DECK);
+    await expect(page.getByTestId("cram-mode-toggle")).not.toBeChecked();
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getState().cramMode)).toBe(false);
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-missed").click();
+    await page.getByTestId("next-card").click();
+    await expect(page.getByTestId("score-screen")).toBeVisible();
   });
 
   test("aligns the mobile footer action with the header shell gutter", async ({ page }) => {
@@ -569,6 +591,9 @@ test.describe("basic cards", () => {
     await expect(page.getByTestId("score-screen")).toBeVisible();
     await expect(page.getByTestId("score-value")).toHaveText(`1/${BASIC_DECK.cards.length}`);
 
+    // Given: Cram mode is enabled after the session completes.
+    await enableCramMode(page);
+
     // When: the learner explicitly resets progress.
     await page.getByTestId("reset-progress").click();
 
@@ -577,6 +602,8 @@ test.describe("basic cards", () => {
     await expect(page.getByTestId("card-prompt")).toHaveText(BASIC_DECK.cards[0].prompt);
     await expect(page.getByTestId("card-answer")).toBeHidden();
     await expect(page.getByTestId("player")).toHaveAttribute("data-state", "ready");
+    await expect(page.getByTestId("cram-mode-toggle")).not.toBeChecked();
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getState().cramMode)).toBe(false);
     expect(await page.evaluate(() => window.CRAM_PLAYER.getState().grades)).toEqual({});
     expect(await page.evaluate((deckId) => localStorage.getItem(`fc:${deckId}:v1`), BASIC_DECK.id)).toBeNull();
     expect(await page.evaluate((deckId) => JSON.parse(localStorage.getItem(`fc:${deckId}:v1`)), OTHER_DECK.id)).toEqual({
@@ -608,6 +635,9 @@ test.describe("basic cards", () => {
     // Then: the retry session contains only the missed card.
     await expect(page.getByTestId("card-prompt")).toHaveText(RETRY_DECK.cards[1].prompt);
     await expect(page.getByTestId("progress-label")).toHaveText("Card 1 of 1");
+    await page.getByTestId("settings-toggle").click();
+    await expect(page.getByTestId("cram-mode-toggle")).toBeDisabled();
+    await page.getByTestId("settings-toggle").click();
 
     // When: the learner corrects the card and finishes the retry session.
     await page.getByTestId("reveal-answer").click();
@@ -811,6 +841,12 @@ test.describe("basic cards", () => {
 test("overrides the system color scheme and persists a separate theme preference", async ({ page }) => {
   await page.emulateMedia({ colorScheme: "dark" });
   await openPlayer(page, BASIC_DECK);
+
+  // Given: the settings panel starts closed behind the header tools.
+  await expect(page.getByTestId("settings-panel")).toBeHidden();
+  await page.getByTestId("settings-toggle").click();
+  await expect(page.getByTestId("settings-panel")).toBeVisible();
+  await expect(page.getByTestId("settings-toggle")).toHaveAttribute("aria-expanded", "true");
 
   // Given: the learner has not chosen a theme, so the dark system preference applies.
   const systemTheme = await page.evaluate(() => ({
@@ -1328,7 +1364,7 @@ test("checks cloze blanks with exact alternatives and restores aggregate feedbac
   expect(await page.evaluate(() => window.CRAM_PLAYER.getGrade("cloze-card"))).toBe("correct");
 });
 
-async function openPlayer(page, deck, sessionOptions = {}) {
+async function openPlayer(page, deck) {
   await page.goto(PLAYER_URL);
   await page.evaluate(() => {
     for (let index = localStorage.length - 1; index >= 0; index -= 1) {
@@ -1338,8 +1374,16 @@ async function openPlayer(page, deck, sessionOptions = {}) {
   });
   // Directly opened templates start with their built-in preview deck. Replace it
   // through the player's public setup API so each test can supply a fixture deck.
-  await page.evaluate(({ initialDeck, options }) => {
-    window.CRAM_PLAYER.setDeck(initialDeck, options);
-  }, { initialDeck: deck, options: sessionOptions });
+  await page.evaluate((initialDeck) => {
+    window.CRAM_PLAYER.setDeck(initialDeck);
+  }, deck);
   await expect(page.getByTestId("player")).toHaveAttribute("data-state", "ready");
+}
+
+async function enableCramMode(page) {
+  await page.getByTestId("settings-toggle").click();
+  await expect(page.getByTestId("settings-panel")).toBeVisible();
+  await page.getByTestId("cram-mode-toggle").check();
+  await expect(page.getByTestId("cram-mode-toggle")).toBeChecked();
+  expect(await page.evaluate(() => window.CRAM_PLAYER.getState().cramMode)).toBe(true);
 }

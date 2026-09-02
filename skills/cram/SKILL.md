@@ -47,11 +47,9 @@ when validation fails, it reports the errors and does not write an HTML
 player.
 
 Generated players use a normal linear session by default. To enable adaptive
-intra-session drilling, opt in when rendering:
-
-```sh
-python3 skills/cram/scripts/render.py <deck.json> -o <output.html> --mode cram
-```
+intra-session drilling, open the player’s Settings and enable Cram mode before
+answering. The setting applies only to that session and is off whenever a new
+deck is opened.
 
 ## Open the result
 

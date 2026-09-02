@@ -25,13 +25,10 @@ The repository also includes the deck that generated it: browse the [deck
 source](examples/http-caching-essentials.json), or open the [rendered HTML
 file](examples/http-caching-essentials.html) directly from a local clone.
 
-Rendered decks use a normal linear session by default. Pass `--mode cram` to
-the renderer when you want missed cards to return automatically during the same
-sitting:
-
-```sh
-python3 skills/cram/scripts/render.py deck.json -o deck.html --mode cram
-```
+Rendered decks use a normal linear session by default. To drill missed cards
+automatically during the same sitting, open the player’s Settings and enable
+Cram mode. The setting applies only to that session and is off whenever a new
+deck is opened.
 
 ## Install in Claude Code
 

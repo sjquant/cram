@@ -179,9 +179,9 @@
 
     .player__title {
       min-width: 0;
-      max-width: calc(24ch + 3.5rem);
+      max-width: calc(24ch + 7rem);
       margin: 0;
-      padding-right: 3.5rem;
+      padding-right: 7rem;
       font-family: var(--serif);
       font-variant-numeric: oldstyle-nums;
       font-size: clamp(1.7rem, 4.5vw, 2.35rem);
@@ -190,11 +190,18 @@
       overflow-wrap: anywhere;
     }
 
-    .player__theme-toggle {
+    .player__header-tools {
       position: fixed;
       top: max(1rem, env(safe-area-inset-top));
       right: max(1rem, env(safe-area-inset-right));
       z-index: 2;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.25rem;
+    }
+
+    .player__settings-toggle,
+    .player__theme-toggle {
       display: inline-flex;
       width: 3rem;
       height: 3rem;
@@ -209,10 +216,80 @@
       line-height: 1;
     }
 
+    .player__settings-toggle:hover:not(:disabled),
+    .player__settings-toggle:focus-visible,
     .player__theme-toggle:hover:not(:disabled),
     .player__theme-toggle:focus-visible {
       color: var(--accent);
       background: var(--rule);
+    }
+
+    .player__settings-toggle svg {
+      width: 1.5rem;
+      height: 1.5rem;
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 1.75;
+    }
+
+    .player__settings-panel {
+      position: absolute;
+      top: 3.5rem;
+      right: 0;
+      width: min(calc(100vw - 2rem), 20rem);
+      padding: 1rem;
+      border: 1px solid var(--rule-strong);
+      border-radius: 0.4rem;
+      color: var(--ink);
+      background: var(--paper);
+      box-shadow: 0 0.75rem 2rem rgb(0 0 0 / 16%);
+    }
+
+    .player__settings-panel[hidden] {
+      display: none;
+    }
+
+    .player__settings-heading {
+      margin: 0 0 0.85rem;
+      font-family: var(--serif);
+      font-size: 1.15rem;
+      font-weight: 500;
+    }
+
+    .player__settings-group,
+    .player__settings-option {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding-block: 0.65rem;
+      border-top: 1px solid var(--rule);
+    }
+
+    .player__settings-label,
+    .player__settings-option-text {
+      display: grid;
+      gap: 0.15rem;
+    }
+
+    .player__settings-option {
+      cursor: pointer;
+      justify-content: flex-start;
+    }
+
+    .player__settings-option input {
+      width: 1rem;
+      height: 1rem;
+      margin: 0;
+      accent-color: var(--accent);
+    }
+
+    .player__settings-option small {
+      color: var(--ink-soft);
+      font-size: 0.8rem;
+      line-height: 1.35;
     }
 
     .player__theme-icon {
@@ -1047,17 +1124,38 @@
   <div class="player" id="player" data-testid="player" data-state="loading">
     <header class="player__header">
       <h1 class="player__title" id="deck-title" data-testid="deck-title">Loading deck…</h1>
-      <button type="button" class="player__theme-toggle" id="theme-toggle" data-testid="theme-toggle" data-action="toggle-theme" aria-pressed="false" aria-label="Switch to dark mode" title="Switch to dark mode">
-        <svg class="player__theme-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <g data-theme-icon="moon">
-            <path d="M20.5 15.2A8.5 8.5 0 0 1 8.8 3.5a8.5 8.5 0 1 0 11.7 11.7Z"></path>
-          </g>
-          <g data-theme-icon="sun" hidden>
-            <circle cx="12" cy="12" r="4"></circle>
-            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
-          </g>
-        </svg>
-      </button>
+      <div class="player__header-tools">
+        <button type="button" class="player__settings-toggle" id="settings-toggle" data-testid="settings-toggle" data-action="toggle-settings" aria-expanded="false" aria-controls="settings-panel" aria-label="Open settings" title="Open settings">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M9.6 3.5h4.8l.6 2.1a6.8 6.8 0 0 1 1.4.8l2.1-.6 2.4 4.1-1.5 1.5a6.7 6.7 0 0 1 0 1.6l1.5 1.5-2.4 4.1-2.1-.6a6.8 6.8 0 0 1-1.4.8l-.6 2.1H9.6L9 18.9a6.8 6.8 0 0 1-1.4-.8l-2.1.6-2.4-4.1 1.5-1.5a6.7 6.7 0 0 1 0-1.6L3.1 10l2.4-4.1 2.1.6A6.8 6.8 0 0 1 9 5.6l.6-2.1Z"></path>
+            <circle cx="12" cy="12" r="2.5"></circle>
+          </svg>
+        </button>
+        <section class="player__settings-panel" id="settings-panel" data-testid="settings-panel" aria-labelledby="settings-heading" hidden>
+          <h2 class="player__settings-heading" id="settings-heading">Settings</h2>
+          <div class="player__settings-group">
+            <span class="player__settings-label">Theme</span>
+            <button type="button" class="player__theme-toggle" id="theme-toggle" data-testid="theme-toggle" data-action="toggle-theme" aria-pressed="false" aria-label="Switch to dark mode" title="Switch to dark mode">
+              <svg class="player__theme-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <g data-theme-icon="moon">
+                  <path d="M20.5 15.2A8.5 8.5 0 0 1 8.8 3.5a8.5 8.5 0 1 0 11.7 11.7Z"></path>
+                </g>
+                <g data-theme-icon="sun" hidden>
+                  <circle cx="12" cy="12" r="4"></circle>
+                  <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+                </g>
+              </svg>
+            </button>
+          </div>
+          <label class="player__settings-option">
+            <input type="checkbox" id="cram-mode-toggle" data-testid="cram-mode-toggle">
+            <span class="player__settings-option-text">
+              <strong>Cram mode</strong>
+              <small>Requeue missed cards during this session.</small>
+            </span>
+          </label>
+        </section>
+      </div>
     </header>
 
     <section class="player__progress-panel" aria-label="Deck progress">
@@ -1142,7 +1240,6 @@
     contains a closing script tag cannot end this element early and break the page.
   -->
   <script>window.__DECK__ = {"id": "http-caching-essentials", "title": "HTTP caching essentials", "source": "RFC 9111: HTTP Caching", "cards": [{"id": "cache-control-max-age", "type": "basic", "prompt": "What does `Cache-Control: max-age=60` permit a cache to do?", "answer": "Treat a stored response as fresh for 60 seconds after it was generated, so it can be reused without revalidation.", "hint": "Think in terms of a freshness lifetime."}, {"id": "cache-control-no-store", "type": "mcq", "prompt": "Which `Cache-Control` directive prevents a cache from storing a response?", "answer": "`no-store`", "distractors": ["`no-cache`", "`private`", "`max-age=60`"], "explanation": "Use this directive when retaining the response in a cache is not allowed."}, {"id": "cache-control-no-cache", "type": "basic", "prompt": "What does the HTTP `Cache-Control: no-cache` directive mean for a stored response?", "answer": "A cache may store the response, but it must revalidate it with the origin before reusing it.", "hint": "It is different from `no-store`: storage is allowed, reuse without validation is not."}, {"id": "etag-validator", "type": "cloze", "prompt": "Which response header gives a representation an opaque validator that a client can send in `If-None-Match`? The header is `{{ETag}}`.", "explanation": "A validator lets the client ask whether its stored representation is still current without downloading the full representation again."}, {"id": "if-none-match-not-modified", "type": "basic", "prompt": "For a conditional `GET`, what status can an origin return when `If-None-Match` confirms that a cached representation is still current?", "answer": "`304 Not Modified`, allowing the cache to reuse its stored response body."}, {"id": "vary-shared-cache", "type": "basic", "prompt": "What does the HTTP `Vary` response header tell a shared cache?", "answer": "Which request-header fields must match before a stored response can be reused for another request.", "hint": "The response may vary based on fields such as `Accept-Language`."}, {"id": "cache-control-private", "type": "basic", "prompt": "When should a response be marked `Cache-Control: private`?", "answer": "When it may be stored by a private browser cache but must not be stored by a shared cache.", "explanation": "This is useful for user-specific responses that a browser may reuse for that same user."}]};</script>
-  <script>window.__CRAM_MODE__ = false;</script>
   <script>
     (() => {
       "use strict";
@@ -1186,7 +1283,10 @@
         navigation: document.querySelector(".player__navigation"),
         previous: document.getElementById("previous-card"),
         next: document.getElementById("next-card"),
+        settingsToggle: document.getElementById("settings-toggle"),
+        settingsPanel: document.getElementById("settings-panel"),
         themeToggle: document.getElementById("theme-toggle"),
+        cramModeToggle: document.getElementById("cram-mode-toggle"),
         status: document.getElementById("player-status"),
         announcer: document.getElementById("card-announcer")
       };
@@ -1222,6 +1322,7 @@
         themePreference = loadThemePreference();
         applyTheme(themePreference);
         updateThemeToggle();
+        updateCramModeToggle();
         watchSystemTheme();
       }
 
@@ -1299,6 +1400,39 @@
         }
       }
 
+      function toggleSettings() {
+        const shouldOpen = refs.settingsPanel.hidden;
+        refs.settingsPanel.hidden = !shouldOpen;
+        refs.settingsToggle.setAttribute("aria-expanded", String(shouldOpen));
+        const label = shouldOpen ? "Close settings" : "Open settings";
+        refs.settingsToggle.setAttribute("aria-label", label);
+        refs.settingsToggle.title = label;
+      }
+
+      function updateCramModeToggle() {
+        refs.cramModeToggle.checked = state.cramMode;
+        refs.cramModeToggle.disabled = state.isRetry;
+        refs.cramModeToggle.setAttribute(
+          "aria-label",
+          state.isRetry
+            ? "Cram mode is unavailable during retry sessions"
+            : (state.cramMode ? "Disable Cram mode" : "Enable Cram mode")
+        );
+      }
+
+      function setCramMode(enabled) {
+        if (state.isRetry) {
+          updateCramModeToggle();
+          setStatus("Cram mode is unavailable during retry sessions.");
+          return;
+        }
+        state.cramMode = Boolean(enabled);
+        updateCramModeToggle();
+        setStatus(state.cramMode
+          ? "Cram mode enabled for this session."
+          : "Cram mode disabled for this session.");
+      }
+
       // Renderer options keep grade vocabulary, scoring, and navigation policy with the
       // card type. A renderer may omit grade validation when its values are intentionally
       // opaque; persistence then accepts non-empty strings.
@@ -1361,14 +1495,7 @@
         }
       }
 
-      function setDeck(deck, options = {}) {
-        if (!options || typeof options !== "object" || Array.isArray(options)) {
-          throw new TypeError("Session options must be an object.");
-        }
-        const { cramMode = false } = options;
-        if (typeof cramMode !== "boolean") {
-          throw new TypeError("The cramMode session option must be a boolean.");
-        }
+      function setDeck(deck) {
         if (!isRenderableDeck(deck)) {
           showDeckError("The page needs a deck with a title and at least one card.");
           return;
@@ -1377,7 +1504,8 @@
         state.sessionCards = deck.cards.slice();
         state.scoreCards = deck.cards.slice();
         state.isRetry = false;
-        state.cramMode = cramMode;
+        state.cramMode = false;
+        updateCramModeToggle();
         state.index = 0;
         state.persistenceWarning = "";
         state.grades = progressStore.load(deck);
@@ -1398,6 +1526,8 @@
         state.sessionCards = state.deck.cards.slice();
         state.scoreCards = state.deck.cards.slice();
         state.isRetry = false;
+        state.cramMode = false;
+        updateCramModeToggle();
         state.index = 0;
         resetDrillState();
         seedPersistedAttemptGrades();
@@ -2075,6 +2205,7 @@
         state.scoreCards = [];
         state.isRetry = false;
         state.cramMode = false;
+        updateCramModeToggle();
         resetDrillState();
         setViewState("error");
         state.hintsUsed = Object.create(null);
@@ -2204,6 +2335,7 @@
         state.scoreCards = missedCards.slice();
         state.isRetry = true;
         state.cramMode = false;
+        updateCramModeToggle();
         state.index = 0;
         resetDrillState();
         setViewState("ready");
@@ -2539,7 +2671,12 @@
         if (button.dataset.action === "retry-missed") retryMissedCards();
         if (button.dataset.action === "reset-progress") resetProgress();
         if (button.dataset.action === "scroll-review") scrollReview();
+        if (button.dataset.action === "toggle-settings") toggleSettings();
         if (button.dataset.action === "toggle-theme") toggleTheme();
+      });
+
+      refs.settingsPanel.addEventListener("change", (event) => {
+        if (event.target === refs.cramModeToggle) setCramMode(event.target.checked);
       });
 
       refs.scoreScreen.addEventListener("scroll", updateReviewScrollCue, { passive: true });
@@ -2601,10 +2738,7 @@
       initializeTheme();
 
       const injectedDeck = window.__DECK__;
-      setDeck(
-        injectedDeck === null || injectedDeck === undefined ? previewDeck : injectedDeck,
-        { cramMode: window.__CRAM_MODE__ === true }
-      );
+      setDeck(injectedDeck === null || injectedDeck === undefined ? previewDeck : injectedDeck);
     })();
   </script>
 </body>

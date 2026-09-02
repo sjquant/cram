@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -59,6 +61,8 @@ class RendererCliTests(unittest.TestCase):
                     "card text must never add a closing </script> tag beyond the template's own; "
                     "this only holds if injected '<' characters are escaped",
                 )
+                self.assertNotIn("__CRAM_MODE__", html)
+                self.assertNotIn("INJECT_MODE", html)
 
     def test_given_a_valid_deck_when_rendered_then_it_includes_only_a_passive_attribution_link(self):
         """Given a valid deck, when rendered, then attribution is a plain link without external resources."""
@@ -82,16 +86,30 @@ class RendererCliTests(unittest.TestCase):
                 "the attribution must not add a page-load external resource",
             )
 
-    def test_given_cram_mode_when_rendered_then_the_output_enables_adaptive_drilling(self):
-        """Given cram mode, when rendered, then the standalone player opts into drilling."""
+    def test_given_the_removed_mode_option_when_rendered_then_the_cli_rejects_it(self):
+        """Given the removed mode option, when passed to the CLI, then it is rejected."""
 
         deck_path = fixture_paths("valid")[0]
         with tempfile.TemporaryDirectory() as directory:
-            output = Path(directory) / "cram-deck.html"
-            result = run_renderer(deck_path, output, Path(directory), mode="cram")
+            output = Path(directory) / "deck.html"
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(RENDERER),
+                    str(deck_path),
+                    "-o",
+                    str(output),
+                    "--mode",
+                    "cram",
+                ],
+                cwd=directory,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
 
-            self.assertEqual(result.returncode, 0, msg=result.stderr or result.stdout)
-            self.assertIn("window.__CRAM_MODE__ = true;", output.read_text(encoding="utf-8"))
+            self.assertNotEqual(result.returncode, 0)
+            self.assertFalse(output.exists())
 
     def test_given_an_invalid_deck_when_rendered_then_it_is_rejected_without_html(self):
         """Given an invalid deck, when rendered, then the CLI rejects it without HTML."""
