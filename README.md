@@ -1,3 +1,5 @@
+<img src="docs/logo.svg" alt="Cram logo: a paper card stamped with a red ink seal" width="96" height="96">
+
 # Cram
 
 Cram turns pasted, attached, local, or web material into a validated deck and

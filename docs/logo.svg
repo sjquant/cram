@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Cram logo: a paper card stamped with a red ink seal">
+  <title>Cram</title>
+  <!-- The card: same paper and rule colors as the player's own paper/ink tokens. -->
+  <rect x="10" y="8" width="108" height="112" rx="14" fill="#f4efe4" stroke="#c9bfa8" stroke-width="3"/>
+  <!-- The seal: an irregular, hand-stamped blob, echoing the player's own
+       reader's-seal card-position badge (accent color). -->
+  <path fill="#b5342b" transform="rotate(-6 64 50)"
+    d="M96.0,50.0 L90.8,61.1 L88.0,74.0 L75.5,77.7 L64.0,83.0 L53.3,75.9
+       L39.3,74.7 L36.3,61.5 L32.0,50.0 L35.4,38.1 L40.0,26.0 L52.9,23.2
+       L64.0,17.0 L75.5,22.3 L86.6,27.4 L92.6,38.1 Z"/>
+  <!-- Two short rules suggesting a card's hidden prompt, below the fold. -->
+  <rect x="34" y="92" width="60" height="6" rx="3" fill="#c9bfa8"/>
+  <rect x="34" y="104" width="40" height="6" rx="3" fill="#c9bfa8"/>
+</svg>
