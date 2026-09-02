@@ -167,7 +167,6 @@
     }
 
     .player__header {
-      position: relative;
       min-height: 2.5rem;
       margin-bottom: var(--s3);
     }
@@ -186,27 +185,51 @@
     }
 
     .player__theme-toggle {
-      position: absolute;
-      top: 0;
-      right: 0;
+      position: fixed;
+      top: max(1rem, env(safe-area-inset-top));
+      right: max(1rem, env(safe-area-inset-right));
+      z-index: 2;
       display: inline-flex;
-      width: 2.5rem;
-      height: 2.5rem;
-      min-height: 2.5rem;
+      width: 3rem;
+      height: 3rem;
+      min-height: 3rem;
       align-items: center;
       justify-content: center;
-      border: 1px solid var(--rule-strong);
-      border-radius: 999px;
+      border: 0;
+      border-radius: 50%;
       padding: 0;
-      color: var(--ink-soft);
-      background: var(--paper);
-      font-size: 1.2rem;
+      color: var(--ink);
+      background: transparent;
       line-height: 1;
     }
 
-    .player__theme-toggle:hover:not(:disabled) {
-      border-color: var(--accent);
+    .player__theme-toggle:hover:not(:disabled),
+    .player__theme-toggle:focus-visible {
       color: var(--accent);
+      background: var(--rule);
+    }
+
+    .player__theme-icon {
+      display: block;
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+
+    .player__theme-icon [data-theme-icon][hidden] {
+      display: none;
+    }
+
+    .player__theme-icon [data-theme-icon="moon"] path {
+      fill: currentColor;
+    }
+
+    .player__theme-icon [data-theme-icon="sun"] circle,
+    .player__theme-icon [data-theme-icon="sun"] path {
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 1.75;
     }
 
     .player__progress-panel { margin: 0; }
@@ -1019,7 +1042,15 @@
     <header class="player__header">
       <h1 class="player__title" id="deck-title" data-testid="deck-title">Loading deck…</h1>
       <button type="button" class="player__theme-toggle" id="theme-toggle" data-testid="theme-toggle" data-action="toggle-theme" aria-pressed="false" aria-label="Switch to dark mode" title="Switch to dark mode">
-        <span class="player__theme-icon" aria-hidden="true">☾</span>
+        <svg class="player__theme-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <g data-theme-icon="moon">
+            <path d="M20.5 15.2A8.5 8.5 0 0 1 8.8 3.5a8.5 8.5 0 1 0 11.7 11.7Z"></path>
+          </g>
+          <g data-theme-icon="sun" hidden>
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+          </g>
+        </svg>
       </button>
     </header>
 
@@ -1197,7 +1228,9 @@
 
       function updateThemeToggle() {
         const isDark = getEffectiveTheme() === "dark";
-        refs.themeToggle.querySelector(".player__theme-icon").textContent = isDark ? "☀" : "☾";
+        const themeIcon = refs.themeToggle.querySelector(".player__theme-icon");
+        themeIcon.querySelector('[data-theme-icon="moon"]').toggleAttribute("hidden", isDark);
+        themeIcon.querySelector('[data-theme-icon="sun"]').toggleAttribute("hidden", !isDark);
         const label = isDark ? "Switch to light mode" : "Switch to dark mode";
         refs.themeToggle.setAttribute(
           "aria-label",
