@@ -1,0 +1,20 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "cram",
+  "version": "0.1.0",
+  "description": "Turn any document into an interactive flashcard quiz in a single self-contained HTML file. Extracts normalized cards — basic, multiple choice and cloze — then renders an offline quiz that remembers your progress and lets you retry only what you missed.",
+  "author": {
+    "name": "sjquant"
+  },
+  "homepage": "https://github.com/sjquant/cram",
+  "repository": "https://github.com/sjquant/cram",
+  "license": "MIT",
+  "keywords": [
+    "flashcards",
+    "quiz",
+    "study",
+    "learning",
+    "spaced-practice",
+    "html"
+  ]
+}
