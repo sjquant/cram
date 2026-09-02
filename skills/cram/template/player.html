@@ -614,7 +614,9 @@
       left: 0;
       z-index: 2;
       width: min(100% - 3rem, 46rem);
-      margin: 0;
+      /* A fixed box with both insets and an explicit width is over-constrained;
+         without auto margins it resolves flush left instead of centered. */
+      margin: 0 auto;
       color: var(--ink-soft);
       font-size: 0.72rem;
       text-align: center;
