@@ -823,8 +823,8 @@ test.describe("card controls", () => {
     // Given: the current card advertises its help and navigation shortcuts.
     await expect(page.getByTestId("show-hint")).toHaveAttribute("aria-keyshortcuts", "H");
     await expect(page.getByTestId("reveal-answer")).toHaveAttribute("aria-keyshortcuts", "A");
-    await expect(page.getByTestId("previous-card")).toHaveAttribute("aria-keyshortcuts", "P ArrowLeft");
-    await expect(page.getByTestId("next-card")).toHaveAttribute("aria-keyshortcuts", "N ArrowRight");
+    await expect(page.getByTestId("previous-card")).toHaveAttribute("aria-keyshortcuts", "ArrowLeft");
+    await expect(page.getByTestId("next-card")).toHaveAttribute("aria-keyshortcuts", "ArrowRight");
     await expect(page.getByRole("group", { name: "Optional hint" })).toBeVisible();
     await expect(page.getByRole("group", { name: "Answer actions" })).toBeVisible();
 
@@ -837,10 +837,14 @@ test.describe("card controls", () => {
     await expect(page.getByTestId("card-answer")).toBeVisible();
     expect(await page.evaluate(() => window.CRAM_PLAYER.getGrade("hint-basic-card"))).toBeUndefined();
 
-    // And: mnemonic navigation follows the same bounds as the arrow keys.
+    // And: the arrow keys navigate while the removed N/P mnemonics do nothing.
     await page.keyboard.press("n");
+    await expect(page.getByTestId("card-prompt")).toHaveText(HINT_DECK.cards[0].prompt);
+    await page.keyboard.press("ArrowRight");
     await expect(page.getByTestId("card-prompt")).toHaveText(HINT_DECK.cards[1].prompt);
     await page.keyboard.press("p");
+    await expect(page.getByTestId("card-prompt")).toHaveText(HINT_DECK.cards[1].prompt);
+    await page.keyboard.press("ArrowLeft");
     await expect(page.getByTestId("card-prompt")).toHaveText(HINT_DECK.cards[0].prompt);
   });
 
@@ -848,8 +852,8 @@ test.describe("card controls", () => {
     await openPlayer(page, HINT_DECK);
 
     // Given: the learner has navigated to a cloze card with an available hint.
-    await page.keyboard.press("n");
-    await page.keyboard.press("n");
+    await page.keyboard.press("ArrowRight");
+    await page.keyboard.press("ArrowRight");
     const input = page.getByTestId("cloze-input").first();
 
     // When: the learner types the shortcut letter into the answer field.
@@ -865,7 +869,7 @@ test.describe("card controls", () => {
     await openPlayer(page, HINT_DECK);
 
     // Given: the learner is on an MCQ card before making a choice.
-    await page.keyboard.press("n");
+    await page.keyboard.press("ArrowRight");
     await expect(page.getByTestId("mcq-check-answer")).toBeHidden();
 
     // When: the learner selects an option.
