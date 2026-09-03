@@ -376,7 +376,9 @@ async function capturePlayerFlow(page) {
   await clickWithCue(page, next);
   await page.getByTestId("mcq-options").waitFor({ state: "visible" });
   await pause(500);
-  await clickWithCue(page, page.getByTestId("mcq-option").filter({ hasText: "`no-store`" }));
+  // Show a believable miss before the score screen: `private` is a valid
+  // cache directive, but it does not prevent storage altogether.
+  await clickWithCue(page, page.getByTestId("mcq-option").filter({ hasText: "`private`" }));
   await pause(300);
   await clickWithCue(page, page.getByTestId("mcq-check-answer"));
   await page.getByTestId("mcq-feedback").waitFor({ state: "visible" });
