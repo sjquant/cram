@@ -15,7 +15,7 @@ const OUTPUT_PATH = path.join(ROOT, "docs/demo.gif");
 // A portrait tablet canvas keeps the storyboard and the player's lower actions visible.
 const VIEWPORT = { width: 800, height: 900 };
 const VIDEO_START = "0.35";
-const TERMINAL_COMMAND = "/cram:cram";
+const TERMINAL_COMMAND = "/cram:cram HTTP caching essentials";
 const EXAMPLE_DECK = JSON.parse(fs.readFileSync(EXAMPLE_JSON_PATH, "utf8"));
 const DEMO_DECK = {
   ...EXAMPLE_DECK,
