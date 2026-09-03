@@ -8,7 +8,7 @@ Cram turns pasted, attached, local, or web material into a validated deck and
 a self-contained, offline flashcard quiz in a single HTML file you can open in
 any browser.
 
-![Cram demo: turn a prompt into recall questions, then study the generated deck](docs/demo.gif)
+![Cram demo: run the cram skill, generate validated questions, and study the deck](docs/demo.gif)
 
 The generated player supports:
 

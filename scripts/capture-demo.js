@@ -10,20 +10,22 @@ const { chromium } = require("@playwright/test");
 const ROOT = path.resolve(__dirname, "..");
 const EXAMPLE_PATH = path.join(ROOT, "examples/http-caching-essentials.html");
 const EXAMPLE_JSON_PATH = path.join(ROOT, "examples/http-caching-essentials.json");
+const RENDERER_PATH = path.join(ROOT, "skills/cram/scripts/render.py");
 const OUTPUT_PATH = path.join(ROOT, "docs/demo.gif");
 // A portrait tablet canvas keeps the storyboard and the player's lower actions visible.
 const VIEWPORT = { width: 800, height: 900 };
 const VIDEO_START = "0.15";
-const PROMPT_TEXT = "Turn my HTTP caching notes into a self-graded quiz.";
+const TERMINAL_COMMAND = "/cram:cram";
+const OPEN_COMMAND = "open examples/http-caching-essentials.html";
 const EXAMPLE_DECK = JSON.parse(fs.readFileSync(EXAMPLE_JSON_PATH, "utf8"));
 const DEMO_DECK = {
   ...EXAMPLE_DECK,
   cards: [EXAMPLE_DECK.cards[0], EXAMPLE_DECK.cards[1], EXAMPLE_DECK.cards[3]]
 };
-const STORY_CARDS = [
-  { type: "Basic", prompt: "What does max-age=60 permit?", detail: "free recall" },
-  { type: "MCQ", prompt: "Which directive prevents storage?", detail: "choose one" },
-  { type: "Cloze", prompt: "The validator header is ____.", detail: "fill the blank" }
+const TERMINAL_CARDS = [
+  { type: "basic", prompt: "What does `max-age=60` permit?" },
+  { type: "mcq", prompt: "Which directive prevents storage?" },
+  { type: "cloze", prompt: "The validator header is _____." }
 ];
 const CURSOR_STYLE = `
   .demo-cursor {
@@ -85,10 +87,10 @@ async function captureVideo(tempDir) {
   const video = page.video();
 
   try {
-    await page.setContent(buildStoryboardMarkup(EXAMPLE_DECK), { waitUntil: "load" });
-    await page.waitForSelector("#prompt-scene.scene--active");
-    await installCursor(page);
-    await playStoryboard(page);
+    verifyRenderedExample(tempDir);
+    await page.setContent(buildTerminalMarkup(EXAMPLE_DECK), { waitUntil: "load" });
+    await page.waitForSelector(".terminal-window");
+    await playTerminalStory(page);
 
     await page.goto(pathToFileURL(EXAMPLE_PATH).href);
     await page.waitForFunction(() => document.querySelector("#player")?.dataset.state === "ready");
@@ -111,15 +113,24 @@ async function captureVideo(tempDir) {
   return video.path();
 }
 
-function buildStoryboardMarkup(deck) {
-  const questionRows = STORY_CARDS.map((card, index) => `
-    <div class="question-row" data-question-index="${index}">
-      <span class="question-number">0${index + 1}</span>
-      <span class="question-copy">
-        <span class="question-text">${escapeHtml(card.prompt)}</span>
-        <span class="question-detail">${escapeHtml(card.detail)}</span>
-      </span>
-      <span class="question-type">${escapeHtml(card.type)}</span>
+function verifyRenderedExample(tempDir) {
+  const outputPath = path.join(tempDir, "rendered-example.html");
+  const result = spawnSync("python3", [RENDERER_PATH, EXAMPLE_JSON_PATH, "-o", outputPath], {
+    encoding: "utf8",
+    env: { ...process.env, CLAUDE_PLUGIN_ROOT: ROOT }
+  });
+  if (result.error) throw result.error;
+  if (result.status !== 0) {
+    throw new Error(`The example deck could not be rendered: ${result.stderr || result.stdout}`);
+  }
+}
+
+function buildTerminalMarkup(deck) {
+  const cardLines = TERMINAL_CARDS.map((card, index) => `
+    <div class="output-line card-line" data-output-line>
+      <span class="card-number">0${index + 1}</span>
+      <span class="card-type">${escapeHtml(card.type)}</span>
+      <span class="card-prompt">${escapeHtml(card.prompt)}</span>
     </div>
   `).join("");
 
@@ -128,507 +139,216 @@ function buildStoryboardMarkup(deck) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Cram demo</title>
+  <title>Cram terminal demo</title>
   <style>
     :root {
-      --paper: #f4efe4;
-      --ink: #1f1c18;
-      --ink-soft: #746c5e;
-      --rule: #d9d0bf;
-      --accent: #b5342b;
-      --positive: #356b4a;
-      --serif: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino,
-        Georgia, serif;
-      --sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-        "Segoe UI", sans-serif;
-      font-family: var(--sans);
-      color: var(--ink);
+      --paper: #ede8de;
+      --terminal: #111416;
+      --terminal-rule: #2b3033;
+      --terminal-muted: #899196;
+      --terminal-ink: #e5ebe8;
+      --terminal-green: #9bd4a7;
+      --terminal-blue: #91c9e8;
+      --terminal-amber: #e6c487;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: var(--terminal-ink);
       background: var(--paper);
     }
 
     * { box-sizing: border-box; }
 
-    html {
+    html,
+    body {
       width: 100%;
       height: 100%;
+      margin: 0;
       overflow: hidden;
     }
 
     body {
-      min-width: 800px;
-      min-height: 900px;
-      margin: 0;
-      overflow: hidden;
+      display: grid;
+      place-items: center;
+      padding: 58px 48px;
       background: var(--paper);
       -webkit-font-smoothing: antialiased;
     }
 
-    .demo-shell {
-      position: relative;
-      width: 800px;
-      height: 900px;
-      padding: 44px 48px 34px;
+    .terminal-window {
+      width: 704px;
+      height: 784px;
       overflow: hidden;
+      border: 1px solid #4a514f;
+      border-radius: 12px;
+      background: var(--terminal);
+      box-shadow: 0 22px 50px rgba(55, 46, 31, 0.2);
     }
 
-    .demo-shell::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      opacity: 0.22;
-      pointer-events: none;
-      background-image: repeating-linear-gradient(0deg, rgba(74, 58, 35, 0.04) 0 1px, transparent 1px 5px);
-    }
-
-    .demo-header,
-    .stage-steps,
-    .demo-footer { position: relative; z-index: 1; }
-
-    .demo-header {
+    .terminal-bar {
       display: flex;
+      height: 43px;
       align-items: center;
       justify-content: space-between;
-    }
-
-    .brand {
-      display: flex;
-      gap: 9px;
-      align-items: center;
-      font-size: 16px;
-      font-weight: 700;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-    }
-
-    .brand-mark {
-      display: inline-grid;
-      width: 27px;
-      height: 27px;
-      place-items: center;
-      color: var(--paper);
-      background: var(--accent);
-      border-radius: 50%;
-      font-family: var(--serif);
-      font-size: 20px;
-      font-weight: 700;
-      letter-spacing: 0;
-    }
-
-    .header-caption,
-    .demo-footer {
-      color: var(--ink-soft);
-      font-size: 10px;
-      font-weight: 650;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-    }
-
-    .stage-steps {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      margin-top: 26px;
-    }
-
-    .stage-step {
-      display: inline-flex;
-      gap: 7px;
-      align-items: center;
-      color: #aaa092;
-      font-size: 10px;
-      font-weight: 650;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-    }
-
-    .stage-step + .stage-step::before {
-      content: "→";
-      margin-right: 4px;
-      color: #c7bcaa;
-      font-size: 13px;
-    }
-
-    .stage-step.is-current { color: var(--accent); }
-
-    .stage-dot {
-      display: inline-block;
-      width: 7px;
-      height: 7px;
-      border: 1px solid currentColor;
-      border-radius: 50%;
-    }
-
-    .stage-step.is-current .stage-dot { background: currentColor; }
-
-    main { position: relative; height: 765px; }
-
-    .scene {
-      position: absolute;
-      inset: 18px 0 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      pointer-events: none;
-      transform: translateY(8px);
-      transition: opacity 320ms ease, transform 320ms ease;
-    }
-
-    .scene--active {
-      opacity: 1;
-      pointer-events: auto;
-      transform: translateY(0);
-    }
-
-    .prompt-wrap { width: 620px; }
-
-    .source-pill {
-      display: inline-flex;
-      gap: 8px;
-      align-items: center;
-      margin-bottom: 15px;
-      color: var(--ink-soft);
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--terminal-rule);
+      color: var(--terminal-muted);
       font-size: 11px;
     }
 
-    .source-dot {
-      width: 7px;
-      height: 7px;
+    .window-controls { display: flex; gap: 7px; }
+
+    .window-controls span {
+      display: block;
+      width: 9px;
+      height: 9px;
       border-radius: 50%;
-      background: var(--positive);
     }
 
-    .prompt-card,
-    .source-card,
-    .deck-card {
-      border: 1px solid var(--rule);
-      background: rgba(255, 253, 248, 0.46);
-      box-shadow: 0 11px 26px rgba(74, 58, 35, 0.07);
+    .window-controls span:nth-child(1) { background: #e27d70; }
+    .window-controls span:nth-child(2) { background: #e2c070; }
+    .window-controls span:nth-child(3) { background: #7eb68d; }
+
+    .terminal-body {
+      height: calc(100% - 43px);
+      padding: 32px 34px;
+      font-size: 15px;
+      line-height: 1.75;
     }
 
-    .prompt-card { padding: 25px 29px 23px; }
-
-    .eyebrow {
-      color: var(--accent);
-      font-size: 10px;
-      font-weight: 750;
-      letter-spacing: 0.17em;
-      text-transform: uppercase;
+    .terminal-path {
+      margin-bottom: 12px;
+      color: var(--terminal-muted);
     }
 
-    .prompt-row {
+    .command-line {
       display: flex;
-      min-height: 78px;
-      align-items: center;
-      font-family: var(--serif);
-      font-size: 28px;
-      line-height: 1.25;
+      align-items: baseline;
+      min-height: 27px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
     }
 
-    .prompt-caret {
-      margin-right: 13px;
-      color: var(--accent);
-      font-family: var(--sans);
-      font-size: 25px;
-    }
+    .command-prompt { color: var(--terminal-blue); }
+    .command { color: var(--terminal-ink); }
 
-    .typing-caret {
-      width: 2px;
-      height: 31px;
-      margin-left: 3px;
-      background: var(--accent);
-      animation: caret-blink 850ms steps(1) infinite;
+    .terminal-caret {
+      display: inline-block;
+      width: 9px;
+      height: 18px;
+      margin-left: 4px;
+      vertical-align: -3px;
+      background: var(--terminal-green);
+      animation: caret-blink 900ms steps(1) infinite;
     }
 
     @keyframes caret-blink { 50% { opacity: 0; } }
 
-    .prompt-hint {
-      padding-top: 14px;
-      border-top: 1px solid var(--rule);
-      color: var(--ink-soft);
-      font-size: 12px;
+    .output-stack {
+      display: grid;
+      gap: 3px;
+      margin-top: 20px;
     }
 
-    .status {
-      display: flex;
-      gap: 9px;
-      align-items: center;
-      margin-top: 19px;
-      color: var(--ink-soft);
-      font-size: 12px;
+    .output-line {
+      min-height: 27px;
+      color: var(--terminal-muted);
       opacity: 0;
       transform: translateY(4px);
       transition: opacity 220ms ease, transform 220ms ease;
     }
 
-    .status.is-visible { opacity: 1; transform: translateY(0); }
+    .output-line.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
 
-    .status-icon {
-      display: inline-grid;
-      width: 20px;
-      height: 20px;
-      place-items: center;
-      border: 1px solid var(--rule);
-      border-radius: 50%;
-      color: var(--accent);
+    .output-line--success { color: var(--terminal-green); }
+    .output-line--accent { color: var(--terminal-amber); }
+
+    .card-line {
+      display: grid;
+      grid-template-columns: 30px 68px minmax(0, 1fr);
+      gap: 10px;
+      align-items: baseline;
+      padding-left: 12px;
+      color: var(--terminal-ink);
+    }
+
+    .card-number { color: var(--terminal-muted); }
+    .card-type { color: var(--terminal-blue); }
+    .card-prompt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    #next-command {
+      margin-top: 22px;
+      opacity: 0;
+      transition: opacity 220ms ease;
+    }
+
+    #next-command.is-visible { opacity: 1; }
+
+    .terminal-hint {
+      margin-top: 27px;
+      color: var(--terminal-muted);
       font-size: 12px;
     }
 
-    .status.is-done .status-icon {
-      color: var(--paper);
-      background: var(--positive);
-      border-color: var(--positive);
-    }
-
-    .deck-wrap {
-      display: grid;
-      grid-template-columns: 190px 40px 1fr;
-      gap: 14px;
-      width: 700px;
-      align-items: center;
-    }
-
-    .source-card { padding: 20px 18px; }
-
-    .source-card h2,
-    .deck-card h1 {
-      margin: 9px 0 0;
-      font-family: var(--serif);
-      font-weight: 500;
-      line-height: 1.15;
-    }
-
-    .source-card h2 { font-size: 20px; }
-
-    .source-meta {
-      margin-top: 9px;
-      color: var(--ink-soft);
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 9px;
-    }
-
-    .source-lines {
-      display: grid;
-      gap: 7px;
-      margin-top: 24px;
-      color: var(--ink-soft);
-      font-size: 11px;
-      line-height: 1.35;
-    }
-
-    .source-lines span::before {
-      content: "·";
-      margin-right: 6px;
-      color: var(--accent);
-    }
-
-    .source-check {
-      margin-top: 23px;
-      color: var(--positive);
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-
-    .flow-arrow {
-      color: var(--accent);
-      font-family: var(--serif);
-      font-size: 27px;
-      text-align: center;
-    }
-
-    .deck-card { min-height: 315px; padding: 22px 24px 20px; }
-
-    .deck-card h1 { font-size: 25px; }
-
-    .deck-count {
-      margin-top: 6px;
-      color: var(--positive);
-      font-size: 11px;
-      font-weight: 650;
-    }
-
-    .question-list {
-      display: grid;
-      gap: 7px;
-      margin-top: 19px;
-    }
-
-    .question-row {
-      display: flex;
-      gap: 11px;
-      align-items: center;
-      min-height: 45px;
-      padding: 7px 10px;
-      border: 1px solid var(--rule);
-      background: rgba(244, 239, 228, 0.46);
-      opacity: 0;
-      transform: translateX(12px);
-      transition: opacity 250ms ease, transform 250ms ease;
-    }
-
-    .question-row.is-visible { opacity: 1; transform: translateX(0); }
-
-    .question-number {
-      color: var(--accent);
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 10px;
-    }
-
-    .question-copy { display: grid; gap: 2px; min-width: 0; flex: 1; }
-
-    .question-text {
-      overflow: hidden;
-      color: var(--ink);
-      font-family: var(--serif);
-      font-size: 13px;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .question-detail {
-      color: var(--ink-soft);
-      font-size: 9px;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-
-    .question-type {
-      color: var(--ink-soft);
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-    }
-
-    #start-study {
-      display: block;
-      margin: 17px 0 0 auto;
-      border: 0;
-      padding: 9px 13px;
-      color: var(--paper);
-      background: var(--ink);
-      font: inherit;
-      font-size: 11px;
-      font-weight: 650;
-      cursor: pointer;
-    }
-
-    #start-study span { margin-left: 7px; color: #e0645a; }
-
-    .demo-footer {
-      position: absolute;
-      right: 48px;
-      bottom: 34px;
-    }
-
-    ${CURSOR_STYLE}
+    .terminal-hint strong { color: var(--terminal-green); font-weight: 500; }
   </style>
 </head>
 <body>
-  <div class="demo-shell">
-    <header class="demo-header">
-      <div class="brand"><span class="brand-mark">c</span><span>cram</span></div>
-      <div class="header-caption">from material to memory</div>
+  <section class="terminal-window" aria-label="Cram terminal session">
+    <header class="terminal-bar">
+      <div class="window-controls" aria-hidden="true"><span></span><span></span><span></span></div>
+      <span>cram — zsh</span>
+      <span>⌘ 1</span>
     </header>
-
-    <div class="stage-steps" id="stage-steps" aria-label="Demo stages">
-      <span class="stage-step is-current"><span class="stage-dot"></span>Prompt</span>
-      <span class="stage-step"><span class="stage-dot"></span>Deck</span>
-      <span class="stage-step"><span class="stage-dot"></span>Study</span>
-    </div>
-
-    <main>
-      <section class="scene scene--active" id="prompt-scene">
-        <div class="prompt-wrap">
-          <div class="source-pill"><span class="source-dot"></span>${escapeHtml(deck.title)} · notes.md</div>
-          <div class="prompt-card">
-            <div class="eyebrow">Prompt</div>
-            <div class="prompt-row"><span class="prompt-caret">›</span><span id="prompt-text"></span><span class="typing-caret"></span></div>
-            <div class="prompt-hint">Tell Cram what you want to remember.</div>
-          </div>
-          <div class="status" id="prompt-status"><span class="status-icon" id="prompt-status-icon">…</span><span id="prompt-status-text">Waiting for your prompt</span></div>
-        </div>
-      </section>
-
-      <section class="scene" id="deck-scene">
-        <div class="deck-wrap">
-          <div class="source-card">
-            <div class="eyebrow">Source</div>
-            <h2>${escapeHtml(deck.title)}</h2>
-            <div class="source-meta">RFC 9111 · notes.md</div>
-            <div class="source-lines"><span>freshness</span><span>directives</span><span>validators</span></div>
-            <div class="source-check">✓ source read</div>
-          </div>
-          <div class="flow-arrow">→</div>
-          <div class="deck-card">
-            <div class="eyebrow">Generated deck</div>
-            <h1>${escapeHtml(deck.title)}</h1>
-            <div class="deck-count" id="deck-count">Building recall questions…</div>
-            <div class="question-list" id="question-list">${questionRows}</div>
-            <button id="start-study" type="button">Study these questions <span>→</span></button>
-          </div>
-        </div>
-      </section>
+    <main class="terminal-body">
+      <div class="terminal-path">~/study-notes</div>
+      <div class="command-line">
+        <span class="command-prompt">~/study-notes $ </span><span class="command" id="command"></span><span class="terminal-caret"></span>
+      </div>
+      <div class="output-stack" id="output-stack">
+        <div class="output-line" data-output-line>source: ${escapeHtml(deck.title)} · attached notes</div>
+        <div class="output-line" data-output-line>reading source material…</div>
+        <div class="output-line output-line--success" data-output-line>✓ extracted 3 concepts</div>
+        <div class="output-line output-line--success" data-output-line>✓ generated and validated deck</div>
+        ${cardLines}
+        <div class="output-line output-line--success" data-output-line>✓ rendered self-contained player</div>
+      </div>
+      <div class="command-line" id="next-command">
+        <span class="command-prompt">~/study-notes $ </span><span class="command" id="open-command"></span><span class="terminal-caret"></span>
+      </div>
+      <div class="terminal-hint">ready to study · <strong>3 cards</strong> · basic / mcq / cloze</div>
     </main>
-
-    <footer class="demo-footer">one prompt → a playable quiz</footer>
-  </div>
-  <span class="demo-cursor" id="demo-cursor" aria-hidden="true"></span>
+  </section>
 </body>
 </html>`;
 }
 
-async function playStoryboard(page) {
-  for (const character of PROMPT_TEXT) {
-    await page.evaluate((value) => {
-      document.querySelector("#prompt-text").textContent += value;
+async function playTerminalStory(page) {
+  await typeTerminalText(page, "#command", TERMINAL_COMMAND, 55);
+  await pause(650);
+
+  for (const line of await page.locator("[data-output-line]").all()) {
+    await revealTerminalLine(line);
+    await pause(330);
+  }
+
+  await page.locator("#next-command").evaluate((line) => line.classList.add("is-visible"));
+  await typeTerminalText(page, "#open-command", OPEN_COMMAND, 28);
+  await pause(800);
+}
+
+async function revealTerminalLine(line) {
+  await line.evaluate((element) => element.classList.add("is-visible"));
+}
+
+async function typeTerminalText(page, selector, value, delay) {
+  for (const character of value) {
+    await page.locator(selector).evaluate((element, nextCharacter) => {
+      element.textContent += nextCharacter;
     }, character);
-    await pause(24);
+    await pause(delay);
   }
-  await pause(400);
-  await page.evaluate(() => {
-    const status = document.querySelector("#prompt-status");
-    status.classList.add("is-visible");
-    document.querySelector("#prompt-status-text").textContent = "Reading your source…";
-  });
-  await pause(500);
-  await page.evaluate(() => {
-    const status = document.querySelector("#prompt-status");
-    status.classList.add("is-done");
-    document.querySelector("#prompt-status-icon").textContent = "✓";
-    document.querySelector("#prompt-status-text").textContent = "3 recall questions ready";
-  });
-  await pause(450);
-  await showStage(page, "deck");
-
-  for (let index = 0; index < STORY_CARDS.length; index += 1) {
-    await pause(280);
-    await revealGeneratedQuestion(page, index);
-  }
-  await page.evaluate(() => {
-    document.querySelector("#deck-count").textContent = "3 questions ready · Basic · MCQ · Cloze";
-  });
-  await pause(450);
-  const startStudy = page.locator("#start-study");
-  await moveCursor(page, startStudy);
-  await triggerCursorClick(page);
-  await pause(300);
-}
-
-async function revealGeneratedQuestion(page, index) {
-  await page.locator(`[data-question-index="${index}"]`).evaluate((row) => row.classList.add("is-visible"));
-}
-
-async function showStage(page, stage) {
-  await page.evaluate((nextStage) => {
-    document.querySelector("#prompt-scene").classList.toggle("scene--active", nextStage === "prompt");
-    document.querySelector("#deck-scene").classList.toggle("scene--active", nextStage === "deck");
-    document.querySelectorAll(".stage-step").forEach((step, index) => {
-      step.classList.toggle("is-current", index === (nextStage === "prompt" ? 0 : 1));
-    });
-  }, stage);
 }
 
 async function capturePlayerFlow(page) {
