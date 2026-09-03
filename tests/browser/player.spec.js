@@ -8,6 +8,16 @@ const PLAYER_URL = pathToFileURL(path.join(ROOT, "skills/cram/template/player.ht
 const BASIC_DECK = JSON.parse(
   fs.readFileSync(path.join(ROOT, "fixtures/valid/basic-only.json"), "utf8")
 );
+const LONG_COUNT_DECK = {
+  id: "long-count-browser-check",
+  title: "Long count browser check",
+  cards: Array.from({ length: 100 }, (_, index) => ({
+    id: `long-count-card-${index + 1}`,
+    type: "basic",
+    prompt: `Card ${index + 1}`,
+    answer: `Answer ${index + 1}`,
+  })),
+};
 const RETRY_DECK = {
   id: "retry-browser-check",
   title: "Retry browser check",
@@ -389,6 +399,41 @@ test.describe("basic cards", () => {
     // Then: the visible footer action and header use the same outer gutter.
     expect(gutters.headerTop).toBeCloseTo(gutters.navigationBottom, 1);
     expect(gutters.navigationBottom).toBeCloseTo(gutters.shellPaddingBottom, 1);
+  });
+
+  test("keeps long card-position counts readable without horizontal page overflow", async ({ page }) => {
+    for (const viewport of [
+      { width: 1280, height: 800 },
+      { width: 390, height: 844 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await openPlayer(page, LONG_COUNT_DECK);
+
+      // Given: a 100-card deck renders a zero-padded position in the seal badge.
+      const badgeState = await page.evaluate(() => {
+        const badge = document.querySelector("[data-testid='card-position']");
+        const textRange = document.createRange();
+        textRange.selectNodeContents(badge);
+        const badgeBounds = badge.getBoundingClientRect();
+        const textBounds = textRange.getBoundingClientRect();
+        return {
+          label: badge.textContent,
+          badgeBounds,
+          textBounds,
+          badgeClientWidth: badge.clientWidth,
+          badgeScrollWidth: badge.scrollWidth,
+          bodyScrollWidth: document.body.scrollWidth,
+          viewportWidth: window.innerWidth,
+        };
+      });
+
+      // Then: every digit stays inside the widened seal and the page remains viewport-bound.
+      expect(badgeState.label).toBe("001/100");
+      expect(badgeState.badgeScrollWidth).toBeLessThanOrEqual(badgeState.badgeClientWidth);
+      expect(badgeState.textBounds.left).toBeGreaterThanOrEqual(badgeState.badgeBounds.left - 1);
+      expect(badgeState.textBounds.right).toBeLessThanOrEqual(badgeState.badgeBounds.right + 1);
+      expect(badgeState.bodyScrollWidth).toBeLessThanOrEqual(badgeState.viewportWidth);
+    }
   });
 
   test("restores a basic-card grade after Next and Previous navigation", async ({ page }) => {
