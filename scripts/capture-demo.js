@@ -14,7 +14,7 @@ const RENDERER_PATH = path.join(ROOT, "skills/cram/scripts/render.py");
 const OUTPUT_PATH = path.join(ROOT, "docs/demo.gif");
 // A portrait tablet canvas keeps the storyboard and the player's lower actions visible.
 const VIEWPORT = { width: 800, height: 900 };
-const VIDEO_START = "0.15";
+const VIDEO_START = "0.35";
 const TERMINAL_COMMAND = "/cram:cram";
 const OPEN_COMMAND = "open examples/http-caching-essentials.html";
 const EXAMPLE_DECK = JSON.parse(fs.readFileSync(EXAMPLE_JSON_PATH, "utf8"));
@@ -143,17 +143,16 @@ function buildTerminalMarkup(deck) {
   <title>Cram terminal demo</title>
   <style>
     :root {
-      --paper: #ede8de;
-      --terminal: #111416;
-      --terminal-rule: #2b3033;
-      --terminal-muted: #899196;
-      --terminal-ink: #e5ebe8;
-      --terminal-green: #9bd4a7;
-      --terminal-blue: #91c9e8;
-      --terminal-amber: #e6c487;
+      --terminal: #090d12;
+      --terminal-rule: #5d6267;
+      --terminal-muted: #8e9398;
+      --terminal-ink: #d8dbd9;
+      --terminal-green: #a4d6ae;
+      --terminal-blue: #9aa1a8;
+      --terminal-amber: #f0b817;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       color: var(--terminal-ink);
-      background: var(--paper);
+      background: var(--terminal);
     }
 
     * { box-sizing: border-box; }
@@ -167,102 +166,55 @@ function buildTerminalMarkup(deck) {
     }
 
     body {
-      display: grid;
-      place-items: center;
-      padding: 58px 48px;
-      background: var(--paper);
+      background: var(--terminal);
       -webkit-font-smoothing: antialiased;
     }
 
     .terminal-window {
-      width: 704px;
-      height: 784px;
+      width: 100%;
+      height: 100%;
       overflow: hidden;
-      border: 1px solid #4a514f;
-      border-radius: 12px;
       background: var(--terminal);
-      box-shadow: 0 22px 50px rgba(55, 46, 31, 0.2);
     }
-
-    .terminal-bar {
-      display: flex;
-      height: 43px;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 16px;
-      border-bottom: 1px solid var(--terminal-rule);
-      color: var(--terminal-muted);
-      font-size: 11px;
-    }
-
-    .window-controls { display: flex; gap: 7px; }
-
-    .window-controls span {
-      display: block;
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-    }
-
-    .window-controls span:nth-child(1) { background: #e27d70; }
-    .window-controls span:nth-child(2) { background: #e2c070; }
-    .window-controls span:nth-child(3) { background: #7eb68d; }
 
     .terminal-body {
-      height: calc(100% - 43px);
-      padding: 32px 34px;
-      font-size: 15px;
-      line-height: 1.75;
-    }
-
-    .terminal-path {
-      margin-bottom: 12px;
-      color: var(--terminal-muted);
-    }
-
-    .command-line {
       display: flex;
-      align-items: baseline;
-      min-height: 27px;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      justify-content: center;
+      padding: 0 32px;
     }
 
-    .command-prompt { color: var(--terminal-blue); }
-
-    .command-input {
-      min-width: 0;
-      flex: 1;
-      border: 1px solid #3c4747;
-      border-radius: 4px;
-      padding: 2px 8px;
-      color: var(--terminal-ink);
-      background: #171c1d;
-      caret-color: var(--terminal-green);
-      font: inherit;
-      line-height: 1.5;
-      outline: none;
+    .terminal-workspace {
+      display: flex;
+      width: min(100%, 704px);
+      min-height: 0;
+      flex-direction: column;
+      padding: 176px 0 32px;
     }
 
-    .command-input:focus {
-      border-color: var(--terminal-green);
-      box-shadow: 0 0 0 2px rgba(155, 212, 167, 0.15);
-    }
-
-    .command-input.is-submitted {
-      border-color: #39403f;
+    .command-history-line {
+      min-height: 24px;
+      margin-top: 26px;
       color: var(--terminal-muted);
-      background: transparent;
+      font-size: 15px;
+      opacity: 0;
+      transition: opacity 220ms ease;
     }
+
+    .command-history-line.is-visible { opacity: 1; }
 
     .output-stack {
       display: grid;
-      gap: 3px;
-      margin-top: 20px;
+      gap: 2px;
+      margin-top: 8px;
+      font-size: 14px;
+      line-height: 1.4;
     }
 
     .output-line {
-      min-height: 27px;
+      min-height: 25px;
       color: var(--terminal-muted);
       opacity: 0;
       transform: translateY(4px);
@@ -283,54 +235,98 @@ function buildTerminalMarkup(deck) {
       gap: 10px;
       align-items: baseline;
       padding-left: 12px;
-      color: var(--terminal-ink);
     }
 
     .card-number { color: var(--terminal-muted); }
     .card-type { color: var(--terminal-blue); }
     .card-prompt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-    #next-command {
-      margin-top: 22px;
+    .terminal-hint {
+      margin-top: 10px;
+      color: var(--terminal-muted);
+      font-size: 12px;
       opacity: 0;
       transition: opacity 220ms ease;
     }
 
-    #next-command.is-visible { opacity: 1; }
-
-    .terminal-hint {
-      margin-top: 27px;
-      color: var(--terminal-muted);
-      font-size: 12px;
-    }
+    .terminal-hint.is-visible { opacity: 1; }
 
     .terminal-hint strong { color: var(--terminal-green); font-weight: 500; }
+
+    .command-line {
+      display: flex;
+      min-height: 58px;
+      align-items: center;
+      padding: 0 16px;
+      border: 1px solid #4d5965;
+      border-radius: 7px;
+      background: #111821;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+      font-size: 17px;
+      line-height: 1.45;
+      white-space: nowrap;
+    }
+
+    .command-line.is-hidden { display: none; }
+
+    .command-line:focus-within {
+      border-color: #96a8b7;
+      box-shadow: 0 0 0 3px rgba(150, 168, 183, 0.14);
+    }
+
+    .command-prompt {
+      flex: 0 0 auto;
+      margin-right: 8px;
+      color: var(--terminal-ink);
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .command-input {
+      min-width: 0;
+      width: 0;
+      flex: 1;
+      border: 0;
+      padding: 0;
+      color: var(--terminal-ink);
+      background: transparent;
+      caret-color: var(--terminal-amber);
+      font: inherit;
+      line-height: 1.45;
+      outline: none;
+    }
+
+    .command-input.is-submitted { color: var(--terminal-muted); }
+
+    #next-command {
+      display: none;
+      margin-top: 18px;
+    }
+
+    #next-command.is-visible { display: flex; }
   </style>
 </head>
 <body>
-  <section class="terminal-window" aria-label="Cram terminal session">
-    <header class="terminal-bar">
-      <div class="window-controls" aria-hidden="true"><span></span><span></span><span></span></div>
-      <span>cram — zsh</span>
-      <span>⌘ 1</span>
-    </header>
+  <section class="terminal-window" aria-label="Cram command preview">
     <main class="terminal-body">
-      <div class="terminal-path">~/study-notes</div>
-      <div class="command-line">
-        <label class="command-prompt" for="command-input">~/study-notes $ </label><input class="command-input" id="command-input" aria-label="Cram command" autocomplete="off" spellcheck="false">
-      </div>
-      <div class="output-stack" id="output-stack">
-        <div class="output-line" data-output-line>source: ${escapeHtml(deck.title)} · attached notes</div>
-        <div class="output-line" data-output-line>reading source material…</div>
-        <div class="output-line output-line--success" data-output-line>✓ extracted 3 concepts</div>
-        <div class="output-line output-line--success" data-output-line>✓ generated and validated deck</div>
-        ${cardLines}
-        <div class="output-line output-line--success" data-output-line>✓ rendered self-contained player</div>
-      </div>
+      <section class="terminal-workspace">
+        <div class="command-line" id="primary-command">
+          <label class="command-prompt" for="command-input">›</label><input class="command-input" id="command-input" aria-label="Cram command" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="command-history-line" id="command-history">› <span id="command-history-text"></span></div>
+        <div class="output-stack" id="output-stack">
+          <div class="output-line" data-output-line>source: ${escapeHtml(deck.title)} · attached notes</div>
+          <div class="output-line" data-output-line>reading source material…</div>
+          <div class="output-line output-line--success" data-output-line>✓ extracted 3 concepts</div>
+          <div class="output-line output-line--success" data-output-line>✓ generated and validated deck</div>
+          ${cardLines}
+          <div class="output-line output-line--success" data-output-line>✓ rendered self-contained player</div>
+        </div>
+        <div class="terminal-hint" id="terminal-hint">ready to study · <strong>3 cards</strong> · basic / mcq / cloze</div>
       <div class="command-line" id="next-command">
-        <label class="command-prompt" for="open-command-input">~/study-notes $ </label><input class="command-input" id="open-command-input" aria-label="Open generated player" autocomplete="off" spellcheck="false">
+        <label class="command-prompt" for="open-command-input">›</label><input class="command-input" id="open-command-input" aria-label="Open generated player" autocomplete="off" spellcheck="false">
       </div>
-      <div class="terminal-hint">ready to study · <strong>3 cards</strong> · basic / mcq / cloze</div>
+      </section>
     </main>
   </section>
 </body>
@@ -339,9 +335,17 @@ function buildTerminalMarkup(deck) {
 
 async function playTerminalStory(page) {
   const command = page.locator("#command-input");
+  await command.focus();
+  await pause(450);
   await typeTerminalText(command, TERMINAL_COMMAND, 55);
   await command.press("Enter");
-  await command.evaluate((input) => input.classList.add("is-submitted"));
+  await command.evaluate((input) => {
+    input.classList.add("is-submitted");
+    input.closest(".command-line").classList.add("is-hidden");
+    const history = document.querySelector("#command-history");
+    history.querySelector("#command-history-text").textContent = input.value;
+    history.classList.add("is-visible");
+  });
   await pause(650);
 
   for (const line of await page.locator("[data-output-line]").all()) {
@@ -349,6 +353,7 @@ async function playTerminalStory(page) {
     await pause(330);
   }
 
+  await page.locator("#terminal-hint").evaluate((line) => line.classList.add("is-visible"));
   await page.locator("#next-command").evaluate((line) => line.classList.add("is-visible"));
   const openCommand = page.locator("#open-command-input");
   await typeTerminalText(openCommand, OPEN_COMMAND, 28);
@@ -444,7 +449,7 @@ async function triggerCursorClick(page) {
 function transcodeGif(videoPath, outputPath) {
   const filter = [
     "fps=10,scale=800:-2:flags=lanczos,split[s0][s1]",
-    "[s0]palettegen=max_colors=16:stats_mode=diff[p]",
+    "[s0]palettegen=max_colors=6:stats_mode=diff[p]",
     "[s1][p]paletteuse=dither=none:diff_mode=rectangle"
   ].join(";");
   const result = spawnSync("ffmpeg", [
