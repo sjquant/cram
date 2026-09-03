@@ -16,7 +16,6 @@ const OUTPUT_PATH = path.join(ROOT, "docs/demo.gif");
 const VIEWPORT = { width: 800, height: 900 };
 const VIDEO_START = "0.35";
 const TERMINAL_COMMAND = "/cram:cram";
-const OPEN_COMMAND = "open examples/http-caching-essentials.html";
 const EXAMPLE_DECK = JSON.parse(fs.readFileSync(EXAMPLE_JSON_PATH, "utf8"));
 const DEMO_DECK = {
   ...EXAMPLE_DECK,
@@ -99,6 +98,8 @@ async function captureVideo(tempDir) {
         const key = localStorage.key(index);
         if (key && key.startsWith("fc:")) localStorage.removeItem(key);
       }
+      document.documentElement.dataset.theme = "bluebell";
+      localStorage.setItem("cram:theme:v2", "bluebell");
       window.CRAM_PLAYER.setDeck(deck);
     }, DEMO_DECK);
     await page.waitForFunction(() => window.CRAM_PLAYER?.getState().total === 3);
@@ -298,12 +299,6 @@ function buildTerminalMarkup(deck) {
 
     .command-input.is-submitted { color: var(--terminal-muted); }
 
-    #next-command {
-      display: none;
-      margin-top: 18px;
-    }
-
-    #next-command.is-visible { display: flex; }
   </style>
 </head>
 <body>
@@ -323,9 +318,6 @@ function buildTerminalMarkup(deck) {
           <div class="output-line output-line--success" data-output-line>✓ rendered self-contained player</div>
         </div>
         <div class="terminal-hint" id="terminal-hint">ready to study · <strong>3 cards</strong> · basic / mcq / cloze</div>
-      <div class="command-line" id="next-command">
-        <label class="command-prompt" for="open-command-input">›</label><input class="command-input" id="open-command-input" aria-label="Open generated player" autocomplete="off" spellcheck="false">
-      </div>
       </section>
     </main>
   </section>
@@ -338,6 +330,7 @@ async function playTerminalStory(page) {
   await command.focus();
   await pause(450);
   await typeTerminalText(command, TERMINAL_COMMAND, 55);
+  await pause(700);
   await command.press("Enter");
   await command.evaluate((input) => {
     input.classList.add("is-submitted");
@@ -346,7 +339,7 @@ async function playTerminalStory(page) {
     history.querySelector("#command-history-text").textContent = input.value;
     history.classList.add("is-visible");
   });
-  await pause(650);
+  await pause(1000);
 
   for (const line of await page.locator("[data-output-line]").all()) {
     await revealTerminalLine(line);
@@ -354,12 +347,7 @@ async function playTerminalStory(page) {
   }
 
   await page.locator("#terminal-hint").evaluate((line) => line.classList.add("is-visible"));
-  await page.locator("#next-command").evaluate((line) => line.classList.add("is-visible"));
-  const openCommand = page.locator("#open-command-input");
-  await typeTerminalText(openCommand, OPEN_COMMAND, 28);
-  await openCommand.press("Enter");
-  await openCommand.evaluate((input) => input.classList.add("is-submitted"));
-  await pause(800);
+  await pause(1100);
 }
 
 async function revealTerminalLine(line) {
@@ -395,6 +383,11 @@ async function capturePlayerFlow(page) {
   const clozeInput = page.getByTestId("cloze-input").first();
   await clozeInput.waitFor({ state: "visible" });
   await pause(500);
+  await clozeInput.evaluate((input) => {
+    input.style.minWidth = "8ch";
+    input.style.paddingInline = "0.35em";
+    input.style.textAlign = "left";
+  });
   await moveCursor(page, clozeInput);
   await clozeInput.pressSequentially("ETag", { delay: 70 });
   await pause(350);
@@ -449,7 +442,7 @@ async function triggerCursorClick(page) {
 function transcodeGif(videoPath, outputPath) {
   const filter = [
     "fps=10,scale=800:-2:flags=lanczos,split[s0][s1]",
-    "[s0]palettegen=max_colors=6:stats_mode=diff[p]",
+    "[s0]palettegen=max_colors=12:stats_mode=diff[p]",
     "[s1][p]paletteuse=dither=none:diff_mode=rectangle"
   ].join(";");
   const result = spawnSync("ffmpeg", [
