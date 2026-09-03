@@ -103,6 +103,8 @@ async function captureVideo(tempDir) {
       window.CRAM_PLAYER.setDeck(deck);
     }, DEMO_DECK);
     await page.waitForFunction(() => window.CRAM_PLAYER?.getState().total === 3);
+    // Keep the capture crisp and compact; the production player still keeps its paper grain.
+    await page.addStyleTag({ content: "body::before { opacity: 0 !important; }" });
     await installCursor(page);
     await moveCursor(page, page.getByTestId("reveal-answer"));
     await capturePlayerFlow(page);
@@ -442,7 +444,7 @@ async function triggerCursorClick(page) {
 function transcodeGif(videoPath, outputPath) {
   const filter = [
     "fps=10,scale=800:-2:flags=lanczos,split[s0][s1]",
-    "[s0]palettegen=max_colors=12:stats_mode=diff[p]",
+    "[s0]palettegen=max_colors=16:stats_mode=diff[p]",
     "[s1][p]paletteuse=dither=none:diff_mode=rectangle"
   ].join(";");
   const result = spawnSync("ffmpeg", [

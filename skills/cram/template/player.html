@@ -687,7 +687,8 @@
     }
 
     .cloze__input:focus-visible {
-      outline-offset: 0;
+      /* Keep the focus ring inside the scrollable card edge. */
+      outline-offset: -2px;
     }
 
     .cloze__input--correct {
