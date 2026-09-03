@@ -872,6 +872,7 @@ test("selects paper-and-ink themes and persists the explicit choice independentl
   await page.getByTestId("settings-toggle").click();
   await expect(page.getByTestId("settings-panel")).toBeVisible();
   await expect(page.getByTestId("settings-toggle")).toHaveAttribute("aria-expanded", "true");
+  await expect(themeSelect).toBeVisible();
 
   // Given: the learner has not chosen a theme, so the dark system preference applies.
   const systemTheme = await page.evaluate(() => ({
