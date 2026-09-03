@@ -41,8 +41,9 @@ def run_renderer(deck: Path, output: Path, cwd: Path) -> subprocess.CompletedPro
 
     environment = os.environ.copy()
     environment["CLAUDE_PLUGIN_ROOT"] = str(ROOT)
+    command = [sys.executable, str(RENDERER), str(deck), "-o", str(output)]
     return subprocess.run(
-        [sys.executable, str(RENDERER), str(deck), "-o", str(output)],
+        command,
         cwd=cwd,
         env=environment,
         capture_output=True,

@@ -44,6 +44,30 @@ const RETRY_TYPES_DECK = {
     },
   ],
 };
+const ADAPTIVE_TYPES_DECK = {
+  id: "adaptive-types-browser-check",
+  title: "Adaptive card types browser check",
+  cards: [
+    {
+      id: "adaptive-basic-card",
+      type: "basic",
+      prompt: "What does this basic card test?",
+      answer: "Same-session drilling",
+    },
+    {
+      id: "adaptive-mcq-card",
+      type: "mcq",
+      prompt: "Which option should be requeued?",
+      answer: "The missed one",
+      distractors: ["The skipped one"],
+    },
+    {
+      id: "adaptive-cloze-card",
+      type: "cloze",
+      prompt: "A missed {{card}} returns later.",
+    },
+  ],
+};
 const ALL_TYPES_DECK = JSON.parse(
   fs.readFileSync(path.join(ROOT, "fixtures/valid/all-types.json"), "utf8")
 );
@@ -159,6 +183,7 @@ test.describe("basic cards", () => {
     await openPlayer(page, BASIC_DECK);
 
     // Given: the first basic card starts with its answer and grades hidden.
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getState().cramMode)).toBe(false);
     await expect(page.getByTestId("card-prompt")).toHaveText(BASIC_DECK.cards[0].prompt);
     await expect(page.getByTestId("card-answer")).toBeHidden();
     await expect(page.getByTestId("grading-buttons")).toBeHidden();
@@ -174,6 +199,171 @@ test.describe("basic cards", () => {
     await expect(page.getByTestId("grade-known")).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByTestId("grade-missed")).toHaveAttribute("aria-pressed", "false");
     await expect(page.locator("#player-status")).toHaveText("Marked as known.");
+  });
+
+  test("requeues missed cards in the same session until their correct streak is mastered", async ({ page }) => {
+    await openPlayer(page, BASIC_DECK);
+    await enableCramMode(page);
+
+    // Given: the learner answers the first card correctly and the second card incorrectly.
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-missed").click();
+
+    // When: the learner advances through the remaining first-pass cards.
+    await page.getByTestId("next-card").click();
+    await expect(page.getByTestId("card-prompt")).toHaveText(BASIC_DECK.cards[2].prompt);
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+    await page.getByTestId("next-card").click();
+
+    // Then: the missed card returns without a score-screen round trip or stale answer UI.
+    await expect(page.getByTestId("score-screen")).toBeHidden();
+    await expect(page.getByTestId("card-prompt")).toHaveText(BASIC_DECK.cards[1].prompt);
+    await expect(page.getByTestId("card-answer")).toBeHidden();
+    await expect(page.getByTestId("grading-buttons")).toBeHidden();
+
+    // When: the learner gets one drill attempt correct.
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+    await page.getByTestId("next-card").click();
+    await expect(page.getByTestId("card-prompt")).toHaveText(BASIC_DECK.cards[1].prompt);
+    await expect(page.getByTestId("card-answer")).toBeHidden();
+
+    // And: a miss during drilling resets the streak and requeues the card again.
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-missed").click();
+    await page.getByTestId("next-card").click();
+    await expect(page.getByTestId("score-screen")).toBeHidden();
+    await expect(page.getByTestId("card-prompt")).toHaveText(BASIC_DECK.cards[1].prompt);
+    await expect(page.getByTestId("card-answer")).toBeHidden();
+
+    // When: the learner answers the reset streak correctly twice in a row.
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      await page.getByTestId("reveal-answer").click();
+      await page.getByTestId("grade-known").click();
+      await page.getByTestId("next-card").click();
+      if (attempt === 0) {
+        await expect(page.getByTestId("card-prompt")).toHaveText(BASIC_DECK.cards[1].prompt);
+        await expect(page.getByTestId("card-answer")).toBeHidden();
+      }
+    }
+
+    // Then: results appear only after the drill queue is retired, with one score per card.
+    await expect(page.getByTestId("score-screen")).toBeVisible();
+    await expect(page.getByTestId("score-value")).toHaveText(`${BASIC_DECK.cards.length}/${BASIC_DECK.cards.length}`);
+    await expect(page.getByTestId("retry-missed")).toBeHidden();
+    expect(await page.evaluate((deckId) => JSON.parse(localStorage.getItem(`fc:${deckId}:v1`)), BASIC_DECK.id)).toEqual(
+      Object.fromEntries(BASIC_DECK.cards.map((card) => [card.id, "known"]))
+    );
+  });
+
+  test("applies same-session requeue behavior to every built-in card type", async ({ page }) => {
+    await openPlayer(page, ADAPTIVE_TYPES_DECK);
+    await enableCramMode(page);
+
+    // Given: the learner answers a basic, MCQ, and cloze card incorrectly.
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-missed").click();
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("mcq-option").filter({ hasText: "The skipped one" }).click();
+    await page.getByTestId("mcq-check-answer").click();
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("cloze-input").fill("wrong");
+    await page.getByTestId("cloze-check-answer").click();
+    await page.getByTestId("next-card").click();
+
+    // Then: each missed type returns as a fresh attempt before results can appear.
+    await expect(page.getByTestId("card-prompt")).toHaveText(ADAPTIVE_TYPES_DECK.cards[0].prompt);
+    await expect(page.getByTestId("card-answer")).toBeHidden();
+
+    // When: the first basic drill attempt is correct.
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+    await page.getByTestId("next-card").click();
+
+    // And: the first MCQ drill attempt is fresh and correct.
+    await expect(page.getByTestId("mcq-check-answer")).toBeHidden();
+    await page.getByTestId("mcq-option").filter({ hasText: "The missed one" }).click();
+    await page.getByTestId("mcq-check-answer").click();
+    await page.getByTestId("next-card").click();
+
+    // And: the first cloze drill attempt is fresh and correct.
+    await expect(page.getByTestId("cloze-input")).toBeEnabled();
+    await page.getByTestId("cloze-input").fill("card");
+    await page.getByTestId("cloze-check-answer").click();
+    await page.getByTestId("next-card").click();
+
+    // When: the learner completes the second correct attempt for each type.
+    await expect(page.getByTestId("card-prompt")).toHaveText(ADAPTIVE_TYPES_DECK.cards[0].prompt);
+    await expect(page.getByTestId("card-answer")).toBeHidden();
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+    await page.getByTestId("next-card").click();
+    await expect(page.getByTestId("mcq-check-answer")).toBeHidden();
+    await page.getByTestId("mcq-option").filter({ hasText: "The missed one" }).click();
+    await page.getByTestId("mcq-check-answer").click();
+    await page.getByTestId("next-card").click();
+    await expect(page.getByTestId("cloze-input")).toBeEnabled();
+    await page.getByTestId("cloze-input").fill("card");
+    await page.getByTestId("cloze-check-answer").click();
+    await page.getByTestId("next-card").click();
+
+    // Then: results appear only after the final mastered attempt, with one score per card.
+    await expect(page.getByTestId("score-screen")).toBeVisible();
+    await expect(page.getByTestId("score-value")).toHaveText("3/3");
+    await expect(page.getByTestId("retry-missed")).toBeHidden();
+  });
+
+  test("keeps Cram mode session-only and allows the learner to turn it off", async ({ page }) => {
+    await openPlayer(page, BASIC_DECK);
+    await enableCramMode(page);
+
+    // When: the learner turns Cram mode off before selecting another deck.
+    await page.getByTestId("cram-mode-toggle").uncheck();
+    await expect(page.getByTestId("cram-mode-toggle")).not.toBeChecked();
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getState().cramMode)).toBe(false);
+
+    // Then: selecting a new deck keeps the default off and a missed card ends normally.
+    await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), OTHER_DECK);
+    await expect(page.getByTestId("cram-mode-toggle")).not.toBeChecked();
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getState().cramMode)).toBe(false);
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-missed").click();
+    await page.getByTestId("next-card").click();
+    await expect(page.getByTestId("score-screen")).toBeVisible();
+  });
+
+  test("closes the settings panel with Escape or an outside click", async ({ page }) => {
+    await openPlayer(page, BASIC_DECK);
+
+    // Given: the learner has opened the settings panel.
+    await page.getByTestId("settings-toggle").click();
+    await expect(page.getByTestId("settings-panel")).toBeVisible();
+
+    // When: the learner presses Escape.
+    await page.keyboard.press("Escape");
+
+    // Then: the panel closes and focus returns to its toggle.
+    await expect(page.getByTestId("settings-panel")).toBeHidden();
+    await expect(page.getByTestId("settings-toggle")).toHaveAttribute("aria-expanded", "false");
+    await expect(page.getByTestId("settings-toggle")).toBeFocused();
+
+    // When: the learner reopens the panel and clicks outside it.
+    await page.getByTestId("settings-toggle").click();
+    await page.getByTestId("deck-title").click();
+
+    // Then: the outside click closes the panel as well.
+    await expect(page.getByTestId("settings-panel")).toBeHidden();
+    await expect(page.getByTestId("settings-toggle")).toHaveAttribute("aria-expanded", "false");
   });
 
   test("aligns the mobile footer action with the header shell gutter", async ({ page }) => {
@@ -243,6 +433,14 @@ test.describe("basic cards", () => {
       [BASIC_DECK.cards[0].id]: "known",
       [BASIC_DECK.cards[1].id]: "missed",
     });
+
+    // And: the stored miss does not create a new adaptive attempt in this sitting.
+    for (let index = 0; index < BASIC_DECK.cards.length - 1; index += 1) {
+      await page.getByTestId("next-card").click();
+    }
+    await expect(page.getByTestId("score-screen")).toBeVisible();
+    await expect(page.getByTestId("score-value")).toHaveText(`1/${BASIC_DECK.cards.length}`);
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getState().total)).toBe(BASIC_DECK.cards.length);
   });
 
   test("persists basic, MCQ, and cloze grades across reloads", async ({ page }) => {
@@ -417,6 +615,9 @@ test.describe("basic cards", () => {
     await expect(page.getByTestId("score-screen")).toBeVisible();
     await expect(page.getByTestId("score-value")).toHaveText(`1/${BASIC_DECK.cards.length}`);
 
+    // Given: Cram mode is enabled after the session completes.
+    await enableCramMode(page);
+
     // When: the learner explicitly resets progress.
     await page.getByTestId("reset-progress").click();
 
@@ -425,6 +626,8 @@ test.describe("basic cards", () => {
     await expect(page.getByTestId("card-prompt")).toHaveText(BASIC_DECK.cards[0].prompt);
     await expect(page.getByTestId("card-answer")).toBeHidden();
     await expect(page.getByTestId("player")).toHaveAttribute("data-state", "ready");
+    await expect(page.getByTestId("cram-mode-toggle")).not.toBeChecked();
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getState().cramMode)).toBe(false);
     expect(await page.evaluate(() => window.CRAM_PLAYER.getState().grades)).toEqual({});
     expect(await page.evaluate((deckId) => localStorage.getItem(`fc:${deckId}:v1`), BASIC_DECK.id)).toBeNull();
     expect(await page.evaluate((deckId) => JSON.parse(localStorage.getItem(`fc:${deckId}:v1`)), OTHER_DECK.id)).toEqual({
@@ -435,25 +638,30 @@ test.describe("basic cards", () => {
   test("retries only missed cards and persists a corrected grade", async ({ page }) => {
     await openPlayer(page, RETRY_DECK);
 
-    // Given: the learner completes the deck with one known card and one missed card.
+    // Given: the learner answers one card correctly and one card incorrectly in normal mode.
     await page.getByTestId("reveal-answer").click();
     await page.getByTestId("grade-known").click();
     await page.getByTestId("next-card").click();
     await page.getByTestId("reveal-answer").click();
     await page.getByTestId("grade-missed").click();
     await page.getByTestId("next-card").click();
+
+    // Then: the linear session ends with the missed card available for the separate retry action.
     await expect(page.getByTestId("score-value")).toHaveText("1/2");
     await expect(page.getByTestId("score-summary")).toHaveText("1 correct · 1 to review");
     await expect(page.getByTestId("score-correct-label")).toHaveText("1 correct");
     await expect(page.getByTestId("score-missed-label")).toHaveText("1 to review");
     await expect(page.getByTestId("retry-missed")).toHaveText("Retry 1 missed card");
 
-    // When: the learner starts a retry from the score screen.
+    // When: the learner starts a new retry session from the score screen.
     await page.getByTestId("retry-missed").click();
 
     // Then: the retry session contains only the missed card.
     await expect(page.getByTestId("card-prompt")).toHaveText(RETRY_DECK.cards[1].prompt);
     await expect(page.getByTestId("progress-label")).toHaveText("Card 1 of 1");
+    await page.getByTestId("settings-toggle").click();
+    await expect(page.getByTestId("cram-mode-toggle")).toBeDisabled();
+    await page.getByTestId("settings-toggle").click();
 
     // When: the learner corrects the card and finishes the retry session.
     await page.getByTestId("reveal-answer").click();
@@ -485,6 +693,8 @@ test.describe("basic cards", () => {
     await page.getByTestId("cloze-input").fill("wrong");
     await page.getByTestId("cloze-check-answer").click();
     await page.getByTestId("next-card").click();
+
+    // Then: the linear session reaches the score screen with both cards missed.
     await expect(page.getByTestId("score-value")).toHaveText("0/2");
     await expect(page.getByTestId("score-summary")).toHaveText("0 correct · 2 to review");
     await expect(page.getByTestId("score-missed-label")).toHaveText("2 to review");
@@ -545,7 +755,7 @@ test.describe("basic cards", () => {
     await page.evaluate((deck) => {
       const grades = { basic: "missed", mcq: "incorrect", cloze: "incorrect" };
       deck.cards.forEach((card) => window.CRAM_PLAYER.recordGrade(card.id, grades[card.type]));
-      for (let index = 0; index < deck.cards.length; index += 1) {
+      for (let index = 0; index < deck.cards.length * 2; index += 1) {
         document.querySelector("#next-card").click();
       }
     }, ALL_TYPES_DECK);
@@ -656,6 +866,12 @@ test("overrides the system color scheme and persists a separate theme preference
   await page.emulateMedia({ colorScheme: "dark" });
   await openPlayer(page, BASIC_DECK);
 
+  // Given: the settings panel starts closed behind the header tools.
+  await expect(page.getByTestId("settings-panel")).toBeHidden();
+  await page.getByTestId("settings-toggle").click();
+  await expect(page.getByTestId("settings-panel")).toBeVisible();
+  await expect(page.getByTestId("settings-toggle")).toHaveAttribute("aria-expanded", "true");
+
   // Given: the learner has not chosen a theme, so the dark system preference applies.
   const systemTheme = await page.evaluate(() => ({
     rootTheme: document.documentElement.getAttribute("data-theme"),
@@ -681,6 +897,8 @@ test("overrides the system color scheme and persists a separate theme preference
   );
 
   // When: the learner toggles to light mode and then back to dark mode.
+  await page.getByTestId("settings-toggle").click();
+  await expect(page.getByTestId("settings-panel")).toBeVisible();
   await page.getByTestId("theme-toggle").click();
 
   // Then: explicit light mode overrides the dark system preference.
@@ -763,7 +981,7 @@ test.describe("hints", () => {
     await page.getByTestId("grade-missed").click();
     await page.getByTestId("next-card").click();
 
-    // And: the missed-card review identifies exactly the cards that needed hints.
+    // And: the normal session's missed-card review identifies exactly the cards that needed hints.
     await expect(page.getByTestId("score-value")).toHaveText("0/4");
     await expect(page.getByTestId("missed-hint")).toHaveCount(3);
     const missedCards = page.getByTestId("missed-card");
@@ -1024,6 +1242,26 @@ test("persists grades for a renderer supplied through the public registry", asyn
   expect(await page.evaluate(() => window.CRAM_PLAYER.getState().grades)).toEqual({});
 });
 
+test("completes opaque custom cards without adaptive requeueing", async ({ page }) => {
+  await openPlayer(page, CUSTOM_DECK);
+
+  // Given: a custom renderer accepts an opaque grade but does not declare mastery semantics.
+  await page.evaluate((deck) => {
+    const customRenderer = ({ card, createPromptElement }) => createPromptElement(card.prompt);
+    window.CRAM_PLAYER.registerCardRenderer("custom", customRenderer, {
+      gradeValidator: (grade) => grade === "opaque",
+    });
+    window.CRAM_PLAYER.setDeck(deck);
+
+    // When: the renderer records its opaque grade through the shared player API.
+    window.CRAM_PLAYER.recordGrade("custom-card", "opaque");
+  }, CUSTOM_DECK);
+
+  // Then: the session retires the card instead of creating an endless drill queue.
+  await page.getByTestId("next-card").click();
+  await expect(page.getByTestId("score-value")).toHaveText("0/1");
+});
+
 test("gives custom renderers a narrow player facade and navigation metadata", async ({ page }) => {
   await openPlayer(page, REQUIRED_CUSTOM_DECK);
 
@@ -1166,4 +1404,12 @@ async function openPlayer(page, deck) {
     window.CRAM_PLAYER.setDeck(initialDeck);
   }, deck);
   await expect(page.getByTestId("player")).toHaveAttribute("data-state", "ready");
+}
+
+async function enableCramMode(page) {
+  await page.getByTestId("settings-toggle").click();
+  await expect(page.getByTestId("settings-panel")).toBeVisible();
+  await page.getByTestId("cram-mode-toggle").check();
+  await expect(page.getByTestId("cram-mode-toggle")).toBeChecked();
+  expect(await page.evaluate(() => window.CRAM_PLAYER.getState().cramMode)).toBe(true);
 }
