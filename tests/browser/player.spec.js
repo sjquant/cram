@@ -914,6 +914,8 @@ test("selects paper-and-ink themes and persists the explicit choice independentl
   );
 
   // When: the learner selects each named theme from the picker.
+  await page.getByTestId("settings-toggle").click();
+  await expect(page.getByTestId("settings-panel")).toBeVisible();
 
   const namedThemes = [
     { name: "light", paper: "#f4efe4" },
@@ -941,6 +943,8 @@ test("selects paper-and-ink themes and persists the explicit choice independentl
 
   // When: the file:// player is reloaded.
   await page.reload();
+  await page.getByTestId("settings-toggle").click();
+  await expect(page.getByTestId("settings-panel")).toBeVisible();
 
   // Then: the explicit theme remains applied without changing the deck session machinery.
   await expect(page.locator("html")).toHaveAttribute("data-theme", "night-neon");
@@ -969,6 +973,8 @@ test("ignores the legacy v1 theme key and keeps every palette legible over its p
   // Given: only the old G1 key contains an explicit choice.
   await page.reload();
   await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), BASIC_DECK);
+  await page.getByTestId("settings-toggle").click();
+  await expect(page.getByTestId("settings-panel")).toBeVisible();
 
   // Then: the v1 value is ignored and the system preference remains active.
   expect(await page.locator("html").getAttribute("data-theme")).toBeNull();
@@ -1010,7 +1016,7 @@ test("ignores the legacy v1 theme key and keeps every palette legible over its p
   }
 
   // Then: all seven tokens exist, text-facing colors meet 4.5:1, and grain stays visible.
-  expect(palettes).toHaveLength(5);
+  expect(palettes).toHaveLength(6);
   for (const palette of palettes) {
     expect(Object.values(palette.tokens).every(Boolean)).toBe(true);
     for (const ratio of Object.values(palette.contrast)) expect(ratio).toBeGreaterThanOrEqual(4.5);
