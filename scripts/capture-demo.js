@@ -103,6 +103,7 @@ async function captureVideo(tempDir) {
     }, DEMO_DECK);
     await page.waitForFunction(() => window.CRAM_PLAYER?.getState().total === 3);
     await installCursor(page);
+    await moveCursor(page, page.getByTestId("reveal-answer"));
     await capturePlayerFlow(page);
   } finally {
     await context.close();
@@ -228,19 +229,31 @@ function buildTerminalMarkup(deck) {
     }
 
     .command-prompt { color: var(--terminal-blue); }
-    .command { color: var(--terminal-ink); }
 
-    .terminal-caret {
-      display: inline-block;
-      width: 9px;
-      height: 18px;
-      margin-left: 4px;
-      vertical-align: -3px;
-      background: var(--terminal-green);
-      animation: caret-blink 900ms steps(1) infinite;
+    .command-input {
+      min-width: 0;
+      flex: 1;
+      border: 1px solid #3c4747;
+      border-radius: 4px;
+      padding: 2px 8px;
+      color: var(--terminal-ink);
+      background: #171c1d;
+      caret-color: var(--terminal-green);
+      font: inherit;
+      line-height: 1.5;
+      outline: none;
     }
 
-    @keyframes caret-blink { 50% { opacity: 0; } }
+    .command-input:focus {
+      border-color: var(--terminal-green);
+      box-shadow: 0 0 0 2px rgba(155, 212, 167, 0.15);
+    }
+
+    .command-input.is-submitted {
+      border-color: #39403f;
+      color: var(--terminal-muted);
+      background: transparent;
+    }
 
     .output-stack {
       display: grid;
@@ -304,7 +317,7 @@ function buildTerminalMarkup(deck) {
     <main class="terminal-body">
       <div class="terminal-path">~/study-notes</div>
       <div class="command-line">
-        <span class="command-prompt">~/study-notes $ </span><span class="command" id="command"></span><span class="terminal-caret"></span>
+        <label class="command-prompt" for="command-input">~/study-notes $ </label><input class="command-input" id="command-input" aria-label="Cram command" autocomplete="off" spellcheck="false">
       </div>
       <div class="output-stack" id="output-stack">
         <div class="output-line" data-output-line>source: ${escapeHtml(deck.title)} · attached notes</div>
@@ -315,7 +328,7 @@ function buildTerminalMarkup(deck) {
         <div class="output-line output-line--success" data-output-line>✓ rendered self-contained player</div>
       </div>
       <div class="command-line" id="next-command">
-        <span class="command-prompt">~/study-notes $ </span><span class="command" id="open-command"></span><span class="terminal-caret"></span>
+        <label class="command-prompt" for="open-command-input">~/study-notes $ </label><input class="command-input" id="open-command-input" aria-label="Open generated player" autocomplete="off" spellcheck="false">
       </div>
       <div class="terminal-hint">ready to study · <strong>3 cards</strong> · basic / mcq / cloze</div>
     </main>
@@ -325,7 +338,10 @@ function buildTerminalMarkup(deck) {
 }
 
 async function playTerminalStory(page) {
-  await typeTerminalText(page, "#command", TERMINAL_COMMAND, 55);
+  const command = page.locator("#command-input");
+  await typeTerminalText(command, TERMINAL_COMMAND, 55);
+  await command.press("Enter");
+  await command.evaluate((input) => input.classList.add("is-submitted"));
   await pause(650);
 
   for (const line of await page.locator("[data-output-line]").all()) {
@@ -334,7 +350,10 @@ async function playTerminalStory(page) {
   }
 
   await page.locator("#next-command").evaluate((line) => line.classList.add("is-visible"));
-  await typeTerminalText(page, "#open-command", OPEN_COMMAND, 28);
+  const openCommand = page.locator("#open-command-input");
+  await typeTerminalText(openCommand, OPEN_COMMAND, 28);
+  await openCommand.press("Enter");
+  await openCommand.evaluate((input) => input.classList.add("is-submitted"));
   await pause(800);
 }
 
@@ -342,13 +361,9 @@ async function revealTerminalLine(line) {
   await line.evaluate((element) => element.classList.add("is-visible"));
 }
 
-async function typeTerminalText(page, selector, value, delay) {
-  for (const character of value) {
-    await page.locator(selector).evaluate((element, nextCharacter) => {
-      element.textContent += nextCharacter;
-    }, character);
-    await pause(delay);
-  }
+async function typeTerminalText(input, value, delay) {
+  await input.focus();
+  await input.pressSequentially(value, { delay });
 }
 
 async function capturePlayerFlow(page) {
