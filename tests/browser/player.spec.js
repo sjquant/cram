@@ -886,7 +886,8 @@ test("selects paper-and-ink themes and persists the explicit choice independentl
     "Light",
     "Dark",
     "Sepia",
-    "Night neon"
+    "Night neon",
+    "Bluebell"
   ]);
   await expect(themeSelect).toHaveValue("");
   await expect(themeSelect).toHaveAttribute("aria-label", "Color theme");
@@ -918,6 +919,7 @@ test("selects paper-and-ink themes and persists the explicit choice independentl
     { name: "light", paper: "#f4efe4" },
     { name: "dark", paper: "#151310" },
     { name: "sepia", paper: "#eadcc5" },
+    { name: "bluebell", paper: "#eaf3fa" },
     { name: "night-neon", paper: "#101820" }
   ];
   for (const theme of namedThemes) {
@@ -974,8 +976,8 @@ test("ignores the legacy v1 theme key and keeps every palette legible over its p
 
   // When: the picker visits each theme, inspect the public token contract and grain branch.
   const palettes = [];
-  const themeValues = ["", "light", "dark", "sepia", "night-neon"];
-  for (let index = 0; index < 5; index += 1) {
+  const themeValues = ["", "light", "dark", "sepia", "bluebell", "night-neon"];
+  for (let index = 0; index < themeValues.length; index += 1) {
     if (index > 0) await page.getByTestId("theme-select").selectOption(themeValues[index]);
     palettes.push(await page.evaluate(() => {
       const root = getComputedStyle(document.documentElement);
@@ -1014,8 +1016,9 @@ test("ignores the legacy v1 theme key and keeps every palette legible over its p
     for (const ratio of Object.values(palette.contrast)) expect(ratio).toBeGreaterThanOrEqual(4.5);
     expect(Number.parseFloat(palette.grain.opacity)).toBeGreaterThan(0);
   }
-  expect(palettes.map(({ theme }) => theme)).toEqual(["system", "light", "dark", "sepia", "night-neon"]);
+  expect(palettes.map(({ theme }) => theme)).toEqual(["system", "light", "dark", "sepia", "bluebell", "night-neon"]);
   expect(palettes.find(({ theme }) => theme === "sepia").grain.mixBlendMode).toBe("multiply");
+  expect(palettes.find(({ theme }) => theme === "bluebell").grain.mixBlendMode).toBe("multiply");
   expect(palettes.find(({ theme }) => theme === "night-neon").grain.mixBlendMode).toBe("screen");
 });
 

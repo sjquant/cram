@@ -92,6 +92,17 @@
       --positive: #9bd3b0;
     }
 
+    [data-theme="bluebell"] {
+      color-scheme: light;
+      --paper: #eaf3fa;
+      --ink: #20344a;
+      --ink-soft: #526b82;
+      --rule: #c8dbe9;
+      --rule-strong: #90b0c8;
+      --accent: #b84335;
+      --positive: #3c725a;
+    }
+
     * { box-sizing: border-box; }
 
     html {
@@ -1146,6 +1157,11 @@
       opacity: 0.08;
     }
 
+    [data-theme="bluebell"] body::before {
+      mix-blend-mode: multiply;
+      opacity: 0.13;
+    }
+
     .player {
       position: relative;
       z-index: 1;
@@ -1189,7 +1205,7 @@
     (() => {
       try {
         const preference = window.localStorage.getItem("cram:theme:v2");
-        if (["light", "dark", "sepia", "night-neon"].includes(preference)) {
+        if (["light", "dark", "sepia", "night-neon", "bluebell"].includes(preference)) {
           document.documentElement.dataset.theme = preference;
         }
       } catch {
@@ -1227,6 +1243,7 @@
                 <option value="dark">Dark</option>
                 <option value="sepia">Sepia</option>
                 <option value="night-neon">Night neon</option>
+                <option value="bluebell">Bluebell</option>
               </select>
             </div>
           </div>
@@ -1377,7 +1394,7 @@
       const NAVIGATION_HINT = "Use H for a hint, A to reveal a basic answer, or the arrow keys to move through the deck.";
       const PROMPT_ID = "card-prompt";
       const THEME_STORAGE_KEY = "cram:theme:v2";
-      const THEME_VALUES = Object.freeze(["light", "dark", "sepia", "night-neon"]);
+      const THEME_VALUES = Object.freeze(["light", "dark", "sepia", "night-neon", "bluebell"]);
       const REQUIRED_DRILL_STREAK = 2;
 
       const cardTypes = Object.create(null);
