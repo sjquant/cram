@@ -286,6 +286,12 @@
       accent-color: var(--accent);
     }
 
+    .player__settings-option small {
+      color: var(--ink-soft);
+      font-size: 0.8rem;
+      line-height: 1.35;
+    }
+
     .player__theme-icon {
       display: block;
       width: 1.5rem;
@@ -1145,6 +1151,7 @@
             <input type="checkbox" id="cram-mode-toggle" data-testid="cram-mode-toggle">
             <span class="player__settings-option-text">
               <strong>Cram mode</strong>
+              <small>Requeue missed cards during this session.</small>
             </span>
           </label>
         </section>

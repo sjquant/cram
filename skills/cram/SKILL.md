@@ -46,11 +46,6 @@ the deck JSON into the player template and writes the requested output path;
 when validation fails, it reports the errors and does not write an HTML
 player.
 
-Generated players use a normal linear session by default. To enable adaptive
-intra-session drilling, open the player’s Settings and enable Cram mode before
-answering. The setting applies only to that session and is off whenever a new
-deck is opened.
-
 ## Open the result
 
 `<output.html>` is a self-contained HTML file. It includes the player and
