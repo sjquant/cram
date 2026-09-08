@@ -107,11 +107,27 @@ placeholder (such as `{count}`). Plural messages use language-specific
 categories selected by `Intl.PluralRules` and require an `other` form.
 Register the code in the renderer's `LANGUAGES`, add a browser integration
 case, and update the supported codes here and in the skill guide. The renderer
-rejects incomplete catalogs and mismatched placeholders. New UI messages
-must be added to every catalog and marked with `data-i18n` in static markup
-or passed to `t(...)` in JavaScript. English source messages also let the
-unrendered template run as a development preview; its inline locale data
-contains the two English plural messages.
+rejects incomplete catalogs, malformed values, and mismatched placeholders.
+It also checks that marked HTML messages and JavaScript translation calls
+exist in the English catalog, so omissions from all catalogs fail before
+output is written. Mark static text-only elements with `data-i18n` and
+attributes with `data-i18n-attrs="aria-label title"`. In JavaScript, pass
+literal, double-quoted message keys to `t(...)`, with variables supplied as
+parameters rather than embedded in the key. Add each new message to every
+catalog.
+
+The template is a rendering input. To preview a change, generate an HTML
+file using the command above, or refresh the committed example:
+
+```sh
+python3 skills/cram/scripts/render.py examples/http-caching-essentials.json \
+  -o examples/http-caching-essentials.html
+```
+
+Open the generated HTML in a browser. Preview and production rendering both
+use the locale JSON files, including English plural forms. Preserve each
+of the template's three injection tokens exactly once; surrounding HTML
+and script formatting can change freely.
 
 ## Requirements
 

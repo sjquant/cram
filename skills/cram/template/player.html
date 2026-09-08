@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="__CRAM_LANGUAGE__">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -1351,29 +1351,13 @@
     <small><a href="https://github.com/sjquant/cram" data-i18n>Made with Cram</a></small>
   </footer>
 
-  <!--
-    A3 replaces only the value after the /*INJECT*/ marker with the deck JSON. Keep this
-    exact line. Every "<" in the JSON must be escaped as \u003C, so that a card whose text
-    contains a closing script tag cannot end this element early and break the page.
-  -->
-  <script>window.__LOCALE__ = /*LOCALE*/ {"language":"en","messages":{"Retry {count} missed card":{"one":"Retry {count} missed card","other":"Retry {count} missed cards"},"Retrying {count} missed card.":{"one":"Retrying {count} missed card.","other":"Retrying {count} missed cards."}}};</script>
-  <script>window.__DECK__ = /*INJECT*/ null;</script>
+  <!-- Render this template with render.py; examples/ contains the generated preview.
+       Injected JSON escapes every less-than character to keep inline scripts safe. -->
+  <script>window.__LOCALE__ = __CRAM_LOCALE__;</script>
+  <script>window.__DECK__ = __CRAM_DECK__;</script>
   <script>
     (() => {
       "use strict";
-
-      // This small copy of fixtures/valid/minimal.json makes the template useful when
-      // opened as file:// during development. A rendered deck always takes precedence.
-      const previewDeck = {
-        id: "minimal-deck",
-        title: "Minimal deck",
-        cards: [{
-          id: "only-required-fields",
-          type: "basic",
-          prompt: "Which card fields are required?",
-          answer: "id, type, prompt, and the field belonging to the card's own type."
-        }]
-      };
 
       const refs = {
         player: document.getElementById("player"),
@@ -1713,7 +1697,8 @@
         const renderer = cardType ? cardType.renderer : renderUnsupportedCard;
 
         refs.cardFrame.classList.remove("player__card--empty");
-        refs.cardType.textContent = ["basic", "mcq", "cloze", "unknown"].includes(type) ? t(type) : type;
+        const typeLabels = { basic: t("basic"), mcq: t("mcq"), cloze: t("cloze"), unknown: t("unknown") };
+        refs.cardType.textContent = Object.hasOwn(typeLabels, type) ? typeLabels[type] : type;
         refs.cardContent.replaceChildren();
         refs.cardFrame.scrollTop = 0;
         // Drops any error left by the card we navigated away from. Set before the
@@ -2461,17 +2446,17 @@
         );
         prompt.dataset.testid = "missed-prompt";
         item.append(prompt);
-        if (card.answer) item.append(createReviewField("Answer", card.answer));
-        if (card.explanation) item.append(createReviewField("Explanation", card.explanation));
-        if (getHintUsed(card.id)) item.append(createReviewField("Hint", t("Needed a hint")));
+        if (card.answer) item.append(createReviewField("answer", t("Answer:"), card.answer));
+        if (card.explanation) item.append(createReviewField("explanation", t("Explanation:"), card.explanation));
+        if (getHintUsed(card.id)) item.append(createReviewField("hint", t("Hint:"), t("Needed a hint")));
         return item;
       }
 
-      function createReviewField(label, value) {
+      function createReviewField(name, label, value) {
         const field = createElement("p", "player__review-field");
-        field.dataset.testid = `missed-${label.toLowerCase()}`;
+        field.dataset.testid = `missed-${name}`;
         field.append(
-          createElement("strong", "player__review-label", t(`${label}:`)),
+          createElement("strong", "player__review-label", label),
           document.createTextNode(` ${String(value)}`)
         );
         return field;
@@ -2861,9 +2846,7 @@
 
       function t(message, parameters = {}) {
         const locale = window.__LOCALE__;
-        let translation = locale.language === "en"
-          ? (locale.messages[message] ?? message)
-          : locale.messages[message];
+        let translation = locale.messages[message];
         if (typeof translation === "object") {
           const category = new Intl.PluralRules(locale.language).select(parameters.count);
           translation = translation[category] ?? translation.other;
@@ -2874,8 +2857,7 @@
       initializeTranslations();
       initializeTheme();
 
-      const injectedDeck = window.__DECK__;
-      setDeck(injectedDeck === null || injectedDeck === undefined ? previewDeck : injectedDeck);
+      setDeck(window.__DECK__);
     })();
   </script>
 </body>

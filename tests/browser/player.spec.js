@@ -2,9 +2,24 @@ const { test, expect } = require("@playwright/test");
 const fs = require("node:fs");
 const path = require("node:path");
 const { pathToFileURL } = require("node:url");
+const { execFileSync } = require("node:child_process");
+const os = require("node:os");
 
 const ROOT = path.resolve(__dirname, "../..");
-const PLAYER_URL = pathToFileURL(path.join(ROOT, "skills/cram/template/player.html")).href;
+let PLAYER_URL;
+let previewDirectory;
+
+test.beforeAll(() => {
+  previewDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "cram-player-tests-"));
+  const output = path.join(previewDirectory, "player.html");
+  execFileSync("python3", [path.join(ROOT, "skills/cram/scripts/render.py"),
+    path.join(ROOT, "fixtures/valid/minimal.json"), "-o", output]);
+  PLAYER_URL = pathToFileURL(output).href;
+});
+
+test.afterAll(() => {
+  if (previewDirectory) fs.rmSync(previewDirectory, { recursive: true, force: true });
+});
 const BASIC_DECK = JSON.parse(
   fs.readFileSync(path.join(ROOT, "fixtures/valid/basic-only.json"), "utf8")
 );
@@ -1543,7 +1558,7 @@ async function openPlayer(page, deck) {
       if (key && key.startsWith("fc:")) localStorage.removeItem(key);
     }
   });
-  // Directly opened templates start with their built-in preview deck. Replace it
+  // The rendered player starts with the minimal fixture deck. Replace it
   // through the player's public setup API so each test can supply a fixture deck.
   await page.evaluate((initialDeck) => {
     window.CRAM_PLAYER.setDeck(initialDeck);

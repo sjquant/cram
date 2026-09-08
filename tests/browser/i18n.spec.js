@@ -104,31 +104,132 @@ it("rejects an unsupported language without overwriting an existing output", asy
   expect(fs.readFileSync(output, "utf8")).toBe(previous);
 });
 
-for (const defect of ["missing message", "changed placeholder", "missing plural form"]) {
+it("translates incorrect answers, restored feedback, and completion announcements in Korean", async ({ page }, testInfo) => {
+  // Given: a Korean player whose answer text contains braces and literal markup.
+  await page.goto(pathToFileURL(render(testInfo, ["--lang", "ko"])).href);
+  // When: the learner skips the basic card and submits incorrect MCQ and cloze answers.
+  await page.getByTestId("next-card").click();
+  await page.getByRole("button", { name: "Wrong", exact: true }).click();
+  await page.getByRole("button", { name: "정답 확인", exact: true }).click();
+  // Then: feedback is translated, including variable substitution and the live status.
+  await expect(page.getByTestId("mcq-feedback")).toHaveText("오답입니다. 정답: <b>{score}</b>");
+  await expect(page.locator("#player-status")).toHaveText("오답입니다.");
+  await page.getByTestId("next-card").click();
+  await page.getByRole("textbox", { name: "빈칸 1", exact: true }).fill("Wrong");
+  await page.getByRole("button", { name: "정답 확인", exact: true }).click();
+  await expect(page.getByTestId("cloze-blank-feedback")).toHaveText("빈칸 1: 오답입니다. 정답: Correct.");
+  await expect(page.locator("#player-status")).toHaveText("오답입니다.");
+
+  // When: the learner revisits the answered cloze and finishes the session.
+  await page.getByTestId("previous-card").click();
+  await page.getByTestId("next-card").click();
+  // Then: restored feedback and both completion announcements remain translated.
+  await expect(page.getByTestId("cloze-feedback-summary")).toHaveText("이전에 틀린 것으로 기록된 카드입니다.");
+  await page.getByTestId("next-card").click();
+  await expect(page.getByTestId("score-summary")).toHaveText("정답 0개 · 복습 3개");
+  await expect(page.locator("#player-status")).toHaveText("학습 완료. 점수 0/3.");
+  await expect(page.locator("#card-announcer")).toHaveText("학습 완료. 점수 0/3.");
+});
+
+for (const defect of ["missing message", "changed placeholder", "missing plural form", "invalid JSON", "empty translation", "invalid value type", "invalid root type"]) {
   it(`rejects a translation with a ${defect} before writing output`, async ({}, testInfo) => {
-    // Given: a plugin installation whose French translation has an editing mistake.
-    const installation = testInfo.outputPath("plugin");
-    fs.cpSync(path.join(ROOT, "skills"), path.join(installation, "skills"), { recursive: true });
+    // Given: an existing output and a plugin whose French translation has an editing mistake.
+    const installation = copyInstallation(testInfo);
+    const output = render(testInfo, []);
+    const previous = fs.readFileSync(output, "utf8");
     const translationPath = path.join(installation, "skills/cram/locales/fr.json");
     const messages = JSON.parse(fs.readFileSync(translationPath, "utf8"));
     if (defect === "missing message") delete messages["Show answer"];
     if (defect === "changed placeholder") messages["Blank {number}"] = "Trou {wrong}";
     if (defect === "missing plural form") delete messages["Retry {count} missed card"].other;
-    fs.writeFileSync(translationPath, JSON.stringify(messages));
-    const output = testInfo.outputPath("quiz.html");
+    if (defect === "empty translation") messages["Show answer"] = "  ";
+    if (defect === "invalid value type") messages["Show answer"] = 42;
+    fs.writeFileSync(translationPath, defect === "invalid JSON" ? "{" : defect === "invalid root type" ? "[]" : JSON.stringify(messages));
 
     // When: the user renders a deck using that installation from another directory.
-    const result = spawnSync("python3", [
-      path.join(installation, "skills/cram/scripts/render.py"),
-      path.join(ROOT, "fixtures/valid/minimal.json"), "-o", output, "--language", "fr",
-    ], { cwd: testInfo.outputDir, env: { ...process.env, CLAUDE_PLUGIN_ROOT: installation }, encoding: "utf8" });
+    const result = renderInstallation(installation, output, "fr");
 
-    // Then: the CLI reports the invalid French resource without a traceback or output.
+    // Then: the CLI reports the resource error without a traceback or replacing the output.
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain("fr");
     expect(result.stderr).not.toContain("Traceback");
-    expect(fs.existsSync(output)).toBe(false);
+    expect(fs.readFileSync(output, "utf8")).toBe(previous);
   });
+}
+
+for (const [language, missing] of [["en", "Show answer"], ["ko", "Settings"], ["fr", "Answer:"]]) {
+  it(`rejects ${language} rendering when every catalog omits the used message ${missing}`, async ({}, testInfo) => {
+    // Given: the same UI message is missing from every catalog, including English.
+    const installation = copyInstallation(testInfo);
+    for (const code of LANGUAGES.map(locale => locale.code)) {
+      const file = path.join(installation, `skills/cram/locales/${code}.json`);
+      const messages = JSON.parse(fs.readFileSync(file, "utf8"));
+      delete messages[missing];
+      fs.writeFileSync(file, JSON.stringify(messages));
+    }
+    const output = render(testInfo, []);
+    const previous = fs.readFileSync(output, "utf8");
+    // When: rendering a player that uses the omitted static or dynamic message.
+    const result = renderInstallation(installation, output, language);
+    // Then: the omission is reported at rendering time, preserving the previous player.
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain(missing);
+    expect(result.stderr).not.toContain("Traceback");
+    expect(fs.readFileSync(output, "utf8")).toBe(previous);
+  });
+}
+
+for (const marker of ["__CRAM_LANGUAGE__", "__CRAM_LOCALE__", "__CRAM_DECK__"]) {
+  for (const defect of ["missing", "duplicated"]) {
+    it(`rejects a ${defect} ${marker} template marker without replacing output`, async ({}, testInfo) => {
+      // Given: a template editing error and an existing working player.
+      const installation = copyInstallation(testInfo);
+      const template = path.join(installation, "skills/cram/template/player.html");
+      fs.writeFileSync(template, fs.readFileSync(template, "utf8").replace(marker, defect === "missing" ? "" : marker + marker));
+      const output = render(testInfo, []);
+      const previous = fs.readFileSync(output, "utf8");
+      // When: rendering the edited template.
+      const result = renderInstallation(installation, output, "ko");
+      // Then: a precise error prevents overwriting the existing output.
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain(marker);
+      expect(fs.readFileSync(output, "utf8")).toBe(previous);
+    });
+  }
+}
+
+it("renders reformatted templates using the catalog as the sole English plural source", async ({ page }, testInfo) => {
+  // Given: template whitespace/quotes change, and a translator edits an English plural.
+  const installation = copyInstallation(testInfo);
+  const template = path.join(installation, "skills/cram/template/player.html");
+  fs.writeFileSync(template, fs.readFileSync(template, "utf8")
+    .replace('lang="__CRAM_LANGUAGE__"', "lang = '__CRAM_LANGUAGE__'")
+    .replaceAll(";</script>", ";\n</script>"));
+  const catalog = path.join(installation, "skills/cram/locales/en.json");
+  const messages = JSON.parse(fs.readFileSync(catalog, "utf8"));
+  messages["Retry {count} missed card"].one = "Try {count} card again";
+  fs.writeFileSync(catalog, JSON.stringify(messages));
+  const output = testInfo.outputPath("preview.html");
+  // When: rendering the preview through the public CLI and skipping its only card.
+  const result = renderInstallation(installation, output, "en");
+  expect(result.status).toBe(0);
+  await page.goto(pathToFileURL(output).href);
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await page.getByTestId("next-card").click();
+  // Then: the preview uses the edited plural, with no independent template copy.
+  await expect(page.getByRole("button", { name: "Try 1 card again", exact: true })).toBeVisible();
+});
+
+function copyInstallation(testInfo) {
+  const installation = testInfo.outputPath("plugin");
+  fs.cpSync(path.join(ROOT, "skills"), path.join(installation, "skills"), { recursive: true });
+  return installation;
+}
+
+function renderInstallation(installation, output, language) {
+  return spawnSync("python3", [path.join(installation, "skills/cram/scripts/render.py"),
+    path.join(ROOT, "fixtures/valid/minimal.json"), "-o", output, "--language", language],
+  { cwd: path.dirname(output), env: { ...process.env, CLAUDE_PLUGIN_ROOT: installation }, encoding: "utf8" });
 }
 
 function render(testInfo, options) {

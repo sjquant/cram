@@ -2,7 +2,7 @@
 
 Hand-written decks used two ways. They are development inputs, not part of what a user installs, so they live at the repo root rather than inside `skills/cram/`:
 
-- `valid/` — open these directly in `skills/cram/template/player.html` while working on the player, with no Python in the loop.
+- `valid/` — render a fixture with `python3 skills/cram/scripts/render.py fixtures/valid/minimal.json -o /tmp/cram-preview.html`, then open the generated HTML while working on the player.
 - `invalid/` — every one of these must be rejected, each with an error naming the offending card index and field.
 
 ## Valid decks

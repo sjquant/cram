@@ -1351,29 +1351,13 @@
     <small><a href="https://github.com/sjquant/cram" data-i18n>Made with Cram</a></small>
   </footer>
 
-  <!--
-    A3 replaces only the value after the /*INJECT*/ marker with the deck JSON. Keep this
-    exact line. Every "<" in the JSON must be escaped as \u003C, so that a card whose text
-    contains a closing script tag cannot end this element early and break the page.
-  -->
+  <!-- Render this template with render.py; examples/ contains the generated preview.
+       Injected JSON escapes every less-than character to keep inline scripts safe. -->
   <script>window.__LOCALE__ = {"language": "en", "messages": {"Cram player": "Cram player", "Loading deck\u2026": "Loading deck\u2026", "Open settings": "Open settings", "Close settings": "Close settings", "Settings": "Settings", "Theme": "Theme", "Color theme": "Color theme", "System": "System", "Light": "Light", "Dark": "Dark", "Sepia": "Sepia", "Night neon": "Night neon", "Bluebell": "Bluebell", "Cram mode": "Cram mode", "Requeue missed cards during this session.": "Requeue missed cards during this session.", "Deck progress": "Deck progress", "Card 0 of 0": "Card 0 of 0", "Preparing card": "Preparing card", "Preparing your deck\u2026": "Preparing your deck\u2026", "Results": "Results", "Session complete": "Session complete", "0 correct \u00b7 Nothing to review": "0 correct \u00b7 Nothing to review", "Score breakdown": "Score breakdown", "0 correct": "0 correct", "Nothing to review": "Nothing to review", "Retry missed cards": "Retry missed cards", "Reset progress": "Reset progress", "Review missed cards": "Review missed cards", "Perfect score \u2014 nothing to review.": "Perfect score \u2014 nothing to review.", "Scroll down to see more missed cards": "Scroll down to see more missed cards", "More cards below": "More cards below", "Card navigation": "Card navigation", "Previous card": "Previous card", "\u2190 Previous": "\u2190 Previous", "Next card": "Next card", "Skip \u2192": "Skip \u2192", "Next \u2192": "Next \u2192", "See results \u2192": "See results \u2192", "See results": "See results", "Skip to next card": "Skip to next card", "Made with Cram": "Made with Cram", "Use H for a hint, A to reveal a basic answer, or the arrow keys to move through the deck.": "Use H for a hint, A to reveal a basic answer, or the arrow keys to move through the deck.", "Cram mode is unavailable during retry sessions": "Cram mode is unavailable during retry sessions", "Disable Cram mode": "Disable Cram mode", "Enable Cram mode": "Enable Cram mode", "Cram mode is unavailable during retry sessions.": "Cram mode is unavailable during retry sessions.", "Cram mode enabled for this session.": "Cram mode enabled for this session.", "Cram mode disabled for this session.": "Cram mode disabled for this session.", "The page needs a deck with a title and at least one card.": "The page needs a deck with a title and at least one card.", "This card could not be rendered.": "This card could not be rendered.", "The card renderer failed.": "The card renderer failed.", "This card has no prompt.": "This card has no prompt.", "This card has no answer.": "This card has no answer.", "Show answer": "Show answer", "Missed it": "Missed it", "Knew it": "Knew it", "Grade your recall": "Grade your recall", "Optional hint": "Optional hint", "Answer actions": "Answer actions", "The grade could not be recorded.": "The grade could not be recorded.", "Marked as known.": "Marked as known.", "Marked as missed.": "Marked as missed.", "Choose an answer": "Choose an answer", "This option has no text.": "This option has no text.", "Check answer": "Check answer", "Correct.": "Correct.", "Incorrect.": "Incorrect.", "Incorrect. The correct answer is: {answer}": "Incorrect. The correct answer is: {answer}", "Answer selected. Check it when ready.": "Answer selected. Check it when ready.", "Blank {number}": "Blank {number}", "Check answers": "Check answers", "Blank {number}: Correct.": "Blank {number}: Correct.", "Blank {number}: Incorrect. Correct answer: {answer}": "Blank {number}: Incorrect. Correct answer: {answer}", "This card was previously marked incorrect.": "This card was previously marked incorrect.", "Show hint": "Show hint", "The hint could not be recorded.": "The hint could not be recorded.", "The \u201c{type}\u201d card renderer is not installed yet.": "The \u201c{type}\u201d card renderer is not installed yet.", "Unable to load deck": "Unable to load deck", "No cards loaded": "No cards loaded", "Deck error": "Deck error", "Card {position} of {total}": "Card {position} of {total}", "Session complete. Score {score}/{total}.": "Session complete. Score {score}/{total}.", "{score} correct \u00b7 {missedCount} to review": "{score} correct \u00b7 {missedCount} to review", "All {total} correct \u00b7 Nothing to review": "All {total} correct \u00b7 Nothing to review", "{score} correct": "{score} correct", "{missedCount} to review": "{missedCount} to review", "Retry {count} missed card": {"one": "Retry {count} missed card", "other": "Retry {count} missed cards"}, "Retrying {count} missed card.": {"one": "Retrying {count} missed card.", "other": "Retrying {count} missed cards."}, "Session complete: score {score} of {total}": "Session complete: score {score} of {total}", "Session complete: {score} of {total}": "Session complete: {score} of {total}", "Nothing to retry.": "Nothing to retry.", "Needed a hint": "Needed a hint", "Answer:": "Answer:", "Explanation:": "Explanation:", "Hint:": "Hint:", "Card {position} of {total}. {content}": "Card {position} of {total}. {content}", "Progress could not be saved. Try again.": "Progress could not be saved. Try again.", "basic": "basic", "mcq": "mcq", "cloze": "cloze", "unknown": "unknown", "Progress reset. Start again.": "Progress reset. Start again.", "Progress reset for this session, but saved progress could not be cleared.": "Progress reset for this session, but saved progress could not be cleared."}};</script>
   <script>window.__DECK__ = {"id": "http-caching-essentials", "title": "HTTP caching essentials", "source": "RFC 9111: HTTP Caching", "cards": [{"id": "cache-control-max-age", "type": "basic", "prompt": "What does `Cache-Control: max-age=60` permit a cache to do?", "answer": "Treat a stored response as fresh for 60 seconds after it was generated, so it can be reused without revalidation.", "hint": "Think in terms of a freshness lifetime."}, {"id": "cache-control-no-store", "type": "mcq", "prompt": "Which `Cache-Control` directive prevents a cache from storing a response?", "answer": "`no-store`", "distractors": ["`no-cache`", "`private`", "`max-age=60`"], "explanation": "Use this directive when retaining the response in a cache is not allowed."}, {"id": "cache-control-no-cache", "type": "basic", "prompt": "What does the HTTP `Cache-Control: no-cache` directive mean for a stored response?", "answer": "A cache may store the response, but it must revalidate it with the origin before reusing it.", "hint": "It is different from `no-store`: storage is allowed, reuse without validation is not."}, {"id": "etag-validator", "type": "cloze", "prompt": "Which response header gives a representation an opaque validator that a client can send in `If-None-Match`? The header is `{{ETag}}`.", "explanation": "A validator lets the client ask whether its stored representation is still current without downloading the full representation again."}, {"id": "if-none-match-not-modified", "type": "basic", "prompt": "For a conditional `GET`, what status can an origin return when `If-None-Match` confirms that a cached representation is still current?", "answer": "`304 Not Modified`, allowing the cache to reuse its stored response body."}, {"id": "vary-shared-cache", "type": "basic", "prompt": "What does the HTTP `Vary` response header tell a shared cache?", "answer": "Which request-header fields must match before a stored response can be reused for another request.", "hint": "The response may vary based on fields such as `Accept-Language`."}, {"id": "cache-control-private", "type": "basic", "prompt": "When should a response be marked `Cache-Control: private`?", "answer": "When it may be stored by a private browser cache but must not be stored by a shared cache.", "explanation": "This is useful for user-specific responses that a browser may reuse for that same user."}]};</script>
   <script>
     (() => {
       "use strict";
-
-      // This small copy of fixtures/valid/minimal.json makes the template useful when
-      // opened as file:// during development. A rendered deck always takes precedence.
-      const previewDeck = {
-        id: "minimal-deck",
-        title: "Minimal deck",
-        cards: [{
-          id: "only-required-fields",
-          type: "basic",
-          prompt: "Which card fields are required?",
-          answer: "id, type, prompt, and the field belonging to the card's own type."
-        }]
-      };
 
       const refs = {
         player: document.getElementById("player"),
@@ -1713,7 +1697,8 @@
         const renderer = cardType ? cardType.renderer : renderUnsupportedCard;
 
         refs.cardFrame.classList.remove("player__card--empty");
-        refs.cardType.textContent = ["basic", "mcq", "cloze", "unknown"].includes(type) ? t(type) : type;
+        const typeLabels = { basic: t("basic"), mcq: t("mcq"), cloze: t("cloze"), unknown: t("unknown") };
+        refs.cardType.textContent = Object.hasOwn(typeLabels, type) ? typeLabels[type] : type;
         refs.cardContent.replaceChildren();
         refs.cardFrame.scrollTop = 0;
         // Drops any error left by the card we navigated away from. Set before the
@@ -2461,17 +2446,17 @@
         );
         prompt.dataset.testid = "missed-prompt";
         item.append(prompt);
-        if (card.answer) item.append(createReviewField("Answer", card.answer));
-        if (card.explanation) item.append(createReviewField("Explanation", card.explanation));
-        if (getHintUsed(card.id)) item.append(createReviewField("Hint", t("Needed a hint")));
+        if (card.answer) item.append(createReviewField("answer", t("Answer:"), card.answer));
+        if (card.explanation) item.append(createReviewField("explanation", t("Explanation:"), card.explanation));
+        if (getHintUsed(card.id)) item.append(createReviewField("hint", t("Hint:"), t("Needed a hint")));
         return item;
       }
 
-      function createReviewField(label, value) {
+      function createReviewField(name, label, value) {
         const field = createElement("p", "player__review-field");
-        field.dataset.testid = `missed-${label.toLowerCase()}`;
+        field.dataset.testid = `missed-${name}`;
         field.append(
-          createElement("strong", "player__review-label", t(`${label}:`)),
+          createElement("strong", "player__review-label", label),
           document.createTextNode(` ${String(value)}`)
         );
         return field;
@@ -2861,9 +2846,7 @@
 
       function t(message, parameters = {}) {
         const locale = window.__LOCALE__;
-        let translation = locale.language === "en"
-          ? (locale.messages[message] ?? message)
-          : locale.messages[message];
+        let translation = locale.messages[message];
         if (typeof translation === "object") {
           const category = new Intl.PluralRules(locale.language).select(parameters.count);
           translation = translation[category] ?? translation.other;
@@ -2874,8 +2857,7 @@
       initializeTranslations();
       initializeTheme();
 
-      const injectedDeck = window.__DECK__;
-      setDeck(injectedDeck === null || injectedDeck === undefined ? previewDeck : injectedDeck);
+      setDeck(window.__DECK__);
     })();
   </script>
 </body>
