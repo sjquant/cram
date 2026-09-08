@@ -41,6 +41,15 @@ From the plugin/repository root, run:
 python3 skills/cram/scripts/render.py <deck.json> -o <output.html>
 ```
 
+When the user requests a player UI language, pass `--language <code>` (or
+`--lang <code>`). Supported codes are `en` (English, default), `ko` (Korean),
+`ja` (Japanese), `zh-CN` (Simplified Chinese), `es` (Spanish), and `fr`
+(French). For example, append `--language ko` for Korean controls, settings,
+and feedback. This does not translate the deck's questions, answers, hints,
+or explanations; write those in the user's requested content language when
+creating the deck. Unsupported UI language codes are rejected without writing
+output. The selected translations are embedded, so the HTML stays offline.
+
 The renderer validates the deck first. When validation succeeds, it inlines
 the deck JSON into the player template and writes the requested output path;
 when validation fails, it reports the errors and does not write an HTML

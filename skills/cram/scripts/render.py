@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 import tempfile
 from pathlib import Path
@@ -28,6 +29,8 @@ from validator import DeckValidationError, load_deck  # noqa: E402
 PLUGIN_ROOT = Path(os.environ.get("CLAUDE_PLUGIN_ROOT") or str(Path(__file__).resolve().parents[3]))
 TEMPLATE_PATH = PLUGIN_ROOT / "skills" / "cram" / "template" / "player.html"
 INJECTION_MARKER = "/*INJECT*/ null"
+LOCALES_PATH = PLUGIN_ROOT / "skills" / "cram" / "locales"
+LANGUAGES = ("en", "ko", "ja", "zh-CN", "es", "fr")
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -36,6 +39,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("deck", type=Path, help="path to a deck JSON file")
     parser.add_argument("-o", "--output", type=Path, required=True, help="path to write the rendered HTML")
+    parser.add_argument(
+        "--language", "--lang", choices=LANGUAGES, default="en",
+        help="player UI language (default: en); does not translate deck content",
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -45,7 +52,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 1
 
     try:
-        html = render_deck(deck)
+        html = render_deck(deck, args.language)
         _write_output(args.output, html)
     except (OSError, RuntimeError) as error:
         print(error, file=sys.stderr)
@@ -55,15 +62,49 @@ def main(argv: Sequence[str] | None = None) -> int:
     return 0
 
 
-def render_deck(deck: dict) -> str:
+def render_deck(deck: dict, language: str = "en") -> str:
     """Inline a validated deck into the player template and return the resulting HTML."""
 
     template = TEMPLATE_PATH.read_text(encoding="utf-8")
     if INJECTION_MARKER not in template:
         raise RuntimeError(f"{TEMPLATE_PATH}: injection marker not found")
 
+    messages = _load_messages(language)
+    locale_json = _escape_for_inline_script(json.dumps({"language": language, "messages": messages}))
+    template, replacements = re.subn(
+        r"/\*LOCALE\*/ .*?(?=;</script>)", lambda _: locale_json, template, count=1,
+    )
+    if replacements != 1:
+        raise RuntimeError(f"{TEMPLATE_PATH}: locale injection marker not found")
+    template = template.replace('<html lang="en">', f'<html lang="{language}">', 1)
     deck_json = _escape_for_inline_script(json.dumps(deck))
     return template.replace(INJECTION_MARKER, deck_json, 1)
+
+
+def _load_messages(language: str) -> dict:
+    """Reject incomplete translations before writing an unusable player."""
+
+    if language not in LANGUAGES:
+        raise RuntimeError(f"Unsupported language: {language}")
+    try:
+        english = json.loads((LOCALES_PATH / "en.json").read_text(encoding="utf-8"))
+        messages = json.loads((LOCALES_PATH / f"{language}.json").read_text(encoding="utf-8"))
+    except ValueError as error:
+        raise RuntimeError(f"Invalid translation JSON: {error}") from error
+    if not isinstance(messages, dict) or messages.keys() != english.keys():
+        raise RuntimeError(f"Incomplete translation catalog: {language}")
+    for key, translation in messages.items():
+        forms = translation.values() if isinstance(translation, dict) else [translation]
+        if isinstance(english[key], dict):
+            if not isinstance(translation, dict) or "other" not in translation:
+                raise RuntimeError(f"Missing plural forms for {language}: {key}")
+        elif not isinstance(translation, str):
+            raise RuntimeError(f"Expected text for {language}: {key}")
+        placeholders = set(re.findall(r"\{(\w+)\}", key))
+        for text in forms:
+            if not isinstance(text, str) or not text.strip() or set(re.findall(r"\{(\w+)\}", text)) != placeholders:
+                raise RuntimeError(f"Invalid translation for {language}: {key}")
+    return messages
 
 
 def _escape_for_inline_script(deck_json: str) -> str:

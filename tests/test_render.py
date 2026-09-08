@@ -75,9 +75,9 @@ class RendererCliTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, msg=result.stderr or result.stdout)
             html = output.read_text(encoding="utf-8")
 
-            self.assertIn(
-                '<a href="https://github.com/sjquant/cram">Made with Cram</a>',
+            self.assertRegex(
                 html,
+                r'<a\b[^>]*href="https://github.com/sjquant/cram"[^>]*>Made with Cram</a>',
             )
             self.assertNotRegex(
                 html,
