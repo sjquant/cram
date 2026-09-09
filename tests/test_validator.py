@@ -43,6 +43,8 @@ class DeckValidatorTests(unittest.TestCase):
             "duplicate-card-ids.json": "id",
             "empty-deck.json": "cards",
             "mcq-without-distractors.json": "distractors",
+            "mcq-with-duplicate-distractors.json": "distractors",
+            "mcq-with-too-many-distractors.json": "distractors",
             "missing-required-field.json": "answer",
             "unknown-card-type.json": "type",
             "whitespace-only-prompt.json": "prompt",

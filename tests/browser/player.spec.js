@@ -204,6 +204,56 @@ const REQUIRED_CUSTOM_DECK = {
 };
 
 test.describe("basic cards", () => {
+  test("reveals a basic explanation with its answer and restores it on return", async ({ page }) => {
+    // Given: a basic card with an optional explanation.
+    await openPlayer(page, BASIC_DECK);
+    await page.getByTestId("next-card").click();
+    const explanation = page.getByText(BASIC_DECK.cards[1].explanation, { exact: true });
+    await expect(explanation).toBeHidden();
+
+    // When: the learner reveals the answer and grades it as known.
+    await page.getByTestId("reveal-answer").click();
+    await expect(explanation).toBeVisible();
+    await page.getByTestId("grade-known").click();
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("previous-card").click();
+
+    // Then: revisiting the answered card restores its reasoning too.
+    await expect(explanation).toBeVisible();
+    await expect(page.getByTestId("grade-known")).toHaveAttribute("aria-pressed", "true");
+  });
+
+  test("reviewing earlier drill attempts does not add retries or change mastery", async ({ page }) => {
+    // Given: three attempts on one card, with a miss resetting its correct streak.
+    await openPlayer(page, OTHER_DECK);
+    await enableCramMode(page);
+    for (const grade of ["missed", "known", "missed"]) {
+      await page.getByTestId("reveal-answer").click();
+      await page.getByTestId(`grade-${grade}`).click();
+      await page.getByTestId("next-card").click();
+    }
+    await expect(page.getByTestId("progress-label")).toHaveText("Card 4 of 4");
+
+    // When: the learner reviews an older attempt without answering again.
+    await page.getByTestId("previous-card").click();
+    await page.getByTestId("previous-card").click();
+    await page.getByTestId("next-card").click();
+
+    // Then: navigation preserves the queue, and two fresh correct answers finish it.
+    await expect(page.getByTestId("progress-label")).toHaveText("Card 3 of 4");
+    await page.getByTestId("next-card").click();
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      await page.getByTestId("reveal-answer").click();
+      await page.getByTestId("grade-known").click();
+      await page.getByTestId("next-card").click();
+      if (attempt === 0) {
+        await expect(page.getByTestId("progress-label")).toHaveText("Card 5 of 5");
+      }
+    }
+    await expect(page.getByTestId("score-value")).toHaveText("1/1");
+    await expect(page.getByTestId("score-screen")).toBeVisible();
+  });
+
   test("reveals a basic-card answer and records the selected grade", async ({ page }) => {
     await openPlayer(page, BASIC_DECK);
 
@@ -1500,6 +1550,24 @@ test.describe("hints", () => {
 });
 
 test.describe("card controls", () => {
+  test("announces prompts and cloze blanks without revealing answers or hints", async ({ page }) => {
+    // Given: unanswered basic, MCQ, and cloze cards with hidden hints.
+    await openPlayer(page, HINT_DECK);
+    const announcement = page.locator("#card-announcer");
+    await expect(page.getByTestId("card-answer")).toBeHidden();
+    await expect(page.getByTestId("card-hint")).toBeHidden();
+
+    // When: the learner navigates through the unanswered cards.
+    // Then: only each prompt is announced, with a spoken placeholder for the cloze blank.
+    await expect(announcement).toHaveText(`Card 1 of 4. ${HINT_DECK.cards[0].prompt}`);
+    await page.getByTestId("next-card").click();
+    await expect(announcement).toHaveText(`Card 2 of 4. ${HINT_DECK.cards[1].prompt}`);
+    await page.getByTestId("next-card").click();
+    await expect(announcement).toHaveText("Card 3 of 4. A cache revalidates with Blank 1.");
+    await expect(page.getByTestId("cloze-input")).toHaveValue("");
+    await expect(page.getByTestId("card-hint")).toBeHidden();
+  });
+
   test("uses state-aware keyboard shortcuts for help, answers, and navigation", async ({ page }) => {
     await openPlayer(page, HINT_DECK);
 

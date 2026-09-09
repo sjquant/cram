@@ -659,7 +659,8 @@
       color: var(--ink-soft);
     }
 
-    .cloze__explanation {
+    .cloze__explanation,
+    .basic__explanation {
       margin: var(--s3) 0 0;
       padding-top: var(--s2);
       border-top: 1px solid var(--rule);
@@ -1524,7 +1525,7 @@
         drillStreaks: Object.create(null),
         drilledCards: Object.create(null),
         freshAttempts: new Set(),
-        processedAttempts: new Map(),
+        processedAttempts: new Set(),
         persistenceWarning: ""
       };
 
@@ -1742,9 +1743,11 @@
           !grade ||
           !cardType ||
           typeof cardType.positiveGradeValidator !== "function" ||
-          state.processedAttempts.get(state.index) === grade
+          state.processedAttempts.has(state.index)
         ) return;
-        state.processedAttempts.set(state.index, grade);
+        // Later grades belong to later attempts. Revisiting this queue entry
+        // must not process it again unless the learner explicitly re-answers it.
+        state.processedAttempts.add(state.index);
 
         if (isPositiveGrade(card, grade)) {
           if (!state.drilledCards[card.id]) return;
@@ -1768,7 +1771,7 @@
         state.drillStreaks = Object.create(null);
         state.drilledCards = Object.create(null);
         state.freshAttempts = new Set();
-        state.processedAttempts = new Map();
+        state.processedAttempts = new Set();
       }
 
       function seedPersistedAttemptGrades() {
@@ -1777,7 +1780,7 @@
         // clears this marker for the current queue entry first.
         state.sessionCards.forEach((card, index) => {
           const grade = state.grades[card.id];
-          if (grade) state.processedAttempts.set(index, grade);
+          if (grade) state.processedAttempts.add(index);
         });
       }
 
@@ -1849,20 +1852,17 @@
         answerSection.append(createElement("span", "basic__answer-label", t("Answer:")), answer);
         fragment.append(answerSection);
 
+        const explanation = card.explanation
+          ? createElement("p", "basic__explanation", card.explanation)
+          : null;
+        if (explanation) answerSection.append(explanation);
+
         const reveal = createElement("button", "basic__reveal-button player__primary-action", t("Show answer"));
         reveal.type = "button";
         reveal.dataset.testid = "reveal-answer";
         reveal.setAttribute("aria-expanded", "false");
         reveal.setAttribute("aria-keyshortcuts", "A");
         appendShortcutLabel(reveal, "A");
-
-        function createGradeButton(grade, label) {
-          const button = createElement("button", "basic__grade-button", label);
-          button.type = "button";
-          button.dataset.testid = `grade-${grade}`;
-          button.setAttribute("aria-pressed", "false");
-          return button;
-        }
 
         const missed = createGradeButton(BASIC_GRADES.MISSED, t("Missed it"));
         const known = createGradeButton(BASIC_GRADES.KNOWN, t("Knew it"));
@@ -1926,6 +1926,14 @@
         }
 
         return fragment;
+
+        function createGradeButton(grade, label) {
+          const button = createElement("button", "basic__grade-button", label);
+          button.type = "button";
+          button.dataset.testid = `grade-${grade}`;
+          button.setAttribute("aria-pressed", "false");
+          return button;
+        }
       }
 
       const MCQ_GRADES = Object.freeze({ CORRECT: "correct", INCORRECT: "incorrect" });
@@ -2641,7 +2649,13 @@
       function announceCard() {
         const position = state.index + 1;
         const total = state.sessionCards.length;
-        refs.announcer.textContent = t("Card {position} of {total}. {content}", { position, total, content: refs.cardContent.textContent });
+        const prompt = refs.cardContent.querySelector(`#${PROMPT_ID}`);
+        // Announce the rendered prompt only: the card also contains hidden
+        // answers and hints, and raw cloze prompts contain their solutions.
+        const content = Array.from(prompt?.childNodes || [], (node) => (
+          node instanceof HTMLInputElement ? node.getAttribute("aria-label") : node.textContent
+        )).join("");
+        refs.announcer.textContent = t("Card {position} of {total}. {content}", { position, total, content });
       }
 
       // Deliberately lenient: the deck validator owns the strict contract, and the shell

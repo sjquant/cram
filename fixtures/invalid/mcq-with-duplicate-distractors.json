@@ -1,0 +1,13 @@
+{
+  "id": "mcq-with-duplicate-distractors",
+  "title": "Multiple choice card with repeated wrong options",
+  "cards": [
+    {
+      "id": "repeated-distractor",
+      "type": "mcq",
+      "prompt": "Which status code means Not Modified?",
+      "answer": "304",
+      "distractors": ["200", "200"]
+    }
+  ]
+}

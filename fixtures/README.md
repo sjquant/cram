@@ -28,6 +28,8 @@ Almost everything is caught by the schema itself. The validator implements the r
 | `cloze-without-a-blank.json` | cloze `prompt` has no `{{answer}}` in it | schema |
 | `cloze-with-empty-alternative.json` | cloze `prompt` contains an empty pipe-separated alternative | schema/validator |
 | `mcq-without-distractors.json` | nothing to choose between — `distractors` is empty | schema |
+| `mcq-with-duplicate-distractors.json` | two distractors have identical text | schema |
+| `mcq-with-too-many-distractors.json` | more than five distractors | schema |
 | `duplicate-card-ids.json` | two cards share the id `repeated` | validator |
 | `malformed-json.json` | trailing comma — the file does not parse | validator |
 
