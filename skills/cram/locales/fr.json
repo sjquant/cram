@@ -34,7 +34,7 @@
   "See results": "Voir les résultats",
   "Skip to next card": "Passer à la carte suivante",
   "Made with Cram": "Créé avec Cram",
-  "Use H for a hint, A to reveal a basic answer, or the arrow keys to move through the deck.": "Utilisez H pour un indice, A pour révéler une réponse simple et les flèches pour naviguer.",
+  "Use the arrow keys to move through the deck.": "Utilisez les flèches pour parcourir les cartes.",
   "Cram mode is unavailable during retry sessions": "Le mode intensif est indisponible lors des reprises",
   "Disable Cram mode": "Désactiver le mode intensif",
   "Enable Cram mode": "Activer le mode intensif",
@@ -107,5 +107,7 @@
   "Sprint": "Sprint",
   "Appearance": "Apparence",
   "Light": "Clair",
-  "Dark": "Sombre"
+  "Dark": "Sombre",
+  "Single-letter shortcuts": "Raccourcis à une lettre",
+  "A reveals answers; H reveals hints.": "A affiche les réponses ; H affiche les indices."
 }

@@ -18,6 +18,10 @@ The generated player supports:
 - optional hints and explanations; and
 - progress persisted in the browser, so you can come back to a deck later.
 
+Controls support keyboard navigation, reduced-motion preferences, and
+high-contrast mode. Settings lets you turn off the A/H single-letter
+shortcuts; the choice is remembered when browser storage is available.
+
 ## Try the demo
 
 **[Open the live demo →](https://sjquant.github.io/cram/examples/http-caching-essentials.html)**

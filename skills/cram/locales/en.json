@@ -34,7 +34,7 @@
   "See results": "See results",
   "Skip to next card": "Skip to next card",
   "Made with Cram": "Made with Cram",
-  "Use H for a hint, A to reveal a basic answer, or the arrow keys to move through the deck.": "Use H for a hint, A to reveal a basic answer, or the arrow keys to move through the deck.",
+  "Use the arrow keys to move through the deck.": "Use the arrow keys to move through the deck.",
   "Cram mode is unavailable during retry sessions": "Cram mode is unavailable during retry sessions",
   "Disable Cram mode": "Disable Cram mode",
   "Enable Cram mode": "Enable Cram mode",
@@ -107,5 +107,7 @@
   "Sprint": "Sprint",
   "Appearance": "Appearance",
   "Light": "Light",
-  "Dark": "Dark"
+  "Dark": "Dark",
+  "Single-letter shortcuts": "Single-letter shortcuts",
+  "A reveals answers; H reveals hints.": "A reveals answers; H reveals hints."
 }

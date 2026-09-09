@@ -34,7 +34,7 @@
   "See results": "查看结果",
   "Skip to next card": "跳到下一张卡片",
   "Made with Cram": "使用Cram制作",
-  "Use H for a hint, A to reveal a basic answer, or the arrow keys to move through the deck.": "按H查看提示，按A显示基础卡片答案，或用方向键切换卡片。",
+  "Use the arrow keys to move through the deck.": "使用方向键切换卡片。",
   "Cram mode is unavailable during retry sessions": "重试时无法使用强化记忆模式",
   "Disable Cram mode": "关闭强化记忆模式",
   "Enable Cram mode": "开启强化记忆模式",
@@ -107,5 +107,7 @@
   "Sprint": "冲刺",
   "Appearance": "外观",
   "Light": "浅色",
-  "Dark": "深色"
+  "Dark": "深色",
+  "Single-letter shortcuts": "单字母快捷键",
+  "A reveals answers; H reveals hints.": "按 A 显示答案，按 H 显示提示。"
 }
