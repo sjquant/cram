@@ -16,6 +16,11 @@ from the standard-library tests and does not require a contributor's local
 browser profile. Future validator and player tests belong in separate `test_*.py`
 modules and should keep the same outside-in boundary.
 
+The browser suite renders its player through the CLI before opening it;
+it never opens the source template directly. Translation checks cover all
+six languages and reject malformed catalogs or missing template messages
+without overwriting existing output.
+
 ## Browser tests
 
 The player browser tests use Playwright as a contributor/CI-only dependency;

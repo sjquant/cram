@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Cram player</title>
+  <title data-i18n>Cram player</title>
   <!-- Both icons are inlined so the rendered player stays a single
        self-contained file with no external requests. The PNG is a fallback
        for Safari, which does not render SVG favicons; browsers that do
@@ -1234,50 +1234,50 @@
 <body>
   <div class="player" id="player" data-testid="player" data-state="loading">
     <header class="player__header">
-      <h1 class="player__title" id="deck-title" data-testid="deck-title">Loading deck…</h1>
+      <h1 class="player__title" id="deck-title" data-testid="deck-title" data-i18n>Loading deck…</h1>
       <div class="player__header-tools">
-        <button type="button" class="player__settings-toggle" id="settings-toggle" data-testid="settings-toggle" data-action="toggle-settings" aria-expanded="false" aria-controls="settings-panel" aria-label="Open settings" title="Open settings">
+        <button type="button" class="player__settings-toggle" id="settings-toggle" data-testid="settings-toggle" data-action="toggle-settings" aria-expanded="false" aria-controls="settings-panel" aria-label="Open settings" title="Open settings" data-i18n-attrs="aria-label title">
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="M9.6 3.5h4.8l.6 2.1a6.8 6.8 0 0 1 1.4.8l2.1-.6 2.4 4.1-1.5 1.5a6.7 6.7 0 0 1 0 1.6l1.5 1.5-2.4 4.1-2.1-.6a6.8 6.8 0 0 1-1.4.8l-.6 2.1H9.6L9 18.9a6.8 6.8 0 0 1-1.4-.8l-2.1.6-2.4-4.1 1.5-1.5a6.7 6.7 0 0 1 0-1.6L3.1 10l2.4-4.1 2.1.6A6.8 6.8 0 0 1 9 5.6l.6-2.1Z"></path>
             <circle cx="12" cy="12" r="2.5"></circle>
           </svg>
         </button>
         <section class="player__settings-panel" id="settings-panel" data-testid="settings-panel" aria-labelledby="settings-heading" hidden>
-          <h2 class="player__settings-heading" id="settings-heading">Settings</h2>
+          <h2 class="player__settings-heading" id="settings-heading" data-i18n>Settings</h2>
           <div class="player__settings-group">
-            <span class="player__settings-label">Theme</span>
+            <span class="player__settings-label" data-i18n>Theme</span>
             <div class="player__theme-picker">
-              <label class="player__visually-hidden" for="theme-select">Color theme</label>
+              <label class="player__visually-hidden" for="theme-select" data-i18n>Color theme</label>
               <svg class="player__theme-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                 <path d="M12 3.5a8.5 8.5 0 1 0 0 17h1.4a2.1 2.1 0 0 0 1.4-3.66 2.1 2.1 0 0 1 1.4-3.66H18a2.5 2.5 0 0 0 2.5-2.5A8.5 8.5 0 0 0 12 3.5Z"></path>
                 <circle cx="8" cy="9" r="1"></circle>
                 <circle cx="12" cy="7.5" r="1"></circle>
                 <circle cx="15.5" cy="9" r="1"></circle>
               </svg>
-              <select class="player__theme-select" id="theme-select" data-testid="theme-select" aria-label="Color theme">
-                <option value="">System</option>
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-                <option value="sepia">Sepia</option>
-                <option value="night-neon">Night neon</option>
-                <option value="bluebell">Bluebell</option>
+              <select class="player__theme-select" id="theme-select" data-testid="theme-select" aria-label="Color theme" data-i18n-attrs="aria-label">
+                <option value="" data-i18n>System</option>
+                <option value="light" data-i18n>Light</option>
+                <option value="dark" data-i18n>Dark</option>
+                <option value="sepia" data-i18n>Sepia</option>
+                <option value="night-neon" data-i18n>Night neon</option>
+                <option value="bluebell" data-i18n>Bluebell</option>
               </select>
             </div>
           </div>
           <label class="player__settings-option">
             <input type="checkbox" id="cram-mode-toggle" data-testid="cram-mode-toggle">
             <span class="player__settings-option-text">
-              <strong>Cram mode</strong>
-              <small>Requeue missed cards during this session.</small>
+              <strong data-i18n>Cram mode</strong>
+              <small data-i18n>Requeue missed cards during this session.</small>
             </span>
           </label>
         </section>
       </div>
     </header>
 
-    <section class="player__progress-panel" aria-label="Deck progress">
+    <section class="player__progress-panel" aria-label="Deck progress" data-i18n-attrs="aria-label">
       <div class="player__progress-row player__visually-hidden">
-        <span id="progress-label" data-testid="progress-label">Card 0 of 0</span>
+        <span id="progress-label" data-testid="progress-label" data-i18n>Card 0 of 0</span>
         <span class="player__progress-percent" id="progress-percent">0%</span>
       </div>
       <progress class="player__progress-bar" id="progress" data-testid="progress" max="1" value="0">0%</progress>
@@ -1286,56 +1286,56 @@
     <main class="player__main">
       <article class="player__card" id="card-frame" data-testid="card" tabindex="-1" aria-labelledby="card-prompt">
         <div class="player__card-meta">
-          <span class="player__card-type" id="card-type" data-testid="card-type">Preparing card</span>
+          <span class="player__card-type" id="card-type" data-testid="card-type" data-i18n>Preparing card</span>
           <span class="player__card-position" id="card-position" data-testid="card-position">—</span>
         </div>
         <div class="player__card-content" id="card-content" data-testid="card-content">
-          <p class="player__card-prompt" id="card-prompt" data-testid="card-prompt">Preparing your deck…</p>
+          <p class="player__card-prompt" id="card-prompt" data-testid="card-prompt" data-i18n>Preparing your deck…</p>
         </div>
       </article>
 
       <section class="player__score-screen" id="score-screen" data-testid="score-screen" tabindex="-1" hidden aria-labelledby="score-title">
         <header class="player__score-header">
-          <span class="player__card-type">Results</span>
-          <h2 class="player__score-title" id="score-title" tabindex="-1">Session complete</h2>
+          <span class="player__card-type" data-i18n>Results</span>
+          <h2 class="player__score-title" id="score-title" tabindex="-1" data-i18n>Session complete</h2>
           <p class="player__score-value" id="score-value" data-testid="score-value">0/0</p>
-          <p class="player__score-summary" id="score-summary" data-testid="score-summary">0 correct · Nothing to review</p>
+          <p class="player__score-summary" id="score-summary" data-testid="score-summary" data-i18n>0 correct · Nothing to review</p>
           <div class="player__score-meter" id="score-meter" data-testid="score-meter" aria-hidden="true">
             <span class="player__score-meter-segment player__score-meter-segment--correct" id="score-correct-segment"></span>
             <span class="player__score-meter-segment player__score-meter-segment--missed" id="score-missed-segment"></span>
           </div>
-          <div class="player__score-meter-key" aria-label="Score breakdown">
+          <div class="player__score-meter-key" aria-label="Score breakdown" data-i18n-attrs="aria-label">
             <span class="player__score-meter-label">
               <span class="player__score-meter-swatch player__score-meter-swatch--correct" aria-hidden="true"></span>
-              <span id="score-correct-label" data-testid="score-correct-label">0 correct</span>
+              <span id="score-correct-label" data-testid="score-correct-label" data-i18n>0 correct</span>
             </span>
             <span class="player__score-meter-label">
               <span class="player__score-meter-swatch player__score-meter-swatch--missed" aria-hidden="true"></span>
-              <span id="score-missed-label" data-testid="score-missed-label">Nothing to review</span>
+              <span id="score-missed-label" data-testid="score-missed-label" data-i18n>Nothing to review</span>
             </span>
           </div>
           <div class="player__score-actions">
-            <button type="button" class="player__score-button player__score-button--primary" id="retry-missed" data-testid="retry-missed" data-action="retry-missed">Retry missed cards</button>
-            <button type="button" class="player__score-button player__score-button--secondary" id="reset-progress" data-testid="reset-progress" data-action="reset-progress">Reset progress</button>
+            <button type="button" class="player__score-button player__score-button--primary" id="retry-missed" data-testid="retry-missed" data-action="retry-missed" data-i18n>Retry missed cards</button>
+            <button type="button" class="player__score-button player__score-button--secondary" id="reset-progress" data-testid="reset-progress" data-action="reset-progress" data-i18n>Reset progress</button>
           </div>
         </header>
         <section class="player__review-section" aria-labelledby="missed-heading">
-          <h3 class="player__review-heading" id="missed-heading">Review missed cards</h3>
+          <h3 class="player__review-heading" id="missed-heading" data-i18n>Review missed cards</h3>
           <ol class="player__missed-list" id="missed-cards" data-testid="missed-cards"></ol>
-          <p class="player__no-missed-cards" id="no-missed-cards" data-testid="no-missed-cards" hidden>Perfect score — nothing to review.</p>
+          <p class="player__no-missed-cards" id="no-missed-cards" data-testid="no-missed-cards" hidden data-i18n>Perfect score — nothing to review.</p>
         </section>
       </section>
 
       <div class="player__review-scroll-overlay" id="review-scroll-overlay" hidden>
-        <button type="button" class="player__review-scroll-cue" id="review-scroll-cue" data-testid="review-scroll-cue" data-action="scroll-review" aria-controls="missed-cards" aria-label="Scroll down to see more missed cards">
-          More cards below <span aria-hidden="true">↓</span>
+        <button type="button" class="player__review-scroll-cue" id="review-scroll-cue" data-testid="review-scroll-cue" data-action="scroll-review" aria-controls="missed-cards" aria-label="Scroll down to see more missed cards" data-i18n-attrs="aria-label">
+          <span data-i18n>More cards below</span> <span aria-hidden="true">↓</span>
         </button>
       </div>
 
       <footer class="player__footer">
-        <nav class="player__navigation" aria-label="Card navigation">
-          <button type="button" id="previous-card" data-testid="previous-card" data-action="previous" aria-label="Previous card" aria-keyshortcuts="ArrowLeft" disabled>← Previous</button>
-          <button type="button" id="next-card" data-testid="next-card" class="player__next-button player__next-button--skip" data-action="next" aria-label="Next card" aria-keyshortcuts="ArrowRight" disabled>Skip →</button>
+        <nav class="player__navigation" aria-label="Card navigation" data-i18n-attrs="aria-label">
+          <button type="button" id="previous-card" data-testid="previous-card" data-action="previous" aria-label="Previous card" aria-keyshortcuts="ArrowLeft" disabled data-i18n data-i18n-attrs="aria-label">← Previous</button>
+          <button type="button" id="next-card" data-testid="next-card" class="player__next-button player__next-button--skip" data-action="next" aria-label="Next card" aria-keyshortcuts="ArrowRight" disabled data-i18n data-i18n-attrs="aria-label">Skip →</button>
         </nav>
         <p class="player__status" id="player-status" role="status" aria-live="polite"></p>
       </footer>
@@ -1348,31 +1348,16 @@
   </div>
 
   <footer class="player__attribution">
-    <small><a href="https://github.com/sjquant/cram">Made with Cram</a></small>
+    <small><a href="https://github.com/sjquant/cram" data-i18n>Made with Cram</a></small>
   </footer>
 
-  <!--
-    A3 replaces only the value after the /*INJECT*/ marker with the deck JSON. Keep this
-    exact line. Every "<" in the JSON must be escaped as \u003C, so that a card whose text
-    contains a closing script tag cannot end this element early and break the page.
-  -->
+  <!-- Render this template with render.py; examples/ contains the generated preview.
+       Injected JSON escapes every less-than character to keep inline scripts safe. -->
+  <script>window.__LOCALE__ = {"language": "en", "messages": {"Cram player": "Cram player", "Loading deck\u2026": "Loading deck\u2026", "Open settings": "Open settings", "Close settings": "Close settings", "Settings": "Settings", "Theme": "Theme", "Color theme": "Color theme", "System": "System", "Light": "Light", "Dark": "Dark", "Sepia": "Sepia", "Night neon": "Night neon", "Bluebell": "Bluebell", "Cram mode": "Cram mode", "Requeue missed cards during this session.": "Requeue missed cards during this session.", "Deck progress": "Deck progress", "Card 0 of 0": "Card 0 of 0", "Preparing card": "Preparing card", "Preparing your deck\u2026": "Preparing your deck\u2026", "Results": "Results", "Session complete": "Session complete", "0 correct \u00b7 Nothing to review": "0 correct \u00b7 Nothing to review", "Score breakdown": "Score breakdown", "0 correct": "0 correct", "Nothing to review": "Nothing to review", "Retry missed cards": "Retry missed cards", "Reset progress": "Reset progress", "Review missed cards": "Review missed cards", "Perfect score \u2014 nothing to review.": "Perfect score \u2014 nothing to review.", "Scroll down to see more missed cards": "Scroll down to see more missed cards", "More cards below": "More cards below", "Card navigation": "Card navigation", "Previous card": "Previous card", "\u2190 Previous": "\u2190 Previous", "Next card": "Next card", "Skip \u2192": "Skip \u2192", "Next \u2192": "Next \u2192", "See results \u2192": "See results \u2192", "See results": "See results", "Skip to next card": "Skip to next card", "Made with Cram": "Made with Cram", "Use H for a hint, A to reveal a basic answer, or the arrow keys to move through the deck.": "Use H for a hint, A to reveal a basic answer, or the arrow keys to move through the deck.", "Cram mode is unavailable during retry sessions": "Cram mode is unavailable during retry sessions", "Disable Cram mode": "Disable Cram mode", "Enable Cram mode": "Enable Cram mode", "Cram mode is unavailable during retry sessions.": "Cram mode is unavailable during retry sessions.", "Cram mode enabled for this session.": "Cram mode enabled for this session.", "Cram mode disabled for this session.": "Cram mode disabled for this session.", "The page needs a deck with a title and at least one card.": "The page needs a deck with a title and at least one card.", "This card could not be rendered.": "This card could not be rendered.", "The card renderer failed.": "The card renderer failed.", "This card has no prompt.": "This card has no prompt.", "This card has no answer.": "This card has no answer.", "Show answer": "Show answer", "Missed it": "Missed it", "Knew it": "Knew it", "Grade your recall": "Grade your recall", "Optional hint": "Optional hint", "Answer actions": "Answer actions", "The grade could not be recorded.": "The grade could not be recorded.", "Marked as known.": "Marked as known.", "Marked as missed.": "Marked as missed.", "Choose an answer": "Choose an answer", "This option has no text.": "This option has no text.", "Check answer": "Check answer", "Correct.": "Correct.", "Incorrect.": "Incorrect.", "Incorrect. The correct answer is: {answer}": "Incorrect. The correct answer is: {answer}", "Answer selected. Check it when ready.": "Answer selected. Check it when ready.", "Blank {number}": "Blank {number}", "Check answers": "Check answers", "Blank {number}: Correct.": "Blank {number}: Correct.", "Blank {number}: Incorrect. Correct answer: {answer}": "Blank {number}: Incorrect. Correct answer: {answer}", "This card was previously marked incorrect.": "This card was previously marked incorrect.", "Show hint": "Show hint", "The hint could not be recorded.": "The hint could not be recorded.", "The \u201c{type}\u201d card renderer is not installed yet.": "The \u201c{type}\u201d card renderer is not installed yet.", "Unable to load deck": "Unable to load deck", "No cards loaded": "No cards loaded", "Deck error": "Deck error", "Card {position} of {total}": "Card {position} of {total}", "Session complete. Score {score}/{total}.": "Session complete. Score {score}/{total}.", "{score} correct \u00b7 {missedCount} to review": "{score} correct \u00b7 {missedCount} to review", "All {total} correct \u00b7 Nothing to review": "All {total} correct \u00b7 Nothing to review", "{score} correct": "{score} correct", "{missedCount} to review": "{missedCount} to review", "Retry {count} missed card": {"one": "Retry {count} missed card", "other": "Retry {count} missed cards"}, "Retrying {count} missed card.": {"one": "Retrying {count} missed card.", "other": "Retrying {count} missed cards."}, "Session complete: score {score} of {total}": "Session complete: score {score} of {total}", "Session complete: {score} of {total}": "Session complete: {score} of {total}", "Nothing to retry.": "Nothing to retry.", "Needed a hint": "Needed a hint", "Answer:": "Answer:", "Explanation:": "Explanation:", "Hint:": "Hint:", "Card {position} of {total}. {content}": "Card {position} of {total}. {content}", "Progress could not be saved. Try again.": "Progress could not be saved. Try again.", "basic": "basic", "mcq": "mcq", "cloze": "cloze", "unknown": "unknown", "Progress reset. Start again.": "Progress reset. Start again.", "Progress reset for this session, but saved progress could not be cleared.": "Progress reset for this session, but saved progress could not be cleared."}};</script>
   <script>window.__DECK__ = {"id": "http-caching-essentials", "title": "HTTP caching essentials", "source": "RFC 9111: HTTP Caching", "cards": [{"id": "cache-control-max-age", "type": "basic", "prompt": "What does `Cache-Control: max-age=60` permit a cache to do?", "answer": "Treat a stored response as fresh for 60 seconds after it was generated, so it can be reused without revalidation.", "hint": "Think in terms of a freshness lifetime."}, {"id": "cache-control-no-store", "type": "mcq", "prompt": "Which `Cache-Control` directive prevents a cache from storing a response?", "answer": "`no-store`", "distractors": ["`no-cache`", "`private`", "`max-age=60`"], "explanation": "Use this directive when retaining the response in a cache is not allowed."}, {"id": "cache-control-no-cache", "type": "basic", "prompt": "What does the HTTP `Cache-Control: no-cache` directive mean for a stored response?", "answer": "A cache may store the response, but it must revalidate it with the origin before reusing it.", "hint": "It is different from `no-store`: storage is allowed, reuse without validation is not."}, {"id": "etag-validator", "type": "cloze", "prompt": "Which response header gives a representation an opaque validator that a client can send in `If-None-Match`? The header is `{{ETag}}`.", "explanation": "A validator lets the client ask whether its stored representation is still current without downloading the full representation again."}, {"id": "if-none-match-not-modified", "type": "basic", "prompt": "For a conditional `GET`, what status can an origin return when `If-None-Match` confirms that a cached representation is still current?", "answer": "`304 Not Modified`, allowing the cache to reuse its stored response body."}, {"id": "vary-shared-cache", "type": "basic", "prompt": "What does the HTTP `Vary` response header tell a shared cache?", "answer": "Which request-header fields must match before a stored response can be reused for another request.", "hint": "The response may vary based on fields such as `Accept-Language`."}, {"id": "cache-control-private", "type": "basic", "prompt": "When should a response be marked `Cache-Control: private`?", "answer": "When it may be stored by a private browser cache but must not be stored by a shared cache.", "explanation": "This is useful for user-specific responses that a browser may reuse for that same user."}]};</script>
   <script>
     (() => {
       "use strict";
-
-      // This small copy of fixtures/valid/minimal.json makes the template useful when
-      // opened as file:// during development. A rendered deck always takes precedence.
-      const previewDeck = {
-        id: "minimal-deck",
-        title: "Minimal deck",
-        cards: [{
-          id: "only-required-fields",
-          type: "basic",
-          prompt: "Which card fields are required?",
-          answer: "id, type, prompt, and the field belonging to the card's own type."
-        }]
-      };
 
       const refs = {
         player: document.getElementById("player"),
@@ -1408,7 +1393,7 @@
         announcer: document.getElementById("card-announcer")
       };
 
-      const NAVIGATION_HINT = "Use H for a hint, A to reveal a basic answer, or the arrow keys to move through the deck.";
+      const NAVIGATION_HINT = t("Use H for a hint, A to reveal a basic answer, or the arrow keys to move through the deck.");
       const PROMPT_ID = "card-prompt";
       const THEME_STORAGE_KEY = "cram:theme:v2";
       const THEME_VALUES = Object.freeze(["light", "dark", "sepia", "night-neon", "bluebell"]);
@@ -1496,7 +1481,7 @@
       function setSettingsVisibility(isOpen) {
         refs.settingsPanel.hidden = !isOpen;
         refs.settingsToggle.setAttribute("aria-expanded", String(isOpen));
-        const label = isOpen ? "Close settings" : "Open settings";
+        const label = isOpen ? t("Close settings") : t("Open settings");
         refs.settingsToggle.setAttribute("aria-label", label);
         refs.settingsToggle.title = label;
       }
@@ -1507,22 +1492,22 @@
         refs.cramModeToggle.setAttribute(
           "aria-label",
           state.isRetry
-            ? "Cram mode is unavailable during retry sessions"
-            : (state.cramMode ? "Disable Cram mode" : "Enable Cram mode")
+            ? t("Cram mode is unavailable during retry sessions")
+            : (state.cramMode ? t("Disable Cram mode") : t("Enable Cram mode"))
         );
       }
 
       function setCramMode(enabled) {
         if (state.isRetry) {
           updateCramModeToggle();
-          setStatus("Cram mode is unavailable during retry sessions.");
+          setStatus(t("Cram mode is unavailable during retry sessions."));
           return;
         }
         state.cramMode = Boolean(enabled);
         updateCramModeToggle();
         setStatus(state.cramMode
-          ? "Cram mode enabled for this session."
-          : "Cram mode disabled for this session.");
+          ? t("Cram mode enabled for this session.")
+          : t("Cram mode disabled for this session."));
       }
 
       // Renderer options keep grade vocabulary, scoring, and navigation policy with the
@@ -1589,7 +1574,7 @@
 
       function setDeck(deck) {
         if (!isRenderableDeck(deck)) {
-          showDeckError("The page needs a deck with a title and at least one card.");
+          showDeckError(t("The page needs a deck with a title and at least one card."));
           return;
         }
         state.deck = deck;
@@ -1627,8 +1612,8 @@
         renderCurrentCard();
         refs.cardFrame.focus();
         setStatus(cleared
-          ? "Progress reset. Start again."
-          : "Progress reset for this session, but saved progress could not be cleared.", !cleared);
+          ? t("Progress reset. Start again.")
+          : t("Progress reset for this session, but saved progress could not be cleared."), !cleared);
       }
 
       function moveCard(delta) {
@@ -1712,7 +1697,8 @@
         const renderer = cardType ? cardType.renderer : renderUnsupportedCard;
 
         refs.cardFrame.classList.remove("player__card--empty");
-        refs.cardType.textContent = type;
+        const typeLabels = { basic: t("basic"), mcq: t("mcq"), cloze: t("cloze"), unknown: t("unknown") };
+        refs.cardType.textContent = Object.hasOwn(typeLabels, type) ? typeLabels[type] : type;
         refs.cardContent.replaceChildren();
         refs.cardFrame.scrollTop = 0;
         // Drops any error left by the card we navigated away from. Set before the
@@ -1730,8 +1716,8 @@
             if (typeof cleanup === "function") state.cleanup = cleanup;
           }
         } catch (error) {
-          refs.cardContent.replaceChildren(createPromptElement("This card could not be rendered."));
-          setStatus(error instanceof Error ? error.message : "The card renderer failed.", true);
+          refs.cardContent.replaceChildren(createPromptElement(t("This card could not be rendered.")));
+          setStatus(error instanceof Error ? error.message : t("The card renderer failed."), true);
         }
         updateProgress();
         announceCard();
@@ -1755,14 +1741,14 @@
 
       function renderBasicCard({ card, player, createElement, createPromptElement, setStatus }) {
         const fragment = document.createDocumentFragment();
-        fragment.append(createPromptElement(card.prompt || "This card has no prompt."));
+        fragment.append(createPromptElement(card.prompt || t("This card has no prompt.")));
         const hint = createHintControls(card, player, createElement, setStatus);
 
-        const answer = createElement("p", "basic__answer", card.answer || "This card has no answer.");
+        const answer = createElement("p", "basic__answer", card.answer || t("This card has no answer."));
         answer.dataset.testid = "card-answer";
         answer.hidden = true;
 
-        const reveal = createElement("button", "basic__reveal-button player__primary-action", "Show answer");
+        const reveal = createElement("button", "basic__reveal-button player__primary-action", t("Show answer"));
         reveal.type = "button";
         reveal.dataset.testid = "reveal-answer";
         reveal.setAttribute("aria-expanded", "false");
@@ -1777,23 +1763,23 @@
           return button;
         }
 
-        const missed = createGradeButton(BASIC_GRADES.MISSED, "Missed it");
-        const known = createGradeButton(BASIC_GRADES.KNOWN, "Knew it");
+        const missed = createGradeButton(BASIC_GRADES.MISSED, t("Missed it"));
+        const known = createGradeButton(BASIC_GRADES.KNOWN, t("Knew it"));
 
         const grading = createElement("div", "basic__grading-buttons");
         grading.dataset.testid = "grading-buttons";
         grading.setAttribute("role", "group");
-        grading.setAttribute("aria-label", "Grade your recall");
+        grading.setAttribute("aria-label", t("Grade your recall"));
         grading.hidden = true;
         grading.append(missed, known);
 
         const actionRail = createElement("div", "player__action-rail");
         if (hint) {
-          const supportActions = createActionGroup(createElement, "player__support-actions", "Optional hint");
+          const supportActions = createActionGroup(createElement, "player__support-actions", t("Optional hint"));
           supportActions.append(hint);
           actionRail.append(supportActions);
         }
-        const responseActions = createActionGroup(createElement, "player__response-actions", "Answer actions");
+        const responseActions = createActionGroup(createElement, "player__response-actions", t("Answer actions"));
         responseActions.append(answer, reveal, grading);
         actionRail.append(responseActions);
         fragment.append(actionRail);
@@ -1818,11 +1804,11 @@
           try {
             player.recordGrade(card.id, grade);
           } catch (error) {
-            setStatus(error instanceof Error ? error.message : "The grade could not be recorded.", true);
+            setStatus(error instanceof Error ? error.message : t("The grade could not be recorded."), true);
             return;
           }
           applyGradeUI(grade);
-          setStatus(grade === BASIC_GRADES.KNOWN ? "Marked as known." : "Marked as missed.");
+          setStatus(grade === BASIC_GRADES.KNOWN ? t("Marked as known.") : t("Marked as missed."));
         }
 
         reveal.addEventListener("click", () => revealAnswer(true));
@@ -1842,12 +1828,12 @@
 
       function renderMcqCard({ card, player, createElement, createPromptElement, setStatus }) {
         const fragment = document.createDocumentFragment();
-        fragment.append(createPromptElement(card.prompt || "This card has no prompt."));
+        fragment.append(createPromptElement(card.prompt || t("This card has no prompt.")));
         const hint = createHintControls(card, player, createElement, setStatus);
 
         const answer = typeof card.answer === "string" && card.answer
           ? card.answer
-          : "This card has no answer.";
+          : t("This card has no answer.");
         const choices = [answer, ...(Array.isArray(card.distractors) ? card.distractors : [])];
 
         // Fisher-Yates makes every option equally likely to occupy each position.
@@ -1859,11 +1845,11 @@
         const options = createElement("div", "mcq__options");
         options.dataset.testid = "mcq-options";
         options.setAttribute("role", "group");
-        options.setAttribute("aria-label", "Choose an answer");
+        options.setAttribute("aria-label", t("Choose an answer"));
         const optionButtons = [];
 
         choices.forEach((choice) => {
-          const button = createElement("button", "mcq__option", choice || "This option has no text.");
+          const button = createElement("button", "mcq__option", choice || t("This option has no text."));
           button.type = "button";
           button.dataset.testid = "mcq-option";
           button.setAttribute("aria-pressed", "false");
@@ -1871,7 +1857,7 @@
           options.append(button);
         });
 
-        const checkAnswer = createElement("button", "mcq__check-button player__primary-action", "Check answer");
+        const checkAnswer = createElement("button", "mcq__check-button player__primary-action", t("Check answer"));
         checkAnswer.type = "button";
         checkAnswer.dataset.testid = "mcq-check-answer";
         checkAnswer.hidden = true;
@@ -1895,12 +1881,12 @@
         response.append(options, checkAnswer);
         const actionRail = createElement("div", "player__action-rail");
         if (hint) {
-          const supportActions = createActionGroup(createElement, "player__support-actions", "Optional hint");
+          const supportActions = createActionGroup(createElement, "player__support-actions", t("Optional hint"));
           supportActions.append(hint);
           actionRail.append(supportActions);
         }
         response.setAttribute("role", "group");
-        response.setAttribute("aria-label", "Answer actions");
+        response.setAttribute("aria-label", t("Answer actions"));
         actionRail.append(response);
         fragment.append(actionRail, feedback);
         if (explanation) fragment.append(explanation);
@@ -1930,8 +1916,8 @@
           feedback.classList.toggle("mcq__feedback--incorrect", !isCorrect);
           feedback.dataset.result = grade;
           feedback.textContent = isCorrect
-            ? "Correct."
-            : `Incorrect. The correct answer is: ${answer}`;
+            ? t("Correct.")
+            : t("Incorrect. The correct answer is: {answer}", { answer });
           feedback.hidden = false;
           if (explanation) {
             explanation.textContent = explanationText;
@@ -1943,7 +1929,7 @@
 
         function handleOptionClick(selectedButton, selectedChoice) {
           applySelection({ button: selectedButton, choice: selectedChoice });
-          setStatus("Answer selected. Check it when ready.");
+          setStatus(t("Answer selected. Check it when ready."));
         }
 
         function handleCheckAnswer() {
@@ -1952,11 +1938,11 @@
           try {
             player.recordGrade(card.id, grade);
           } catch (error) {
-            setStatus(error instanceof Error ? error.message : "The grade could not be recorded.", true);
+            setStatus(error instanceof Error ? error.message : t("The grade could not be recorded."), true);
             return;
           }
           applyAnsweredUI(grade, selected.button);
-          setStatus(grade === MCQ_GRADES.CORRECT ? "Correct." : "Incorrect.");
+          setStatus(grade === MCQ_GRADES.CORRECT ? t("Correct.") : t("Incorrect."));
         }
 
         optionButtons.forEach(({ button, choice }) => {
@@ -1994,7 +1980,7 @@
           input.type = "text";
           input.dataset.testid = "cloze-input";
           input.dataset.blankIndex = String(blanks.length);
-          input.setAttribute("aria-label", `Blank ${blanks.length + 1}`);
+          input.setAttribute("aria-label", t("Blank {number}", { number: blanks.length + 1 }));
           input.autocomplete = "off";
           input.spellcheck = false;
           prompt.append(input);
@@ -2005,7 +1991,7 @@
         fragment.append(prompt);
         const hint = createHintControls(card, player, createElement, setStatus);
 
-        const checkAnswer = createElement("button", "cloze__check-button player__primary-action", "Check answers");
+        const checkAnswer = createElement("button", "cloze__check-button player__primary-action", t("Check answers"));
         checkAnswer.type = "button";
         checkAnswer.dataset.testid = "cloze-check-answer";
 
@@ -2036,11 +2022,11 @@
 
         const actionRail = createElement("div", "player__action-rail");
         if (hint) {
-          const supportActions = createActionGroup(createElement, "player__support-actions", "Optional hint");
+          const supportActions = createActionGroup(createElement, "player__support-actions", t("Optional hint"));
           supportActions.append(hint);
           actionRail.append(supportActions);
         }
-        const responseActions = createActionGroup(createElement, "player__response-actions", "Answer actions");
+        const responseActions = createActionGroup(createElement, "player__response-actions", t("Answer actions"));
         responseActions.append(checkAnswer);
         actionRail.append(responseActions);
         fragment.append(actionRail, feedback);
@@ -2054,11 +2040,11 @@
           try {
             player.recordGrade(card.id, grade);
           } catch (error) {
-            setStatus(error instanceof Error ? error.message : "The grade could not be recorded.", true);
+            setStatus(error instanceof Error ? error.message : t("The grade could not be recorded."), true);
             return;
           }
           applyAnsweredUI(grade, results);
-          setStatus(grade === CLOZE_GRADES.CORRECT ? "Correct." : "Incorrect.");
+          setStatus(grade === CLOZE_GRADES.CORRECT ? t("Correct.") : t("Incorrect."));
         }
 
         function checkBlank(blank) {
@@ -2093,14 +2079,14 @@
                 ? CLOZE_GRADES.CORRECT
                 : CLOZE_GRADES.INCORRECT;
               feedbackItems[index].textContent = blankCorrect
-                ? `Blank ${index + 1}: Correct.`
-                : `Blank ${index + 1}: Incorrect. Correct answer: ${blank.answers.join(" / ")}`;
+                ? t("Blank {number}: Correct.", { number: index + 1 })
+                : t("Blank {number}: Incorrect. Correct answer: {answer}", { number: index + 1, answer: blank.answers.join(" / ") });
             });
           } else {
             feedbackSummary.hidden = false;
             feedbackSummary.textContent = isCorrect
-              ? "Correct."
-              : "This card was previously marked incorrect.";
+              ? t("Correct.")
+              : t("This card was previously marked incorrect.");
             blanks.forEach((blank, index) => {
               blank.input.disabled = true;
               blank.input.classList.remove("cloze__input--correct", "cloze__input--incorrect");
@@ -2145,7 +2131,7 @@
         hint.dataset.testid = "card-hint";
         hint.hidden = true;
 
-        const reveal = createElement("button", "player__hint-button", "Show hint");
+        const reveal = createElement("button", "player__hint-button", t("Show hint"));
         reveal.type = "button";
         reveal.dataset.testid = "show-hint";
         reveal.setAttribute("aria-expanded", "false");
@@ -2162,7 +2148,7 @@
           try {
             player.recordHintUsed(card.id);
           } catch (error) {
-            setStatus(error instanceof Error ? error.message : "The hint could not be recorded.", true);
+            setStatus(error instanceof Error ? error.message : t("The hint could not be recorded."), true);
             return;
           }
           applyHintUI();
@@ -2189,17 +2175,17 @@
 
       function renderPromptCard({ card }) {
         const fragment = document.createDocumentFragment();
-        fragment.append(createPromptElement(card.prompt || "This card has no prompt."));
+        fragment.append(createPromptElement(card.prompt || t("This card has no prompt.")));
         return fragment;
       }
 
       function renderUnsupportedCard({ card }) {
         const fragment = document.createDocumentFragment();
-        fragment.append(createPromptElement(card.prompt || "This card has no prompt."));
+        fragment.append(createPromptElement(card.prompt || t("This card has no prompt.")));
         fragment.append(createElement(
           "p",
           "player__unsupported-card",
-          `The “${card.type || "unknown"}” card renderer is not installed yet.`
+          t("The “{type}” card renderer is not installed yet.", { type: card.type || t("unknown") })
         ));
         return fragment;
       }
@@ -2236,7 +2222,7 @@
           if (persisted) {
             state.persistenceWarning = "";
           } else {
-            state.persistenceWarning = "Progress could not be saved. Try again.";
+            state.persistenceWarning = t("Progress could not be saved. Try again.");
             setStatus(state.persistenceWarning, true);
           }
           updateProgress();
@@ -2301,13 +2287,13 @@
         resetDrillState();
         setViewState("error");
         state.hintsUsed = Object.create(null);
-        refs.title.textContent = "Unable to load deck";
+        refs.title.textContent = t("Unable to load deck");
         refs.progress.max = 1;
         refs.progress.value = 0;
-        refs.progress.setAttribute("aria-label", "No cards loaded");
-        refs.progressLabel.textContent = "No cards loaded";
+        refs.progress.setAttribute("aria-label", t("No cards loaded"));
+        refs.progressLabel.textContent = t("No cards loaded");
         refs.progressPercent.textContent = "0%";
-        refs.cardType.textContent = "Deck error";
+        refs.cardType.textContent = t("Deck error");
         refs.cardPosition.textContent = "—";
         refs.cardContent.replaceChildren(createPromptElement(message));
         refs.cardFrame.classList.add("player__card--empty");
@@ -2315,8 +2301,8 @@
         refs.previous.disabled = true;
         refs.next.disabled = true;
         refs.next.classList.remove("player__next-button--skip");
-        refs.next.textContent = "Next →";
-        refs.next.setAttribute("aria-label", "Next card");
+        refs.next.textContent = t("Next →");
+        refs.next.setAttribute("aria-label", t("Next card"));
         restoreNavigationFocus(focused);
         setStatus(message, true);
       }
@@ -2340,8 +2326,8 @@
         const percent = Math.round((position / total) * 100);
         refs.progress.max = total;
         refs.progress.value = position;
-        refs.progress.setAttribute("aria-label", `Card ${position} of ${total}`);
-        refs.progressLabel.textContent = `Card ${position} of ${total}`;
+        refs.progress.setAttribute("aria-label", t("Card {position} of {total}", { position, total }));
+        refs.progressLabel.textContent = t("Card {position} of {total}", { position, total });
         refs.progressPercent.textContent = `${percent}%`;
         const width = String(total).length;
         refs.cardPosition.textContent =
@@ -2354,10 +2340,10 @@
         const isSkip = !atLastCard && isAnswerRequiredCard(card) && !currentGrade;
         refs.next.disabled = false;
         refs.next.classList.toggle("player__next-button--skip", isSkip);
-        refs.next.textContent = atLastCard ? "See results →" : (isSkip ? "Skip →" : "Next →");
+        refs.next.textContent = atLastCard ? t("See results →") : (isSkip ? t("Skip →") : t("Next →"));
         refs.next.setAttribute(
           "aria-label",
-          atLastCard ? "See results" : (isSkip ? "Skip to next card" : "Next card")
+          atLastCard ? t("See results") : (isSkip ? t("Skip to next card") : t("Next card"))
         );
         restoreNavigationFocus(focused);
       }
@@ -2372,7 +2358,7 @@
         state.cleanup = () => {};
         const result = renderScoreScreen();
         setViewState("results");
-        setStatus(`Session complete. Score ${result.score}/${result.total}.`);
+        setStatus(t("Session complete. Score {score}/{total}.", result));
         refs.scoreTitle.focus();
       }
 
@@ -2385,30 +2371,30 @@
         refs.scoreValue.textContent = `${score}/${total}`;
         const missedCount = missedCards.length;
         refs.scoreSummary.textContent = missedCount
-          ? `${score} correct · ${missedCount} to review`
-          : `All ${total} correct · Nothing to review`;
+          ? t("{score} correct · {missedCount} to review", { score, missedCount })
+          : t("All {total} correct · Nothing to review", { total });
         const correctShare = total ? (score / total) * 100 : 0;
         const missedShare = total ? (missedCount / total) * 100 : 0;
         refs.scoreCorrectSegment.style.flexBasis = `${correctShare}%`;
         refs.scoreMissedSegment.style.flexBasis = `${missedShare}%`;
-        refs.scoreCorrectLabel.textContent = `${score} correct`;
+        refs.scoreCorrectLabel.textContent = t("{score} correct", { score });
         refs.scoreMissedLabel.textContent = missedCount
-          ? `${missedCount} to review`
-          : "Nothing to review";
+          ? t("{missedCount} to review", { missedCount })
+          : t("Nothing to review");
         refs.retryMissed.disabled = missedCount === 0;
         refs.retryMissed.hidden = missedCount === 0;
         refs.retryMissed.textContent = missedCount
-          ? `Retry ${missedCount} missed card${missedCount === 1 ? "" : "s"}`
-          : "Retry missed cards";
+          ? t("Retry {count} missed card", { count: missedCount })
+          : t("Retry missed cards");
         refs.missedCards.replaceChildren(...missedCards.map(createMissedCard));
         refs.missedCards.hidden = missedCards.length === 0;
         refs.noMissedCards.hidden = missedCards.length !== 0;
         refs.progress.max = total;
         refs.progress.value = total;
-        refs.progress.setAttribute("aria-label", `Session complete: score ${score} of ${total}`);
-        refs.progressLabel.textContent = `Session complete: ${score} of ${total}`;
+        refs.progress.setAttribute("aria-label", t("Session complete: score {score} of {total}", { score, total }));
+        refs.progressLabel.textContent = t("Session complete: {score} of {total}", { score, total });
         refs.progressPercent.textContent = "100%";
-        refs.announcer.textContent = `Session complete. Score ${score}/${total}.`;
+        refs.announcer.textContent = t("Session complete. Score {score}/{total}.", { score, total });
         updateReviewScrollCue();
 
         return { score, total };
@@ -2419,7 +2405,7 @@
         const missedCards = getMissedCards(state.scoreCards, state.grades);
         if (!missedCards.length) {
           refs.retryMissed.disabled = true;
-          setStatus("Nothing to retry.");
+          setStatus(t("Nothing to retry."));
           return;
         }
 
@@ -2433,7 +2419,7 @@
         setViewState("ready");
         renderCurrentCard();
         refs.cardFrame.focus();
-        setStatus(`Retrying ${missedCards.length} missed card${missedCards.length === 1 ? "" : "s"}.`);
+        setStatus(t("Retrying {count} missed card.", { count: missedCards.length }));
       }
 
       function getMissedCards(cards, grades) {
@@ -2456,21 +2442,21 @@
         const prompt = createElement(
           "p",
           "player__missed-prompt",
-          card.prompt || "This card has no prompt."
+          card.prompt || t("This card has no prompt.")
         );
         prompt.dataset.testid = "missed-prompt";
         item.append(prompt);
-        if (card.answer) item.append(createReviewField("Answer", card.answer));
-        if (card.explanation) item.append(createReviewField("Explanation", card.explanation));
-        if (getHintUsed(card.id)) item.append(createReviewField("Hint", "Needed a hint"));
+        if (card.answer) item.append(createReviewField("answer", t("Answer:"), card.answer));
+        if (card.explanation) item.append(createReviewField("explanation", t("Explanation:"), card.explanation));
+        if (getHintUsed(card.id)) item.append(createReviewField("hint", t("Hint:"), t("Needed a hint")));
         return item;
       }
 
-      function createReviewField(label, value) {
+      function createReviewField(name, label, value) {
         const field = createElement("p", "player__review-field");
-        field.dataset.testid = `missed-${label.toLowerCase()}`;
+        field.dataset.testid = `missed-${name}`;
         field.append(
-          createElement("strong", "player__review-label", `${label}:`),
+          createElement("strong", "player__review-label", label),
           document.createTextNode(` ${String(value)}`)
         );
         return field;
@@ -2525,7 +2511,7 @@
       function announceCard() {
         const position = state.index + 1;
         const total = state.sessionCards.length;
-        refs.announcer.textContent = `Card ${position} of ${total}. ${refs.cardContent.textContent}`;
+        refs.announcer.textContent = t("Card {position} of {total}. {content}", { position, total, content: refs.cardContent.textContent });
       }
 
       // Deliberately lenient: the deck validator owns the strict contract, and the shell
@@ -2845,10 +2831,33 @@
         return true;
       }
 
+      // English source messages are keys. Only explicit UI call sites are translated;
+      // card content and persisted identifiers never pass through this lookup.
+      function initializeTranslations() {
+        document.querySelectorAll("[data-i18n]").forEach((element) => {
+          element.textContent = t(element.textContent.trim());
+        });
+        document.querySelectorAll("[data-i18n-attrs]").forEach((element) => {
+          element.dataset.i18nAttrs.split(" ").forEach((name) => {
+            element.setAttribute(name, t(element.getAttribute(name)));
+          });
+        });
+      }
+
+      function t(message, parameters = {}) {
+        const locale = window.__LOCALE__;
+        let translation = locale.messages[message];
+        if (typeof translation === "object") {
+          const category = new Intl.PluralRules(locale.language).select(parameters.count);
+          translation = translation[category] ?? translation.other;
+        }
+        return translation.replace(/\{(\w+)\}/g, (_, name) => String(parameters[name]));
+      }
+
+      initializeTranslations();
       initializeTheme();
 
-      const injectedDeck = window.__DECK__;
-      setDeck(injectedDeck === null || injectedDeck === undefined ? previewDeck : injectedDeck);
+      setDeck(window.__DECK__);
     })();
   </script>
 </body>

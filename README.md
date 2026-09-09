@@ -85,6 +85,18 @@ Kiro Powers and Cursor's public marketplace require their own import or
 review/publish flow; Antigravity and Grok can use the portable skill, and Grok
 also reads Claude-compatible plugin marketplaces.
 
+## Player language
+
+Study with controls in English, Korean, Japanese, Simplified Chinese,
+Spanish, or French. For example, choose Korean with:
+
+```sh
+python3 skills/cram/scripts/render.py deck.json -o quiz.html --language ko
+```
+
+Your cards keep their original language, and the quiz still works offline.
+[Contribute a translation →](docs/translations.md)
+
 ## Requirements
 
 For skill users, system `python3` is enough—there is nothing to install with

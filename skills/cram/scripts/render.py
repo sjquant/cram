@@ -12,8 +12,10 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 import tempfile
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import Sequence
 
@@ -27,7 +29,8 @@ from validator import DeckValidationError, load_deck  # noqa: E402
 
 PLUGIN_ROOT = Path(os.environ.get("CLAUDE_PLUGIN_ROOT") or str(Path(__file__).resolve().parents[3]))
 TEMPLATE_PATH = PLUGIN_ROOT / "skills" / "cram" / "template" / "player.html"
-INJECTION_MARKER = "/*INJECT*/ null"
+LOCALES_PATH = PLUGIN_ROOT / "skills" / "cram" / "locales"
+LANGUAGES = ("en", "ko", "ja", "zh-CN", "es", "fr")
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -36,6 +39,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("deck", type=Path, help="path to a deck JSON file")
     parser.add_argument("-o", "--output", type=Path, required=True, help="path to write the rendered HTML")
+    parser.add_argument(
+        "--language", "--lang", choices=LANGUAGES, default="en",
+        help="player UI language (default: en); does not translate deck content",
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -45,7 +52,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 1
 
     try:
-        html = render_deck(deck)
+        html = render_deck(deck, args.language)
         _write_output(args.output, html)
     except (OSError, RuntimeError) as error:
         print(error, file=sys.stderr)
@@ -55,15 +62,105 @@ def main(argv: Sequence[str] | None = None) -> int:
     return 0
 
 
-def render_deck(deck: dict) -> str:
+def render_deck(deck: dict, language: str = "en") -> str:
     """Inline a validated deck into the player template and return the resulting HTML."""
 
     template = TEMPLATE_PATH.read_text(encoding="utf-8")
-    if INJECTION_MARKER not in template:
-        raise RuntimeError(f"{TEMPLATE_PATH}: injection marker not found")
+    messages = _load_messages(language, template)
+    injections = {
+        "__CRAM_LANGUAGE__": language,
+        "__CRAM_LOCALE__": _escape_for_inline_script(json.dumps({"language": language, "messages": messages})),
+        "__CRAM_DECK__": _escape_for_inline_script(json.dumps(deck)),
+    }
+    for marker in injections:
+        if template.count(marker) != 1:
+            raise RuntimeError(f"{TEMPLATE_PATH}: expected exactly one {marker} injection marker")
+    # One pass keeps marker-like text inside deck/translation content untouched.
+    return re.sub("|".join(injections), lambda match: injections[match[0]], template)
 
-    deck_json = _escape_for_inline_script(json.dumps(deck))
-    return template.replace(INJECTION_MARKER, deck_json, 1)
+
+def _load_messages(language: str, template: str) -> dict:
+    """Reject incomplete translations before writing an unusable player."""
+
+    if language not in LANGUAGES:
+        raise RuntimeError(f"Unsupported language: {language}")
+    english = _read_catalog("en")
+    messages = english if language == "en" else _read_catalog(language)
+    required = _TemplateMessages()
+    required.feed(template)
+    missing = required.messages - english.keys()
+    if missing:
+        raise RuntimeError(f"en: missing UI messages: {', '.join(sorted(missing))}")
+    if messages.keys() != english.keys():
+        raise RuntimeError(f"Incomplete translation catalog: {language}")
+    for key, translation in messages.items():
+        if type(translation) is not type(english[key]):
+            raise RuntimeError(f"Translation type differs from English for {language}: {key}")
+    return messages
+
+
+def _read_catalog(language: str) -> dict:
+    path = LOCALES_PATH / f"{language}.json"
+    try:
+        messages = json.loads(path.read_text(encoding="utf-8"))
+    except ValueError as error:
+        raise RuntimeError(f"{path}: invalid translation JSON: {error}") from error
+    if not isinstance(messages, dict):
+        raise RuntimeError(f"{path}: expected a translation object")
+    for key, translation in messages.items():
+        if isinstance(translation, dict):
+            if "other" not in translation:
+                raise RuntimeError(f"{path}: missing plural forms for {key}")
+            forms = translation.values()
+        else:
+            forms = [translation]
+        placeholders = set(re.findall(r"\{(\w+)\}", key))
+        for text in forms:
+            if not isinstance(text, str) or not text.strip() or set(re.findall(r"\{(\w+)\}", text)) != placeholders:
+                raise RuntimeError(f"{path}: invalid translation for {key}")
+    return messages
+
+
+class _TemplateMessages(HTMLParser):
+    """Collect marked HTML messages and double-quoted literal t(...) calls."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.messages = set()
+        self.text = None
+        self.in_script = False
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        self.in_script = tag == "script"
+        if "data-i18n" in attrs:
+            self.text = []
+        for name in (attrs.get("data-i18n-attrs") or "").split():
+            if name not in attrs or attrs[name] is None:
+                raise RuntimeError(f"Missing translated attribute: {name}")
+            self.messages.add(attrs[name])
+
+    def handle_data(self, data):
+        if self.text is not None:
+            self.text.append(data)
+        if self.in_script:
+            # Skip comments and unrelated strings so examples and embedded text
+            # cannot be mistaken for translation calls. No JS runtime is needed.
+            tokens = (
+                r'//[^\n]*|/\*[\s\S]*?\*/'  # Comments.
+                r'|"(?:\\.|[^"\\])*"|\x27(?:\\.|[^\x27\\])*\x27|`(?:\\.|[^`\\])*`'  # Strings.
+                r'|(?<![\w$.])t\s*\(\s*(?P<message>"(?:\\.|[^"\\])*")'  # Literal calls.
+            )
+            for match in re.finditer(tokens, data):
+                if match["message"] is not None:
+                    self.messages.add(json.loads(match["message"]))
+
+    def handle_endtag(self, tag):
+        if self.text is not None:
+            self.messages.add("".join(self.text).strip())
+            self.text = None
+        if tag == "script":
+            self.in_script = False
 
 
 def _escape_for_inline_script(deck_json: str) -> str:
