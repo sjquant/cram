@@ -87,47 +87,15 @@ also reads Claude-compatible plugin marketplaces.
 
 ## Player language
 
-Choose the player UI language when rendering a deck:
+Study with controls in English, Korean, Japanese, Simplified Chinese,
+Spanish, or French. For example, choose Korean with:
 
 ```sh
 python3 skills/cram/scripts/render.py deck.json -o quiz.html --language ko
 ```
 
-`--lang` is an alias for `--language`. Supported codes are `en` (English,
-the default), `ko` (Korean), `ja` (Japanese), `zh-CN` (Simplified Chinese),
-`es` (Spanish), and `fr` (French). Unsupported codes produce an error before
-the output is written. Buttons, settings, feedback, and accessibility labels
-use the selected language; deck content retains its original text. CLI help
-and diagnostics are in English. All translations needed by the player are
-embedded in the HTML, so playback remains offline.
-
-To add a translation, copy `skills/cram/locales/en.json` to a new language
-file and translate its values, keeping every English message key and named
-placeholder (such as `{count}`). Plural messages use language-specific
-categories selected by `Intl.PluralRules` and require an `other` form.
-Register the code in the renderer's `LANGUAGES`, add a browser integration
-case, and update the supported codes here and in the skill guide. The renderer
-rejects incomplete catalogs, malformed values, and mismatched placeholders.
-It also checks that marked HTML messages and JavaScript translation calls
-exist in the English catalog, so omissions from all catalogs fail before
-output is written. Mark static text-only elements with `data-i18n` and
-attributes with `data-i18n-attrs="aria-label title"`. In JavaScript, pass
-literal, double-quoted message keys to `t(...)`, with variables supplied as
-parameters rather than embedded in the key. Add each new message to every
-catalog.
-
-The template is a rendering input. To preview a change, generate an HTML
-file using the command above, or refresh the committed example:
-
-```sh
-python3 skills/cram/scripts/render.py examples/http-caching-essentials.json \
-  -o examples/http-caching-essentials.html
-```
-
-Open the generated HTML in a browser. Preview and production rendering both
-use the locale JSON files, including English plural forms. Preserve each
-of the template's three injection tokens exactly once; surrounding HTML
-and script formatting can change freely.
+Your cards keep their original language, and the quiz still works offline.
+[Contribute a translation →](docs/translations.md)
 
 ## Requirements
 
