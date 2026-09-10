@@ -649,12 +649,25 @@
       overflow-wrap: anywhere;
     }
 
-    .basic__answer {
-      margin: 0;
+    .basic__answer-section {
+      margin-top: 1.5rem;
       padding-top: var(--s2);
       border-top: 1px solid var(--rule);
+      scroll-margin-top: var(--s2);
+    }
+
+    .basic__answer-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: var(--ink-soft);
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .basic__answer {
+      margin: 0;
       font-family: var(--sans);
-      font-size: clamp(1rem, 2vw, 1.125rem);
+      font-size: clamp(1.125rem, 2vw, 1.25rem);
       line-height: 1.5;
       white-space: pre-wrap;
       overflow-wrap: anywhere;
@@ -1695,7 +1708,11 @@
 
         const answer = createElement("p", "basic__answer", card.answer || t("This card has no answer."));
         answer.dataset.testid = "card-answer";
-        answer.hidden = true;
+        answer.tabIndex = -1;
+        const answerSection = createElement("div", "basic__answer-section");
+        answerSection.hidden = true;
+        answerSection.append(createElement("span", "basic__answer-label", t("Answer:")), answer);
+        fragment.append(answerSection);
 
         const reveal = createElement("button", "basic__reveal-button player__primary-action", t("Show answer"));
         reveal.type = "button";
@@ -1723,22 +1740,29 @@
         grading.append(missed, known);
 
         const actionRail = createElement("div", "player__action-rail");
+        const supportActions = createActionGroup(createElement, "player__support-actions", t("Optional hint"));
         if (hint) {
-          const supportActions = createActionGroup(createElement, "player__support-actions", t("Optional hint"));
           supportActions.append(hint);
           actionRail.append(supportActions);
         }
         const responseActions = createActionGroup(createElement, "player__response-actions", t("Answer actions"));
-        responseActions.append(answer, reveal, grading);
+        responseActions.append(reveal, grading);
         actionRail.append(responseActions);
         fragment.append(actionRail);
 
-        function revealAnswer(shouldScroll = false) {
-          answer.hidden = false;
+        function revealAnswer(shouldFocus = false) {
+          answerSection.hidden = false;
+          supportActions.remove();
           reveal.hidden = true;
           reveal.setAttribute("aria-expanded", "true");
           grading.hidden = false;
-          if (shouldScroll) grading.scrollIntoView({ block: "nearest" });
+          if (shouldFocus) {
+            answer.focus({ preventScroll: true });
+            const bounds = answerSection.getBoundingClientRect();
+            if (bounds.top < 0 || bounds.bottom > window.innerHeight) {
+              answerSection.scrollIntoView({ block: "start" });
+            }
+          }
         }
 
         // Pure UI update, safe to call while restoring a prior grade on mount

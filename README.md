@@ -96,6 +96,10 @@ themes keeps the current card, revealed answer, and unfinished input. On narrow
 screens, response buttons expand to the card width and long cards scroll with
 the page.
 
+Revealed answers appear directly below the question with larger text. Hints
+collapse after revealing; long answers open at their beginning, with grading
+controls after the answer.
+
 ## Player language
 
 Study with controls in English, Korean, Japanese, Simplified Chinese,

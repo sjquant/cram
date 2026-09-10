@@ -226,6 +226,63 @@ test.describe("basic cards", () => {
     await expect(page.locator("#player-status")).toHaveText("Marked as known.");
   });
 
+  for (const width of [390, 1280]) {
+    test(`keeps revealed answers beside their questions at ${width}px`, async ({ page }) => {
+      // Given: each theme shows a short question and an optional hint.
+      await page.setViewportSize({ width, height: 844 });
+      for (const theme of ["paper", "focus", "sprint"]) {
+        await openPlayer(page, HINT_DECK);
+        await page.getByTestId("settings-toggle").click();
+        await page.getByRole("combobox", { name: "Theme", exact: true }).selectOption(theme);
+        await page.keyboard.press("Escape");
+
+        // When: the answer replaces the recall task, through the keyboard shortcut.
+        await page.keyboard.press("a");
+
+        // Then: question and answer form one visible reading area; focus starts on the answer.
+        const prompt = await page.getByTestId("card-prompt").boundingBox();
+        const answer = await page.getByTestId("card-answer").boundingBox();
+        expect(answer.y - (prompt.y + prompt.height)).toBeGreaterThan(0);
+        expect(answer.y - (prompt.y + prompt.height)).toBeLessThan(90);
+        await expect(page.getByTestId("card-prompt")).toBeInViewport();
+        await expect(page.getByTestId("card-answer")).toBeInViewport({ ratio: 1 });
+        await expect(page.getByTestId("card-answer")).toBeFocused();
+        await expect(page.getByTestId("show-hint")).toBeHidden();
+        await page.keyboard.press("Tab");
+        await expect(page.getByTestId("grade-missed")).toBeFocused();
+      }
+    });
+
+    test(`reveals the beginning of a long answer before its grading controls at ${width}px`, async ({ page }) => {
+      // Given: the answer is taller than the viewport, and the learner has used a hint.
+      await page.setViewportSize({ width, height: 844 });
+      const card = { ...HINT_DECK.cards[0], answer: "Start reading here.\n" + "Detailed explanation.\n".repeat(80) };
+      await openPlayer(page, { ...HINT_DECK, cards: [card] });
+      await page.getByTestId("show-hint").click();
+
+      // When: clicking Show answer expands the card well beyond the screen.
+      await page.getByTestId("reveal-answer").click();
+
+      // Then: the opening lines are visible, while grading stays after the full answer.
+      const answer = await page.getByTestId("card-answer").boundingBox();
+      expect(answer.y).toBeGreaterThanOrEqual(0);
+      expect(answer.y).toBeLessThan(120);
+      await expect(page.getByTestId("card-hint")).toBeHidden();
+      await expect(page.getByTestId("grading-buttons")).not.toBeInViewport();
+      expect(await page.evaluate(id => window.CRAM_PLAYER.getHintUsed(id), card.id)).toBe(true);
+
+      // When: the learner finishes reading, grades, and reopens the card.
+      await page.getByTestId("grade-known").click();
+      await page.reload();
+      await page.evaluate(deck => window.CRAM_PLAYER.setDeck(deck), { ...HINT_DECK, cards: [card] });
+
+      // Then: the answer and recorded grade remain available without another reveal.
+      await expect(page.getByTestId("card-answer")).toHaveText(card.answer);
+      await expect(page.getByTestId("grade-known")).toHaveAttribute("aria-pressed", "true");
+      await expect(page.getByTestId("show-hint")).toBeHidden();
+    });
+  }
+
   test("requeues missed cards in the same session until their correct streak is mastered", async ({ page }) => {
     await openPlayer(page, BASIC_DECK);
     await enableCramMode(page);
@@ -1164,8 +1221,9 @@ test.describe("hints", () => {
     await page.reload();
     await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), HINT_DECK);
 
-    // Then: the hint starts hidden again while grade persistence remains independent.
-    await expect(page.getByTestId("show-hint")).toBeVisible();
+    // Then: the restored answer keeps hints collapsed, and hint usage is not restored.
+    await expect(page.getByTestId("show-hint")).toBeHidden();
+    await expect(page.getByTestId("card-answer")).toBeVisible();
     await expect(page.getByTestId("card-hint")).toBeHidden();
     expect(await page.evaluate(() => window.CRAM_PLAYER.getHintUsed("hint-basic-card"))).toBe(false);
     expect(await page.evaluate((deckId) => JSON.parse(localStorage.getItem(`fc:${deckId}:v1`)), HINT_DECK.id)).toEqual({
@@ -1188,10 +1246,11 @@ test.describe("card controls", () => {
 
     // When: the learner uses the card shortcuts instead of pointer clicks.
     await page.keyboard.press("h");
+    await expect(page.getByTestId("card-hint")).toBeVisible();
     await page.keyboard.press("a");
 
-    // Then: the same hint and answer state is reached without changing grading.
-    await expect(page.getByTestId("card-hint")).toBeVisible();
+    // Then: the answer takes over from the hint without changing grading.
+    await expect(page.getByTestId("card-hint")).toBeHidden();
     await expect(page.getByTestId("card-answer")).toBeVisible();
     expect(await page.evaluate(() => window.CRAM_PLAYER.getGrade("hint-basic-card"))).toBeUndefined();
 
