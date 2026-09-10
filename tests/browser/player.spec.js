@@ -1044,6 +1044,13 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }
     const previousAnchor = await page.getByTestId("previous-card").boundingBox();
     await expect(next).toHaveAccessibleName("Skip to next card");
 
+    // Desktop navigation belongs directly below the reading area, not at the window edge.
+    if (viewport.width >= 768) {
+      const card = await page.getByTestId("card").boundingBox();
+      expect(anchor.y).toBeGreaterThanOrEqual(card.y + card.height);
+      expect(anchor.y - (card.y + card.height)).toBeLessThan(24);
+    }
+
     // When: revealing and grading changes both the card height and the button label.
     await page.getByTestId("reveal-answer").click();
     await page.getByTestId("grade-known").click();

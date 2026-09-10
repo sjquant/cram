@@ -96,18 +96,21 @@ themes keeps the current card, revealed answer, and unfinished input. On narrow
 screens, response buttons expand to the card width and long cards scroll with
 the page.
 
-Cards fit their content, keeping reveal and check buttons near the question.
+Reveal and check buttons stay near the question.
 Revealed answers appear directly below the question; multiple-choice results
 follow the options, and cloze corrections follow the sentence. Hints collapse
 after answering, and keyboard focus moves to the result.
 
-On desktop, long cards scroll inside the card body while navigation stays
-outside. Phones and short windows use page scrolling. Long answers open at
-their beginning, and each new card starts with its question in view.
+On desktop, cards share a stable-height study panel with Previous and
+Skip/Next/See results in its bottom row. Long content scrolls inside the card
+body, keeping navigation nearby and outside the scrolling area. Made with
+Cram appears below the panel.
 
-Previous and Skip/Next/See results stay in a fixed bottom navigation bar.
-Their click targets keep the same size and position as card content changes,
-with space reserved so the bar does not cover the end of an answer.
+Phones and short windows use content-height cards and page scrolling, with
+navigation fixed to the screen bottom. Click targets keep the same size and
+position as card content changes, with space reserved so the bar does not
+cover the end of an answer. Long answers open at their beginning, and each
+new card starts with its question in view.
 
 ## Player language
 

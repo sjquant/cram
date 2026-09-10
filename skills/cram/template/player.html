@@ -384,6 +384,9 @@
       padding-top: 1.5rem;
     }
 
+    .player__study-panel { display: contents; }
+    .player__study-panel[hidden] { display: none; }
+
     .player__card {
       width: 100%;
       flex: none;
@@ -1198,17 +1201,39 @@
       .player { padding-top: 1rem; }
     }
 
-    @media (min-width: 48rem) {
-      :root { --navigation-space: calc(4.75rem + env(safe-area-inset-bottom)); }
-      .player__navigation { padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
-      .player__attribution {
-        bottom: calc(2.5rem + env(safe-area-inset-bottom));
-        transform: translateY(50%);
-      }
-    }
-
     @media (min-width: 48rem) and (min-height: 40rem) {
-      .player__card { max-height: min(42rem, calc(100dvh - 22rem)); }
+      :root { --navigation-space: 0px; }
+      .player { min-height: 0; }
+      .player__study-panel {
+        display: flex;
+        flex-direction: column;
+        height: min(32rem, calc(100dvh - 15rem));
+        border: 1px solid var(--card-border);
+        border-radius: var(--card-radius);
+        background: var(--surface);
+        box-shadow: var(--card-shadow);
+      }
+      [data-theme^="sprint"] .player__study-panel { border-width: 2px; }
+      .player__study-panel .player__card {
+        flex: 1;
+        min-height: 0;
+        padding: 2rem;
+        border: 0;
+        border-radius: var(--card-radius) var(--card-radius) 0 0;
+        box-shadow: none;
+      }
+      .player__navigation {
+        position: static;
+        flex: none;
+        padding: 0.75rem 2rem;
+        border-top: 1px solid var(--rule);
+        border-radius: 0 0 var(--card-radius) var(--card-radius);
+        background: var(--surface);
+      }
+      .player__attribution {
+        position: static;
+        margin-bottom: max(1rem, env(safe-area-inset-bottom));
+      }
       .player__card-content {
         min-height: 0;
         overflow-y: auto;
@@ -1300,15 +1325,22 @@
     </section>
 
     <main class="player__main">
-      <article class="player__card" id="card-frame" data-testid="card" tabindex="-1" aria-labelledby="card-prompt">
-        <div class="player__card-meta">
-          <span class="player__card-type" id="card-type" data-testid="card-type" data-i18n>Preparing card</span>
-          <span class="player__card-position" id="card-position" data-testid="card-position">—</span>
-        </div>
-        <div class="player__card-content" id="card-content" data-testid="card-content" tabindex="0" aria-labelledby="card-prompt">
-          <p class="player__card-prompt" id="card-prompt" data-testid="card-prompt" data-i18n>Preparing your deck…</p>
-        </div>
-      </article>
+      <div class="player__study-panel" id="study-panel">
+        <article class="player__card" id="card-frame" data-testid="card" tabindex="-1" aria-labelledby="card-prompt">
+          <div class="player__card-meta">
+            <span class="player__card-type" id="card-type" data-testid="card-type" data-i18n>Preparing card</span>
+            <span class="player__card-position" id="card-position" data-testid="card-position">—</span>
+          </div>
+          <div class="player__card-content" id="card-content" data-testid="card-content" tabindex="0" aria-labelledby="card-prompt">
+            <p class="player__card-prompt" id="card-prompt" data-testid="card-prompt" data-i18n>Preparing your deck…</p>
+          </div>
+        </article>
+
+        <nav class="player__navigation" aria-label="Card navigation" data-i18n-attrs="aria-label">
+          <button type="button" id="previous-card" data-testid="previous-card" data-action="previous" aria-label="Previous card" aria-keyshortcuts="ArrowLeft" disabled data-i18n data-i18n-attrs="aria-label">← Previous</button>
+          <button type="button" id="next-card" data-testid="next-card" class="player__next-button player__next-button--skip" data-action="next" aria-label="Next card" aria-keyshortcuts="ArrowRight" disabled data-i18n data-i18n-attrs="aria-label">Skip →</button>
+        </nav>
+      </div>
 
       <section class="player__score-screen" id="score-screen" data-testid="score-screen" tabindex="-1" hidden aria-labelledby="score-title">
         <header class="player__score-header">
@@ -1349,10 +1381,6 @@
       </div>
 
       <footer class="player__footer">
-        <nav class="player__navigation" aria-label="Card navigation" data-i18n-attrs="aria-label">
-          <button type="button" id="previous-card" data-testid="previous-card" data-action="previous" aria-label="Previous card" aria-keyshortcuts="ArrowLeft" disabled data-i18n data-i18n-attrs="aria-label">← Previous</button>
-          <button type="button" id="next-card" data-testid="next-card" class="player__next-button player__next-button--skip" data-action="next" aria-label="Next card" aria-keyshortcuts="ArrowRight" disabled data-i18n data-i18n-attrs="aria-label">Skip →</button>
-        </nav>
         <p class="player__status" id="player-status" role="status" aria-live="polite"></p>
       </footer>
 
@@ -1377,6 +1405,7 @@
 
       const refs = {
         player: document.getElementById("player"),
+        studyPanel: document.getElementById("study-panel"),
         title: document.getElementById("deck-title"),
         progress: document.getElementById("progress"),
         progressLabel: document.getElementById("progress-label"),
@@ -2503,6 +2532,7 @@
       function setViewState(view) {
         const showingResults = view === "results";
         refs.player.dataset.state = view;
+        refs.studyPanel.hidden = showingResults;
         refs.cardFrame.hidden = showingResults;
         refs.navigation.hidden = showingResults;
         refs.scoreScreen.hidden = !showingResults;
