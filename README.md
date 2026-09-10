@@ -85,6 +85,16 @@ Kiro Powers and Cursor's public marketplace require their own import or
 review/publish flow; Antigravity and Grok can use the portable skill, and Grok
 also reads Claude-compatible plugin marketplaces.
 
+## Player appearance
+
+Open **Settings → Design style** to switch between **A · Paper**, **B · Focus**,
+and **C · Sprint**. Paper is the default. Design and color theme are separate
+choices, so each style supports the system color scheme and all named palettes.
+Both preferences are saved in the browser independently of deck progress;
+switching styles keeps the current card, revealed answer, and unfinished input.
+On narrow screens, response buttons expand to the card width and long cards
+scroll with the page.
+
 ## Player language
 
 Study with controls in English, Korean, Japanese, Simplified Chinese,

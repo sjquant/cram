@@ -107,5 +107,9 @@
   "cloze": "rellenar huecos",
   "unknown": "desconocido",
   "Progress reset. Start again.": "Progreso restablecido. Empieza de nuevo.",
-  "Progress reset for this session, but saved progress could not be cleared.": "Se reinició esta sesión, pero no se pudo borrar el progreso guardado."
+  "Progress reset for this session, but saved progress could not be cleared.": "Se reinició esta sesión, pero no se pudo borrar el progreso guardado.",
+  "Design style": "Estilo de diseño",
+  "A · Paper": "A · Papel",
+  "B · Focus": "B · Concentración",
+  "C · Sprint": "C · Repaso rápido"
 }

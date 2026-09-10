@@ -107,5 +107,9 @@
   "cloze": "texte à trous",
   "unknown": "inconnu",
   "Progress reset. Start again.": "Progression réinitialisée. Recommencez.",
-  "Progress reset for this session, but saved progress could not be cleared.": "Cette session a été réinitialisée, mais la progression enregistrée n’a pas pu être effacée."
+  "Progress reset for this session, but saved progress could not be cleared.": "Cette session a été réinitialisée, mais la progression enregistrée n’a pas pu être effacée.",
+  "Design style": "Style visuel",
+  "A · Paper": "A · Papier",
+  "B · Focus": "B · Concentration",
+  "C · Sprint": "C · Révision rapide"
 }

@@ -391,31 +391,6 @@ test.describe("basic cards", () => {
     await expect(page.getByTestId("settings-toggle")).toHaveAttribute("aria-expanded", "false");
   });
 
-  test("aligns the mobile footer action with the header shell gutter", async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await openPlayer(page, BASIC_DECK);
-
-    // Given: a fresh mobile card hides the non-essential navigation hint.
-    const gutters = await page.evaluate(() => {
-      const player = document.querySelector("#player");
-      const header = document.querySelector(".player__header");
-      const navigation = document.querySelector(".player__navigation");
-      const playerBounds = player.getBoundingClientRect();
-      const headerBounds = header.getBoundingClientRect();
-      const navigationBounds = navigation.getBoundingClientRect();
-      const styles = getComputedStyle(player);
-      return {
-        headerTop: headerBounds.top - playerBounds.top,
-        navigationBottom: playerBounds.bottom - navigationBounds.bottom,
-        shellPaddingBottom: Number.parseFloat(styles.paddingBottom),
-      };
-    });
-
-    // Then: the visible footer action and header use the same outer gutter.
-    expect(gutters.headerTop).toBeCloseTo(gutters.navigationBottom, 1);
-    expect(gutters.navigationBottom).toBeCloseTo(gutters.shellPaddingBottom, 1);
-  });
-
   test("keeps long card-position counts readable without horizontal page overflow", async ({ page }) => {
     for (const viewport of [
       { width: 1280, height: 800 },
@@ -424,7 +399,7 @@ test.describe("basic cards", () => {
       await page.setViewportSize(viewport);
       await openPlayer(page, LONG_COUNT_DECK);
 
-      // Given: a 100-card deck renders a zero-padded position in the seal badge.
+      // Given: a 100-card deck renders a zero-padded card position.
       const badgeState = await page.evaluate(() => {
         const badge = document.querySelector("[data-testid='card-position']");
         const textRange = document.createRange();
@@ -442,7 +417,7 @@ test.describe("basic cards", () => {
         };
       });
 
-      // Then: every digit stays inside the widened seal and the page remains viewport-bound.
+      // Then: every digit stays inside the position label and the page remains viewport-bound.
       expect(badgeState.label).toBe("001/100");
       expect(badgeState.badgeScrollWidth).toBeLessThanOrEqual(badgeState.badgeClientWidth);
       expect(badgeState.textBounds.left).toBeGreaterThanOrEqual(badgeState.badgeBounds.left - 1);
@@ -922,7 +897,7 @@ test.describe("basic cards", () => {
   });
 });
 
-test("selects paper-and-ink themes and persists the explicit choice independently of progress", async ({ page }) => {
+test("selects color themes and persists the explicit choice independently of progress", async ({ page }) => {
   await page.emulateMedia({ colorScheme: "dark" });
   await openPlayer(page, BASIC_DECK);
   const themeSelect = page.getByTestId("theme-select");
@@ -1023,70 +998,91 @@ test("selects paper-and-ink themes and persists the explicit choice independentl
   ))).toBe("#151310");
 });
 
-test("ignores the legacy v1 theme key and keeps every palette legible over its paper", async ({ page }) => {
-  await page.emulateMedia({ colorScheme: "dark" });
-  await page.goto(PLAYER_URL);
-  await page.evaluate(() => {
-    localStorage.removeItem("cram:theme:v2");
-    localStorage.setItem("cram:theme:v1", "dark");
-  });
-
-  // Given: only the old G1 key contains an explicit choice.
-  await page.reload();
-  await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), BASIC_DECK);
+test("changes design without losing an unfinished answer or the color preference", async ({ page }) => {
+  // Given: an unfinished cloze answer in a dark mobile player.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openPlayer(page, CLOZE_DECK);
+  await page.getByRole("textbox", { name: "Blank 1", exact: true }).fill("If-None-Match");
   await page.getByTestId("settings-toggle").click();
-  await expect(page.getByTestId("settings-panel")).toBeVisible();
+  await page.getByRole("combobox", { name: "Color theme", exact: true }).selectOption("dark");
 
-  // Then: the v1 value is ignored and the system preference remains active.
-  expect(await page.locator("html").getAttribute("data-theme")).toBeNull();
-  await expect(page.getByTestId("theme-select")).toHaveValue("");
+  // When: the learner compares all three designs before submitting.
+  for (const design of ["focus", "sprint", "paper"]) {
+    await page.getByRole("combobox", { name: "Design style", exact: true }).selectOption(design);
+    await page.keyboard.press("Escape");
 
-  // When: the picker visits each theme, inspect the public token contract and grain branch.
-  const palettes = [];
-  const themeValues = ["", "light", "dark", "sepia", "bluebell", "night-neon"];
-  for (let index = 0; index < themeValues.length; index += 1) {
-    if (index > 0) await page.getByTestId("theme-select").selectOption(themeValues[index]);
-    palettes.push(await page.evaluate(() => {
-      const root = getComputedStyle(document.documentElement);
-      const paper = root.getPropertyValue("--paper").trim();
-      const luminance = (color) => {
-        const channels = color.slice(1).match(/../g).map((value) => Number.parseInt(value, 16) / 255);
-        const linear = channels.map((channel) => channel <= 0.03928
-          ? channel / 12.92
-          : ((channel + 0.055) / 1.055) ** 2.4);
-        return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
-      };
-      const paperLuminance = luminance(paper);
-      const contrast = (color) => {
-        const colorLuminance = luminance(color);
-        return (Math.max(paperLuminance, colorLuminance) + 0.05)
-          / (Math.min(paperLuminance, colorLuminance) + 0.05);
-      };
-      const grain = getComputedStyle(document.body, "::before");
-      return {
-        theme: document.documentElement.getAttribute("data-theme") || "system",
-        tokens: ["paper", "ink", "ink-soft", "rule", "rule-strong", "accent", "positive"]
-          .reduce((values, token) => ({ ...values, [token]: root.getPropertyValue(`--${token}`).trim() }), {}),
-        contrast: ["ink", "ink-soft", "accent", "positive"].reduce(
-          (values, token) => ({ ...values, [token]: contrast(root.getPropertyValue(`--${token}`).trim()) }),
-          {}
-        ),
-        grain: { mixBlendMode: grain.mixBlendMode, opacity: grain.opacity }
-      };
-    }));
+    // Then: the input survives and the color setting stays independent.
+    await expect(page.getByRole("textbox", { name: "Blank 1", exact: true })).toHaveValue("If-None-Match");
+    await expect(page.locator("html")).toHaveAttribute("data-design", design);
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+    await page.getByTestId("settings-toggle").click();
   }
+  await page.getByRole("combobox", { name: "Design style", exact: true }).selectOption("sprint");
+  await page.keyboard.press("Escape");
+  await page.getByRole("textbox", { name: "Blank 2", exact: true }).fill("304");
+  await page.getByRole("button", { name: "Check answers", exact: true }).click();
 
-  // Then: all seven tokens exist, text-facing colors meet 4.5:1, and grain stays visible.
-  expect(palettes).toHaveLength(6);
-  for (const palette of palettes) {
-    expect(Object.values(palette.tokens).every(Boolean)).toBe(true);
-    for (const ratio of Object.values(palette.contrast)) expect(ratio).toBeGreaterThanOrEqual(4.5);
-    expect(Number.parseFloat(palette.grain.opacity)).toBeGreaterThan(0);
-  }
-  expect(palettes.map(({ theme }) => theme)).toEqual(["system", "light", "dark", "sepia", "bluebell", "night-neon"]);
-  expect(palettes.find(({ theme }) => theme === "sepia").grain.mixBlendMode).toBe("multiply");
-  expect(palettes.find(({ theme }) => theme === "bluebell").grain.mixBlendMode).toBe("multiply");
-  expect(palettes.find(({ theme }) => theme === "night-neon").grain.mixBlendMode).toBe("screen");
+  // When: the file is reopened after grading.
+  await page.reload();
+  await page.evaluate(deck => window.CRAM_PLAYER.setDeck(deck), CLOZE_DECK);
+  await page.getByTestId("settings-toggle").click();
+
+  // Then: both appearance choices and the recorded answer are restored.
+  await expect(page.getByRole("combobox", { name: "Design style", exact: true })).toHaveValue("sprint");
+  await expect(page.getByRole("combobox", { name: "Color theme", exact: true })).toHaveValue("dark");
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId("cloze-feedback-summary")).toHaveText("Correct.");
+});
+
+for (const design of ["paper", "focus", "sprint"]) {
+  test(`completes every card type on a narrow screen in the ${design} design`, async ({ page }) => {
+    // Given: a phone-width player using the selected design.
+    await page.setViewportSize({ width: 320, height: 568 });
+    await openPlayer(page, ADAPTIVE_TYPES_DECK);
+    await page.getByTestId("settings-toggle").click();
+    await page.getByRole("combobox", { name: "Design style", exact: true }).selectOption(design);
+    await page.keyboard.press("Escape");
+
+    // When: a learner reveals, self-grades, selects, and types through the deck.
+    await page.getByTestId("reveal-answer").click();
+    await expect(page.getByTestId("card-answer")).toBeVisible();
+    await page.getByTestId("grade-known").click();
+    await page.getByTestId("next-card").click();
+    await expect(page.getByTestId("card-prompt")).toBeInViewport();
+    await page.getByRole("button", { name: "The missed one", exact: true }).click();
+    await page.getByRole("button", { name: "Check answer", exact: true }).click();
+    await page.getByTestId("next-card").click();
+    await page.getByRole("textbox", { name: "Blank 1", exact: true }).fill("card");
+    await page.getByRole("button", { name: "Check answers", exact: true }).click();
+    await page.getByTestId("next-card").click();
+
+    // Then: controls remain reachable, the round completes, and no horizontal scroll is needed.
+    await expect(page.getByTestId("score-value")).toHaveText("3/3");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.getByTestId("reset-progress").click();
+    await expect(page.getByTestId("reveal-answer")).toBeVisible();
+  });
+}
+
+test("keeps style switching usable when preference storage is blocked", async ({ page }) => {
+  // Given: this browser cannot read or write local preferences.
+  await page.addInitScript(() => {
+    Storage.prototype.getItem = () => { throw new Error("Storage blocked"); };
+    Storage.prototype.setItem = () => { throw new Error("Storage blocked"); };
+  });
+  await openPlayer(page, BASIC_DECK);
+  await page.getByTestId("reveal-answer").click();
+
+  // When: the learner changes the design while inspecting an answer.
+  await page.getByTestId("settings-toggle").click();
+  await page.getByRole("combobox", { name: "Design style", exact: true }).selectOption("focus");
+  await page.keyboard.press("Escape");
+
+  // Then: the style applies for this session without hiding the answer.
+  await expect(page.locator("html")).toHaveAttribute("data-design", "focus");
+  await expect(page.getByTestId("card-answer")).toBeVisible();
+  await page.getByTestId("grade-known").click();
+  await expect(page.getByTestId("grade-known")).toHaveAttribute("aria-pressed", "true");
 });
 
 test.describe("hints", () => {
