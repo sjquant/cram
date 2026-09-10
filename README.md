@@ -105,6 +105,10 @@ On desktop, long cards scroll inside the card body while navigation stays
 outside. Phones and short windows use page scrolling. Long answers open at
 their beginning, and each new card starts with its question in view.
 
+Previous and Skip/Next/See results stay in a fixed bottom navigation bar.
+Their click targets keep the same size and position as card content changes,
+with space reserved so the bar does not cover the end of an answer.
+
 ## Player language
 
 Study with controls in English, Korean, Japanese, Simplified Chinese,

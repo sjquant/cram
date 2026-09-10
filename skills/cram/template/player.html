@@ -42,6 +42,7 @@
       --s2: 1rem;
       --s3: 1.5rem;
       --s4: 2.5rem;
+      --navigation-space: calc(4.5rem + env(safe-area-inset-bottom));
     }
 
     [data-theme="paper"],
@@ -55,6 +56,7 @@
 
     html {
       min-height: 100%;
+      scroll-padding-bottom: var(--navigation-space);
     }
 
     body {
@@ -63,6 +65,7 @@
       min-height: 100dvh;
       color: var(--ink);
       background: var(--canvas);
+      padding-bottom: var(--navigation-space);
       -webkit-font-smoothing: antialiased;
     }
 
@@ -145,7 +148,7 @@
 
     .player {
       width: min(100% - 3rem, 48rem);
-      min-height: calc(100dvh - 3rem);
+      min-height: calc(100dvh - 3rem - var(--navigation-space));
       margin: 0 auto;
       padding: clamp(1.5rem, 4vh, 3rem) 0 1rem;
       display: flex;
@@ -736,12 +739,28 @@
     }
 
     .player__navigation {
-      display: flex;
+      position: fixed;
+      inset-inline: 0;
+      bottom: 0;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       align-items: center;
-      justify-content: space-between;
       gap: 0.75rem;
       width: 100%;
-      margin-top: 1.25rem;
+      padding: 0.75rem max(1rem, calc((100% - 48rem) / 2)) calc(0.75rem + env(safe-area-inset-bottom));
+      border-top: 1px solid var(--rule);
+      background: var(--canvas);
+    }
+
+    .player__navigation button {
+      width: min(100%, 12rem);
+      height: 3rem;
+      white-space: nowrap;
+    }
+
+    .player__navigation #next-card {
+      justify-self: end;
     }
 
     .player__navigation #previous-card {
@@ -2115,7 +2134,10 @@
         const panelBounds = panel.getBoundingClientRect();
         const scrollsInside = panel.scrollHeight > panel.clientHeight && getComputedStyle(panel).overflowY === "auto";
         const top = scrollsInside ? Math.max(0, panelBounds.top) : 0;
-        const bottom = scrollsInside ? Math.min(window.innerHeight, panelBounds.bottom) : window.innerHeight;
+        const viewportBottom = refs.navigation.hidden
+          ? window.innerHeight
+          : Math.min(window.innerHeight, refs.navigation.getBoundingClientRect().top);
+        const bottom = scrollsInside ? Math.min(viewportBottom, panelBounds.bottom) : viewportBottom;
         // Keep nearby questions visible; only move when the result falls outside the reading area.
         if (bounds.top < top || bounds.bottom > bottom) {
           if (scrollsInside) panel.scrollTop += bounds.top - panelBounds.top;

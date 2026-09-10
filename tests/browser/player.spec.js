@@ -1030,6 +1030,66 @@ test("scrolls long desktop cards internally and switches to page scrolling on ph
   await expect.poll(() => readingArea.evaluate(element => element.scrollTop)).toBe(0);
 });
 
+for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }, { width: 1280, height: 900 }]) {
+  test(`advances through changing cards from the same screen position at ${viewport.width}px`, async ({ page }) => {
+    // Given: short and long cards share a persistent navigation bar.
+    await page.setViewportSize(viewport);
+    await openPlayer(page, { ...BASIC_DECK, cards: [
+      BASIC_DECK.cards[0],
+      { ...BASIC_DECK.cards[1], prompt: "Long question.\n".repeat(60) },
+      { ...BASIC_DECK.cards[0], id: "last-card" },
+    ] });
+    const next = page.getByTestId("next-card");
+    const anchor = await next.boundingBox();
+    const previousAnchor = await page.getByTestId("previous-card").boundingBox();
+    await expect(next).toHaveAccessibleName("Skip to next card");
+
+    // When: revealing and grading changes both the card height and the button label.
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+
+    // Then: Next occupies exactly the same click target as Skip.
+    await expect(next).toHaveAccessibleName("Next card");
+    expect(await next.boundingBox()).toEqual(anchor);
+    expect(await page.getByTestId("previous-card").boundingBox()).toEqual(previousAnchor);
+    const clickPoint = { x: anchor.x + anchor.width / 2, y: anchor.y + anchor.height / 2 };
+    await page.mouse.click(clickPoint.x, clickPoint.y);
+
+    // When: the long card is scrolled and skipped by clicking the same coordinates.
+    await page.getByTestId("card-content").focus();
+    await page.keyboard.press("PageDown");
+    expect(await next.boundingBox()).toEqual(anchor);
+    await page.mouse.click(clickPoint.x, clickPoint.y);
+
+    // Then: the final card's See results button also stays put and can be clicked again.
+    await expect(page.getByTestId("card-position")).toHaveText("3/3");
+    await expect(next).toHaveAccessibleName("See results");
+    expect(await next.boundingBox()).toEqual(anchor);
+    await page.mouse.click(clickPoint.x, clickPoint.y);
+    await expect(page.getByTestId("score-screen")).toBeVisible();
+    await expect(next).toBeHidden();
+  });
+}
+
+test("keeps the last mobile answer controls above the fixed navigation bar", async ({ page }) => {
+  // Given: a long answer needs page scrolling on a phone.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openPlayer(page, { ...BASIC_DECK, cards: [
+    { ...BASIC_DECK.cards[0], answer: "Explanation.\n".repeat(80) },
+  ] });
+  await page.getByTestId("reveal-answer").click();
+
+  // When: the learner reaches the end of the document.
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+
+  // Then: grading is fully visible and clickable above navigation, without an overlay.
+  const grade = await page.getByTestId("grade-known").boundingBox();
+  const navigation = await page.getByRole("navigation", { name: "Card navigation" }).boundingBox();
+  expect(grade.y + grade.height).toBeLessThanOrEqual(navigation.y);
+  await page.getByTestId("grade-known").click();
+  await expect(page.getByTestId("grade-known")).toHaveAttribute("aria-pressed", "true");
+});
+
 test("keeps appearance independent from the selected theme", async ({ page }) => {
   // Given: a fresh player with separate Theme and Appearance controls.
   await page.emulateMedia({ colorScheme: "dark" });
