@@ -236,6 +236,10 @@ test.describe("basic cards", () => {
         await page.getByRole("combobox", { name: "Theme", exact: true }).selectOption(theme);
         await page.keyboard.press("Escape");
 
+        const question = await page.getByTestId("card-prompt").boundingBox();
+        const reveal = await page.getByTestId("reveal-answer").boundingBox();
+        expect(reveal.y - (question.y + question.height)).toBeLessThan(140);
+
         // When: the answer replaces the recall task, through the keyboard shortcut.
         await page.keyboard.press("a");
 
@@ -265,8 +269,10 @@ test.describe("basic cards", () => {
 
       // Then: the opening lines are visible, while grading stays after the full answer.
       const answer = await page.getByTestId("card-answer").boundingBox();
-      expect(answer.y).toBeGreaterThanOrEqual(0);
-      expect(answer.y).toBeLessThan(120);
+      const readingArea = await page.getByTestId("card-content").boundingBox();
+      const readingTop = width >= 768 ? readingArea.y : 0;
+      expect(answer.y).toBeGreaterThanOrEqual(readingTop);
+      expect(answer.y - readingTop).toBeLessThan(120);
       await expect(page.getByTestId("card-hint")).toBeHidden();
       await expect(page.getByTestId("grading-buttons")).not.toBeInViewport();
       expect(await page.evaluate(id => window.CRAM_PLAYER.getHintUsed(id), card.id)).toBe(true);
@@ -954,6 +960,76 @@ test.describe("basic cards", () => {
   });
 });
 
+for (const width of [390, 1280]) {
+  test(`keeps choices and input feedback in the reading flow at ${width}px`, async ({ page }) => {
+    // Given: an MCQ with a hint, followed by a cloze question.
+    await page.setViewportSize({ width, height: 1000 });
+    await openPlayer(page, { ...HINT_DECK, cards: HINT_DECK.cards.slice(1, 3) });
+    const prompt = await page.getByTestId("card-prompt").boundingBox();
+    const options = await page.getByTestId("mcq-options").boundingBox();
+    expect(options.y - (prompt.y + prompt.height)).toBeLessThan(40);
+
+    // When: an incorrect choice is submitted.
+    await page.getByTestId("mcq-option").filter({ hasText: "no-cache" }).click();
+    await page.getByTestId("mcq-check-answer").click();
+
+    // Then: the result follows the choices and is the next thing to read.
+    const answeredOptions = await page.getByTestId("mcq-options").boundingBox();
+    const result = await page.getByTestId("mcq-feedback").boundingBox();
+    expect(result.y - (answeredOptions.y + answeredOptions.height)).toBeLessThan(40);
+    await expect(page.getByTestId("mcq-feedback")).toBeFocused();
+    await expect(page.getByTestId("mcq-feedback")).toBeInViewport({ ratio: 1 });
+    await expect(page.getByTestId("show-hint")).toBeHidden();
+
+    // When: the following cloze question is answered incorrectly.
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("cloze-input").fill("wrong");
+    await page.getByTestId("cloze-check-answer").click();
+
+    // Then: the correction follows the sentence, with an accessible link to the invalid blank.
+    const sentence = await page.getByTestId("card-prompt").boundingBox();
+    const feedback = await page.getByTestId("cloze-feedback").boundingBox();
+    expect(feedback.y - (sentence.y + sentence.height)).toBeLessThan(40);
+    await expect(page.getByTestId("cloze-input")).toHaveAttribute("aria-invalid", "true");
+    await expect(page.getByTestId("cloze-input")).toHaveAccessibleDescription(/Correct answer:/);
+    await expect(page.getByTestId("cloze-feedback")).toBeFocused();
+    await expect(page.getByTestId("cloze-feedback")).toBeInViewport({ ratio: 1 });
+    await expect(page.getByTestId("show-hint")).toBeHidden();
+  });
+}
+
+test("scrolls long desktop cards internally and switches to page scrolling on phones", async ({ page }) => {
+  // Given: a desktop card with an answer longer than the available screen.
+  await page.setViewportSize({ width: 1280, height: 844 });
+  await openPlayer(page, { ...BASIC_DECK, cards: [
+    { ...BASIC_DECK.cards[0], answer: "Read from the beginning.\n" + "A detailed explanation.\n".repeat(80) },
+    BASIC_DECK.cards[1],
+  ] });
+  await page.getByTestId("reveal-answer").click();
+  const readingArea = page.getByTestId("card-content");
+
+  // When: keyboard scrolling moves through the answer.
+  await readingArea.focus();
+  const previousScroll = await readingArea.evaluate(element => element.scrollTop);
+  await page.keyboard.press("PageDown");
+
+  // Then: only the card's body moves, and navigation stays visible.
+  await expect.poll(() => readingArea.evaluate(element => element.scrollTop)).toBeGreaterThan(previousScroll);
+  expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(845);
+  await expect(page.getByTestId("next-card")).toBeInViewport({ ratio: 1 });
+
+  // When: the same long card is viewed on a phone.
+  await page.setViewportSize({ width: 390, height: 844 });
+
+  // Then: the content is part of the page, and advancing starts the next question in view.
+  await expect.poll(() => readingArea.evaluate(element => element.scrollHeight - element.clientHeight)).toBeLessThanOrEqual(1);
+  expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeGreaterThan(844);
+  await page.getByTestId("grade-known").click();
+  await page.getByTestId("next-card").click();
+  await expect(page.getByTestId("card-prompt")).toBeInViewport({ ratio: 1 });
+  await expect.poll(() => readingArea.evaluate(element => element.scrollTop)).toBe(0);
+});
+
 test("keeps appearance independent from the selected theme", async ({ page }) => {
   // Given: a fresh player with separate Theme and Appearance controls.
   await page.emulateMedia({ colorScheme: "dark" });
@@ -1097,8 +1173,8 @@ test.describe("hints", () => {
     await page.getByTestId("mcq-option").filter({ hasText: "no-cache" }).click();
     await page.getByTestId("mcq-check-answer").click();
 
-    // Then: that renderer records the same per-card hint state.
-    await expect(page.getByTestId("card-hint")).toHaveText(HINT_DECK.cards[1].hint);
+    // Then: the result replaces the hint, while its use remains recorded for this session.
+    await expect(page.getByTestId("card-hint")).toBeHidden();
     expect(await page.evaluate(() => window.CRAM_PLAYER.getHintUsed("hint-mcq-card"))).toBe(true);
 
     // Given/When: the cloze learner requests its hint and submits an incorrect answer.

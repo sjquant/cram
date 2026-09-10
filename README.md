@@ -96,9 +96,14 @@ themes keeps the current card, revealed answer, and unfinished input. On narrow
 screens, response buttons expand to the card width and long cards scroll with
 the page.
 
-Revealed answers appear directly below the question with larger text. Hints
-collapse after revealing; long answers open at their beginning, with grading
-controls after the answer.
+Cards fit their content, keeping reveal and check buttons near the question.
+Revealed answers appear directly below the question; multiple-choice results
+follow the options, and cloze corrections follow the sentence. Hints collapse
+after answering, and keyboard focus moves to the result.
+
+On desktop, long cards scroll inside the card body while navigation stays
+outside. Phones and short windows use page scrolling. Long answers open at
+their beginning, and each new card starts with its question in view.
 
 ## Player language
 

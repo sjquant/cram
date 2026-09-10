@@ -383,8 +383,7 @@
 
     .player__card {
       width: 100%;
-      flex: 1;
-      min-height: clamp(24rem, 55dvh, 36rem);
+      flex: none;
       display: flex;
       flex-direction: column;
       margin: 0;
@@ -396,11 +395,12 @@
     }
 
     .player__card-meta {
+      flex: none;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: var(--s2);
-      margin-bottom: 2.5rem;
+      margin-bottom: 1.5rem;
     }
 
     .player__card-type {
@@ -429,13 +429,14 @@
       min-width: 0;
     }
 
+    .player__card-content > * { flex-shrink: 0; }
+
     .player__action-rail {
       display: flex;
       width: 100%;
       flex-direction: column;
       gap: var(--s2);
-      margin-top: auto;
-      padding-top: 2rem;
+      padding-top: 1.5rem;
     }
 
     .player__support-actions {
@@ -514,7 +515,7 @@
       flex-direction: column;
       align-items: stretch;
       gap: 0.35rem;
-      margin: 0;
+      margin: 1.5rem 0 0;
     }
 
     .mcq__response {
@@ -627,7 +628,7 @@
     .cloze__blank-feedback {
       margin: 0.35rem 0 0;
       color: var(--ink-soft);
-      font-size: 0.86rem;
+      font-size: 1rem;
     }
 
     .cloze__blank-feedback--correct {
@@ -1159,8 +1160,7 @@
       .player__header { gap: 1rem; margin-bottom: 1rem; }
       .player__title { font-size: 1.05rem; text-align: left; }
       .player__main { padding-top: 1rem; }
-      .player__card { min-height: 28rem; padding: 1.5rem 1.25rem; }
-      .player__card-meta { margin-bottom: 2rem; }
+      .player__card { padding: 1.5rem 1.25rem; }
       .player__card-prompt { font-size: 1.35rem; }
       .player__response-actions > .player__primary-action { align-self: stretch; width: 100%; }
       .player__status--navigation-hint { display: none; }
@@ -1173,7 +1173,18 @@
 
     @media (max-height: 32rem) and (min-width: 30rem) {
       .player { padding-top: 1rem; }
-      .player__card { min-height: 20rem; }
+    }
+
+    @media (min-width: 48rem) and (min-height: 40rem) {
+      .player__card { max-height: min(42rem, calc(100dvh - 22rem)); }
+      .player__card-content {
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior-y: contain;
+        scrollbar-gutter: stable;
+        scrollbar-color: var(--rule-strong) var(--surface);
+        padding-inline: 0.25rem;
+      }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -1262,7 +1273,7 @@
           <span class="player__card-type" id="card-type" data-testid="card-type" data-i18n>Preparing card</span>
           <span class="player__card-position" id="card-position" data-testid="card-position">—</span>
         </div>
-        <div class="player__card-content" id="card-content" data-testid="card-content">
+        <div class="player__card-content" id="card-content" data-testid="card-content" tabindex="0" aria-labelledby="card-prompt">
           <p class="player__card-prompt" id="card-prompt" data-testid="card-prompt" data-i18n>Preparing your deck…</p>
         </div>
       </article>
@@ -1663,6 +1674,7 @@
         refs.cardType.textContent = Object.hasOwn(typeLabels, type) ? typeLabels[type] : type;
         refs.cardContent.replaceChildren();
         refs.cardFrame.scrollTop = 0;
+        refs.cardContent.scrollTop = 0;
         // Drops any error left by the card we navigated away from. Set before the
         // renderer runs, so a renderer that writes its own status keeps it.
         setStatus(NAVIGATION_HINT);
@@ -1757,11 +1769,7 @@
           reveal.setAttribute("aria-expanded", "true");
           grading.hidden = false;
           if (shouldFocus) {
-            answer.focus({ preventScroll: true });
-            const bounds = answerSection.getBoundingClientRect();
-            if (bounds.top < 0 || bounds.bottom > window.innerHeight) {
-              answerSection.scrollIntoView({ block: "start" });
-            }
+            focusCardFeedback(answer, answerSection);
           }
         }
 
@@ -1851,7 +1859,7 @@
         }
 
         const response = createElement("div", "mcq__response");
-        response.append(options, checkAnswer);
+        response.append(checkAnswer);
         const actionRail = createElement("div", "player__action-rail");
         if (hint) {
           const supportActions = createActionGroup(createElement, "player__support-actions", t("Optional hint"));
@@ -1861,7 +1869,7 @@
         response.setAttribute("role", "group");
         response.setAttribute("aria-label", t("Answer actions"));
         actionRail.append(response);
-        fragment.append(actionRail, feedback);
+        fragment.append(options, actionRail, feedback);
         if (explanation) fragment.append(explanation);
 
         let selected = null;
@@ -1874,7 +1882,6 @@
           });
           checkAnswer.hidden = !hasSelection;
           checkAnswer.disabled = !hasSelection;
-          if (hasSelection) checkAnswer.scrollIntoView({ block: "nearest" });
         }
 
         function applyAnsweredUI(grade, selectedButton = null) {
@@ -1898,6 +1905,7 @@
           }
           checkAnswer.hidden = true;
           checkAnswer.disabled = true;
+          actionRail.remove();
         }
 
         function handleOptionClick(selectedButton, selectedChoice) {
@@ -1915,6 +1923,7 @@
             return;
           }
           applyAnsweredUI(grade, selected.button);
+          focusCardFeedback(feedback);
           setStatus(grade === MCQ_GRADES.CORRECT ? t("Correct.") : t("Incorrect."));
         }
 
@@ -2017,6 +2026,7 @@
             return;
           }
           applyAnsweredUI(grade, results);
+          focusCardFeedback(feedback);
           setStatus(grade === CLOZE_GRADES.CORRECT ? t("Correct.") : t("Incorrect."));
         }
 
@@ -2045,6 +2055,8 @@
                 ? CLOZE_GRADES.CORRECT
                 : CLOZE_GRADES.INCORRECT;
               blank.input.setAttribute("aria-invalid", String(!blankCorrect));
+              feedbackItems[index].id = `blank-feedback-${index}`;
+              blank.input.setAttribute("aria-describedby", feedbackItems[index].id);
               feedbackItems[index].hidden = false;
               feedbackItems[index].classList.toggle("cloze__blank-feedback--correct", blankCorrect);
               feedbackItems[index].classList.toggle("cloze__blank-feedback--incorrect", !blankCorrect);
@@ -2065,6 +2077,7 @@
               blank.input.classList.remove("cloze__input--correct", "cloze__input--incorrect");
               blank.input.removeAttribute("data-result");
               blank.input.removeAttribute("aria-invalid");
+              blank.input.removeAttribute("aria-describedby");
               feedbackItems[index].hidden = true;
               feedbackItems[index].classList.remove(
                 "cloze__blank-feedback--correct",
@@ -2077,6 +2090,7 @@
           feedback.hidden = false;
           checkAnswer.hidden = true;
           checkAnswer.disabled = true;
+          actionRail.remove();
           if (explanation) {
             explanation.textContent = explanationText;
             explanation.hidden = false;
@@ -2091,6 +2105,22 @@
         }
 
         return fragment;
+      }
+
+      function focusCardFeedback(element, readingArea = element) {
+        element.tabIndex = -1;
+        element.focus({ preventScroll: true });
+        const panel = refs.cardContent;
+        const bounds = readingArea.getBoundingClientRect();
+        const panelBounds = panel.getBoundingClientRect();
+        const scrollsInside = panel.scrollHeight > panel.clientHeight && getComputedStyle(panel).overflowY === "auto";
+        const top = scrollsInside ? Math.max(0, panelBounds.top) : 0;
+        const bottom = scrollsInside ? Math.min(window.innerHeight, panelBounds.bottom) : window.innerHeight;
+        // Keep nearby questions visible; only move when the result falls outside the reading area.
+        if (bounds.top < top || bounds.bottom > bottom) {
+          if (scrollsInside) panel.scrollTop += bounds.top - panelBounds.top;
+          else readingArea.scrollIntoView({ block: "start" });
+        }
       }
 
       function createHintControls(card, player, createElement, setStatus) {
