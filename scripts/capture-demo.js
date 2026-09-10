@@ -8,12 +8,11 @@ const { pathToFileURL } = require("node:url");
 const { chromium } = require("@playwright/test");
 
 const ROOT = path.resolve(__dirname, "..");
-const EXAMPLE_PATH = path.join(ROOT, "examples/http-caching-essentials.html");
 const EXAMPLE_JSON_PATH = path.join(ROOT, "examples/http-caching-essentials.json");
 const RENDERER_PATH = path.join(ROOT, "skills/cram/scripts/render.py");
 const OUTPUT_PATH = path.join(ROOT, "docs/demo.gif");
-// A portrait tablet canvas keeps the storyboard and the player's lower actions visible.
-const VIEWPORT = { width: 800, height: 900 };
+// Show the desktop study panel and attribution together at README-friendly proportions.
+const VIEWPORT = { width: 1000, height: 850 };
 const VIDEO_START = "0.35";
 const TERMINAL_COMMAND = "/cram:cram HTTP caching essentials";
 const EXAMPLE_DECK = JSON.parse(fs.readFileSync(EXAMPLE_JSON_PATH, "utf8"));
@@ -86,25 +85,21 @@ async function captureVideo(tempDir) {
   const video = page.video();
 
   try {
-    verifyRenderedExample(tempDir);
+    const examplePath = renderExample(tempDir);
     await page.setContent(buildTerminalMarkup(EXAMPLE_DECK), { waitUntil: "load" });
     await page.waitForSelector(".terminal-window");
     await playTerminalStory(page);
 
-    await page.goto(pathToFileURL(EXAMPLE_PATH).href);
+    await page.addInitScript(() => {
+      localStorage.setItem("cram:theme", "paper");
+      localStorage.setItem("cram:appearance", "light");
+    });
+    await page.goto(pathToFileURL(examplePath).href);
     await page.waitForFunction(() => document.querySelector("#player")?.dataset.state === "ready");
     await page.evaluate((deck) => {
-      for (let index = localStorage.length - 1; index >= 0; index -= 1) {
-        const key = localStorage.key(index);
-        if (key && key.startsWith("fc:")) localStorage.removeItem(key);
-      }
-      document.documentElement.dataset.theme = "bluebell";
-      localStorage.setItem("cram:theme:v2", "bluebell");
       window.CRAM_PLAYER.setDeck(deck);
     }, DEMO_DECK);
     await page.waitForFunction(() => window.CRAM_PLAYER?.getState().total === 3);
-    // Keep the capture crisp and compact; the production player still keeps its paper grain.
-    await page.addStyleTag({ content: "body::before { opacity: 0 !important; }" });
     await installCursor(page);
     await moveCursor(page, page.getByTestId("reveal-answer"));
     await capturePlayerFlow(page);
@@ -117,7 +112,7 @@ async function captureVideo(tempDir) {
   return video.path();
 }
 
-function verifyRenderedExample(tempDir) {
+function renderExample(tempDir) {
   const outputPath = path.join(tempDir, "rendered-example.html");
   const result = spawnSync("python3", [RENDERER_PATH, EXAMPLE_JSON_PATH, "-o", outputPath], {
     encoding: "utf8",
@@ -127,6 +122,7 @@ function verifyRenderedExample(tempDir) {
   if (result.status !== 0) {
     throw new Error(`The example deck could not be rendered: ${result.stderr || result.stdout}`);
   }
+  return outputPath;
 }
 
 function buildTerminalMarkup(deck) {
@@ -387,11 +383,6 @@ async function capturePlayerFlow(page) {
   const clozeInput = page.getByTestId("cloze-input").first();
   await clozeInput.waitFor({ state: "visible" });
   await pause(500);
-  await clozeInput.evaluate((input) => {
-    input.style.minWidth = "8ch";
-    input.style.paddingInline = "0.35em";
-    input.style.textAlign = "left";
-  });
   await moveCursor(page, clozeInput);
   await clozeInput.pressSequentially("ETag", { delay: 70 });
   await pause(350);
@@ -424,6 +415,7 @@ async function clickWithCue(page, locator) {
 }
 
 async function moveCursor(page, locator) {
+  await locator.scrollIntoViewIfNeeded();
   const bounds = await locator.boundingBox();
   if (!bounds) throw new Error("Cannot focus the demo cursor on a hidden target.");
   await page.evaluate(({ x, y }) => {
@@ -446,7 +438,7 @@ async function triggerCursorClick(page) {
 function transcodeGif(videoPath, outputPath) {
   const filter = [
     "fps=10,scale=800:-2:flags=lanczos,split[s0][s1]",
-    "[s0]palettegen=max_colors=16:stats_mode=diff[p]",
+    "[s0]palettegen=max_colors=32:stats_mode=diff[p]",
     "[s1][p]paletteuse=dither=none:diff_mode=rectangle"
   ].join(";");
   const result = spawnSync("ffmpeg", [
