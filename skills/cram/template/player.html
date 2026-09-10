@@ -48,10 +48,6 @@
     [data-theme="focus"],
     [data-theme="sprint"] { color-scheme: light; }
 
-    [data-theme="paper-dark"],
-    [data-theme="focus-dark"],
-    [data-theme="sprint-dark"] { color-scheme: dark; }
-
     [data-appearance="light"] { color-scheme: light; }
     [data-appearance="dark"] { color-scheme: dark; }
 
@@ -1179,7 +1175,7 @@
     (() => {
       try {
         const preference = window.localStorage.getItem("cram:theme");
-        if (/^(paper|focus|sprint)(-dark)?$/.test(preference)) {
+        if (/^(paper|focus|sprint)$/.test(preference)) {
           document.documentElement.dataset.theme = preference;
         }
         const appearance = window.localStorage.getItem("cram:appearance");
@@ -1215,11 +1211,8 @@
               </svg>
               <select class="player__theme-select" id="theme-select" data-testid="theme-select">
                 <option value="paper" data-i18n>Paper</option>
-                <option value="paper-dark" data-i18n>Paper Dark</option>
                 <option value="focus" data-i18n>Focus</option>
-                <option value="focus-dark" data-i18n>Focus Dark</option>
                 <option value="sprint" data-i18n>Sprint</option>
-                <option value="sprint-dark" data-i18n>Sprint Dark</option>
               </select>
             </div>
           </div>

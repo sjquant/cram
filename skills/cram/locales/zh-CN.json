@@ -103,11 +103,8 @@
   "Progress reset. Start again.": "进度已重置，请重新开始。",
   "Progress reset for this session, but saved progress could not be cleared.": "本次学习已重置，但无法清除已保存的进度。",
   "Paper": "纸张",
-  "Paper Dark": "纸张深色",
   "Focus": "专注",
-  "Focus Dark": "专注深色",
   "Sprint": "冲刺",
-  "Sprint Dark": "冲刺深色",
   "Appearance": "外观",
   "Light": "浅色",
   "Dark": "深色"

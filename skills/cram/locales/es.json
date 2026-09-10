@@ -103,11 +103,8 @@
   "Progress reset. Start again.": "Progreso restablecido. Empieza de nuevo.",
   "Progress reset for this session, but saved progress could not be cleared.": "Se reinició esta sesión, pero no se pudo borrar el progreso guardado.",
   "Paper": "Papel",
-  "Paper Dark": "Papel oscuro",
   "Focus": "Concentración",
-  "Focus Dark": "Concentración oscura",
   "Sprint": "Sprint",
-  "Sprint Dark": "Sprint oscuro",
   "Appearance": "Apariencia",
   "Light": "Claro",
   "Dark": "Oscuro"

@@ -934,7 +934,7 @@ test("switches complete themes without losing an unfinished answer or saved prog
   await page.getByTestId("settings-toggle").click();
 
   // When: the learner compares light, dark, and tinted themes before submitting.
-  for (const theme of ["focus", "sprint-dark", "paper-dark"]) {
+  for (const theme of ["focus", "sprint", "paper"]) {
     await page.getByRole("combobox", { name: "Theme", exact: true }).selectOption(theme);
     await page.keyboard.press("Escape");
 
@@ -943,7 +943,7 @@ test("switches complete themes without losing an unfinished answer or saved prog
     await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
     await page.getByTestId("settings-toggle").click();
   }
-  await page.getByRole("combobox", { name: "Theme", exact: true }).selectOption("sprint-dark");
+  await page.getByRole("combobox", { name: "Theme", exact: true }).selectOption("sprint");
   await page.keyboard.press("Escape");
   await page.getByRole("textbox", { name: "Blank 2", exact: true }).fill("304");
   await page.getByRole("button", { name: "Check answers", exact: true }).click();
@@ -954,7 +954,7 @@ test("switches complete themes without losing an unfinished answer or saved prog
   await page.getByTestId("settings-toggle").click();
 
   // Then: the single theme preference and the recorded answer are restored.
-  await expect(page.getByRole("combobox", { name: "Theme", exact: true })).toHaveValue("sprint-dark");
+  await expect(page.getByRole("combobox", { name: "Theme", exact: true })).toHaveValue("sprint");
   await page.keyboard.press("Escape");
   await expect(page.getByTestId("cloze-feedback-summary")).toHaveText("Correct.");
 });

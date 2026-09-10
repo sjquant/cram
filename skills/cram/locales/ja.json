@@ -103,11 +103,8 @@
   "Progress reset. Start again.": "進捗をリセットしました。もう一度始めましょう。",
   "Progress reset for this session, but saved progress could not be cleared.": "このセッションはリセットしましたが、保存済みの進捗を削除できませんでした。",
   "Paper": "ペーパー",
-  "Paper Dark": "ペーパー・ダーク",
   "Focus": "フォーカス",
-  "Focus Dark": "フォーカス・ダーク",
   "Sprint": "スプリント",
-  "Sprint Dark": "スプリント・ダーク",
   "Appearance": "表示",
   "Light": "ライト",
   "Dark": "ダーク"
