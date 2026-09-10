@@ -1050,6 +1050,32 @@ test("grows the desktop study panel for a long question when space allows", asyn
   expect(navigation.y + navigation.height).toBeLessThanOrEqual(1200);
 });
 
+test("keeps the desktop attribution anchored to the viewport footer", async ({ page }) => {
+  // Given: a desktop viewport where a long question can expand the study panel.
+  await page.setViewportSize({ width: 1280, height: 1200 });
+  await openPlayer(page, {
+    ...BASIC_DECK,
+    cards: [
+      BASIC_DECK.cards[0],
+      { ...BASIC_DECK.cards[1], prompt: "Long question.\n".repeat(28) },
+    ],
+  });
+  const attribution = page.locator(".player__attribution");
+  const initialAttribution = await attribution.boundingBox();
+  const initialStyle = await attribution.evaluate(element => getComputedStyle(element).position);
+
+  // When: the learner advances to the card that grows the panel.
+  await page.getByTestId("next-card").click();
+
+  // Then: attribution remains fixed at the viewport footer instead of following the panel.
+  const expandedAttribution = await attribution.boundingBox();
+  const panel = await page.locator(".player__study-panel").boundingBox();
+  expect(initialStyle).toBe("fixed");
+  expect(expandedAttribution).toEqual(initialAttribution);
+  expect(expandedAttribution.y + expandedAttribution.height).toBeGreaterThan(panel.y + panel.height);
+  expect(1200 - (expandedAttribution.y + expandedAttribution.height)).toBeLessThanOrEqual(32);
+});
+
 test("scrolls long desktop cards internally and switches to page scrolling on phones", async ({ page }) => {
   // Given: a desktop card with an answer longer than the available screen.
   await page.setViewportSize({ width: 1280, height: 844 });

@@ -105,7 +105,8 @@ On desktop, cards share a study panel with a 40rem baseline height. Longer
 questions can grow the panel when the viewport has room, up to its screen-safe
 bound. Previous and Skip/Next/See results stay in its bottom row. Long answer
 content scrolls inside the card body, keeping navigation nearby and outside
-the scrolling area. Made with Cram appears below the panel.
+the scrolling area. Made with Cram stays fixed in the viewport footer, independent
+of the panel height.
 
 Phones and short windows use content-height cards and page scrolling, with
 navigation fixed to the screen bottom. Click targets keep the same size and
