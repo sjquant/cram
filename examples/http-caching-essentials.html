@@ -52,38 +52,8 @@
     [data-theme="focus-dark"],
     [data-theme="sprint-dark"] { color-scheme: dark; }
 
-    [data-theme="sepia"] {
-      color-scheme: light;
-      --paper: #eadcc5;
-      --ink: #34271f;
-      --ink-soft: #725d4a;
-      --rule: #d0bfa2;
-      --rule-strong: #a98f6e;
-      --accent: #a83f2f;
-      --positive: #356b4a;
-    }
-
-    [data-theme="night-neon"] {
-      color-scheme: dark;
-      --paper: #101820;
-      --ink: #e8eef0;
-      --ink-soft: #9fb2bb;
-      --rule: #283842;
-      --rule-strong: #3d5360;
-      --accent: #ff705f;
-      --positive: #9bd3b0;
-    }
-
-    [data-theme="bluebell"] {
-      color-scheme: light;
-      --paper: #eaf3fa;
-      --ink: #20344a;
-      --ink-soft: #526b82;
-      --rule: #c8dbe9;
-      --rule-strong: #90b0c8;
-      --accent: #b84335;
-      --positive: #3c725a;
-    }
+    [data-appearance="light"] { color-scheme: light; }
+    [data-appearance="dark"] { color-scheme: dark; }
 
     * { box-sizing: border-box; }
 
@@ -1209,9 +1179,11 @@
     (() => {
       try {
         const preference = window.localStorage.getItem("cram:theme");
-        if (/^(paper|focus|sprint)(-dark)?$|^(sepia|night-neon|bluebell)$/.test(preference)) {
+        if (/^(paper|focus|sprint)(-dark)?$/.test(preference)) {
           document.documentElement.dataset.theme = preference;
         }
+        const appearance = window.localStorage.getItem("cram:appearance");
+        if (/^(light|dark)$/.test(appearance)) document.documentElement.dataset.appearance = appearance;
       } catch {
         // Theme preferences are optional; the system color scheme remains the fallback.
       }
@@ -1242,18 +1214,22 @@
                 <circle cx="15.5" cy="9" r="1"></circle>
               </svg>
               <select class="player__theme-select" id="theme-select" data-testid="theme-select">
-                <option value="" data-i18n>System</option>
                 <option value="paper" data-i18n>Paper</option>
                 <option value="paper-dark" data-i18n>Paper Dark</option>
                 <option value="focus" data-i18n>Focus</option>
                 <option value="focus-dark" data-i18n>Focus Dark</option>
                 <option value="sprint" data-i18n>Sprint</option>
                 <option value="sprint-dark" data-i18n>Sprint Dark</option>
-                <option value="sepia" data-i18n>Sepia</option>
-                <option value="night-neon" data-i18n>Night neon</option>
-                <option value="bluebell" data-i18n>Bluebell</option>
               </select>
             </div>
+          </div>
+          <div class="player__settings-group">
+            <label class="player__settings-label" for="appearance-select" data-i18n>Appearance</label>
+            <select class="player__theme-select" id="appearance-select" data-testid="appearance-select">
+              <option value="" data-i18n>System</option>
+              <option value="light" data-i18n>Light</option>
+              <option value="dark" data-i18n>Dark</option>
+            </select>
           </div>
           <label class="player__settings-option">
             <input type="checkbox" id="cram-mode-toggle" data-testid="cram-mode-toggle">
@@ -1344,7 +1320,7 @@
 
   <!-- Render this template with render.py; examples/ contains the generated preview.
        Injected JSON escapes every less-than character to keep inline scripts safe. -->
-  <script>window.__LOCALE__ = {"language": "en", "messages": {"Cram player": "Cram player", "Loading deck\u2026": "Loading deck\u2026", "Open settings": "Open settings", "Close settings": "Close settings", "Settings": "Settings", "Theme": "Theme", "System": "System", "Sepia": "Sepia", "Night neon": "Night neon", "Bluebell": "Bluebell", "Cram mode": "Cram mode", "Requeue missed cards during this session.": "Requeue missed cards during this session.", "Deck progress": "Deck progress", "Card 0 of 0": "Card 0 of 0", "Preparing card": "Preparing card", "Preparing your deck\u2026": "Preparing your deck\u2026", "Results": "Results", "Session complete": "Session complete", "0 correct \u00b7 Nothing to review": "0 correct \u00b7 Nothing to review", "Score breakdown": "Score breakdown", "0 correct": "0 correct", "Nothing to review": "Nothing to review", "Retry missed cards": "Retry missed cards", "Reset progress": "Reset progress", "Review missed cards": "Review missed cards", "Perfect score \u2014 nothing to review.": "Perfect score \u2014 nothing to review.", "Scroll down to see more missed cards": "Scroll down to see more missed cards", "More cards below": "More cards below", "Card navigation": "Card navigation", "Previous card": "Previous card", "\u2190 Previous": "\u2190 Previous", "Next card": "Next card", "Skip \u2192": "Skip \u2192", "Next \u2192": "Next \u2192", "See results \u2192": "See results \u2192", "See results": "See results", "Skip to next card": "Skip to next card", "Made with Cram": "Made with Cram", "Use H for a hint, A to reveal a basic answer, or the arrow keys to move through the deck.": "Use H for a hint, A to reveal a basic answer, or the arrow keys to move through the deck.", "Cram mode is unavailable during retry sessions": "Cram mode is unavailable during retry sessions", "Disable Cram mode": "Disable Cram mode", "Enable Cram mode": "Enable Cram mode", "Cram mode is unavailable during retry sessions.": "Cram mode is unavailable during retry sessions.", "Cram mode enabled for this session.": "Cram mode enabled for this session.", "Cram mode disabled for this session.": "Cram mode disabled for this session.", "The page needs a deck with a title and at least one card.": "The page needs a deck with a title and at least one card.", "This card could not be rendered.": "This card could not be rendered.", "The card renderer failed.": "The card renderer failed.", "This card has no prompt.": "This card has no prompt.", "This card has no answer.": "This card has no answer.", "Show answer": "Show answer", "Missed it": "Missed it", "Knew it": "Knew it", "Grade your recall": "Grade your recall", "Optional hint": "Optional hint", "Answer actions": "Answer actions", "The grade could not be recorded.": "The grade could not be recorded.", "Marked as known.": "Marked as known.", "Marked as missed.": "Marked as missed.", "Choose an answer": "Choose an answer", "This option has no text.": "This option has no text.", "Check answer": "Check answer", "Correct.": "Correct.", "Incorrect.": "Incorrect.", "Incorrect. The correct answer is: {answer}": "Incorrect. The correct answer is: {answer}", "Answer selected. Check it when ready.": "Answer selected. Check it when ready.", "Blank {number}": "Blank {number}", "Check answers": "Check answers", "Blank {number}: Correct.": "Blank {number}: Correct.", "Blank {number}: Incorrect. Correct answer: {answer}": "Blank {number}: Incorrect. Correct answer: {answer}", "This card was previously marked incorrect.": "This card was previously marked incorrect.", "Show hint": "Show hint", "The hint could not be recorded.": "The hint could not be recorded.", "The \u201c{type}\u201d card renderer is not installed yet.": "The \u201c{type}\u201d card renderer is not installed yet.", "Unable to load deck": "Unable to load deck", "No cards loaded": "No cards loaded", "Deck error": "Deck error", "Card {position} of {total}": "Card {position} of {total}", "Session complete. Score {score}/{total}.": "Session complete. Score {score}/{total}.", "{score} correct \u00b7 {missedCount} to review": "{score} correct \u00b7 {missedCount} to review", "All {total} correct \u00b7 Nothing to review": "All {total} correct \u00b7 Nothing to review", "{score} correct": "{score} correct", "{missedCount} to review": "{missedCount} to review", "Retry {count} missed card": {"one": "Retry {count} missed card", "other": "Retry {count} missed cards"}, "Retrying {count} missed card.": {"one": "Retrying {count} missed card.", "other": "Retrying {count} missed cards."}, "Session complete: score {score} of {total}": "Session complete: score {score} of {total}", "Session complete: {score} of {total}": "Session complete: {score} of {total}", "Nothing to retry.": "Nothing to retry.", "Needed a hint": "Needed a hint", "Answer:": "Answer:", "Explanation:": "Explanation:", "Hint:": "Hint:", "Card {position} of {total}. {content}": "Card {position} of {total}. {content}", "Progress could not be saved. Try again.": "Progress could not be saved. Try again.", "basic": "basic", "mcq": "mcq", "cloze": "cloze", "unknown": "unknown", "Progress reset. Start again.": "Progress reset. Start again.", "Progress reset for this session, but saved progress could not be cleared.": "Progress reset for this session, but saved progress could not be cleared.", "Paper": "Paper", "Paper Dark": "Paper Dark", "Focus": "Focus", "Focus Dark": "Focus Dark", "Sprint": "Sprint", "Sprint Dark": "Sprint Dark"}};</script>
+  <script>window.__LOCALE__ = {"language": "en", "messages": {"Cram player": "Cram player", "Loading deck\u2026": "Loading deck\u2026", "Open settings": "Open settings", "Close settings": "Close settings", "Settings": "Settings", "Theme": "Theme", "System": "System", "Cram mode": "Cram mode", "Requeue missed cards during this session.": "Requeue missed cards during this session.", "Deck progress": "Deck progress", "Card 0 of 0": "Card 0 of 0", "Preparing card": "Preparing card", "Preparing your deck\u2026": "Preparing your deck\u2026", "Results": "Results", "Session complete": "Session complete", "0 correct \u00b7 Nothing to review": "0 correct \u00b7 Nothing to review", "Score breakdown": "Score breakdown", "0 correct": "0 correct", "Nothing to review": "Nothing to review", "Retry missed cards": "Retry missed cards", "Reset progress": "Reset progress", "Review missed cards": "Review missed cards", "Perfect score \u2014 nothing to review.": "Perfect score \u2014 nothing to review.", "Scroll down to see more missed cards": "Scroll down to see more missed cards", "More cards below": "More cards below", "Card navigation": "Card navigation", "Previous card": "Previous card", "\u2190 Previous": "\u2190 Previous", "Next card": "Next card", "Skip \u2192": "Skip \u2192", "Next \u2192": "Next \u2192", "See results \u2192": "See results \u2192", "See results": "See results", "Skip to next card": "Skip to next card", "Made with Cram": "Made with Cram", "Use H for a hint, A to reveal a basic answer, or the arrow keys to move through the deck.": "Use H for a hint, A to reveal a basic answer, or the arrow keys to move through the deck.", "Cram mode is unavailable during retry sessions": "Cram mode is unavailable during retry sessions", "Disable Cram mode": "Disable Cram mode", "Enable Cram mode": "Enable Cram mode", "Cram mode is unavailable during retry sessions.": "Cram mode is unavailable during retry sessions.", "Cram mode enabled for this session.": "Cram mode enabled for this session.", "Cram mode disabled for this session.": "Cram mode disabled for this session.", "The page needs a deck with a title and at least one card.": "The page needs a deck with a title and at least one card.", "This card could not be rendered.": "This card could not be rendered.", "The card renderer failed.": "The card renderer failed.", "This card has no prompt.": "This card has no prompt.", "This card has no answer.": "This card has no answer.", "Show answer": "Show answer", "Missed it": "Missed it", "Knew it": "Knew it", "Grade your recall": "Grade your recall", "Optional hint": "Optional hint", "Answer actions": "Answer actions", "The grade could not be recorded.": "The grade could not be recorded.", "Marked as known.": "Marked as known.", "Marked as missed.": "Marked as missed.", "Choose an answer": "Choose an answer", "This option has no text.": "This option has no text.", "Check answer": "Check answer", "Correct.": "Correct.", "Incorrect.": "Incorrect.", "Incorrect. The correct answer is: {answer}": "Incorrect. The correct answer is: {answer}", "Answer selected. Check it when ready.": "Answer selected. Check it when ready.", "Blank {number}": "Blank {number}", "Check answers": "Check answers", "Blank {number}: Correct.": "Blank {number}: Correct.", "Blank {number}: Incorrect. Correct answer: {answer}": "Blank {number}: Incorrect. Correct answer: {answer}", "This card was previously marked incorrect.": "This card was previously marked incorrect.", "Show hint": "Show hint", "The hint could not be recorded.": "The hint could not be recorded.", "The \u201c{type}\u201d card renderer is not installed yet.": "The \u201c{type}\u201d card renderer is not installed yet.", "Unable to load deck": "Unable to load deck", "No cards loaded": "No cards loaded", "Deck error": "Deck error", "Card {position} of {total}": "Card {position} of {total}", "Session complete. Score {score}/{total}.": "Session complete. Score {score}/{total}.", "{score} correct \u00b7 {missedCount} to review": "{score} correct \u00b7 {missedCount} to review", "All {total} correct \u00b7 Nothing to review": "All {total} correct \u00b7 Nothing to review", "{score} correct": "{score} correct", "{missedCount} to review": "{missedCount} to review", "Retry {count} missed card": {"one": "Retry {count} missed card", "other": "Retry {count} missed cards"}, "Retrying {count} missed card.": {"one": "Retrying {count} missed card.", "other": "Retrying {count} missed cards."}, "Session complete: score {score} of {total}": "Session complete: score {score} of {total}", "Session complete: {score} of {total}": "Session complete: {score} of {total}", "Nothing to retry.": "Nothing to retry.", "Needed a hint": "Needed a hint", "Answer:": "Answer:", "Explanation:": "Explanation:", "Hint:": "Hint:", "Card {position} of {total}. {content}": "Card {position} of {total}. {content}", "Progress could not be saved. Try again.": "Progress could not be saved. Try again.", "basic": "basic", "mcq": "mcq", "cloze": "cloze", "unknown": "unknown", "Progress reset. Start again.": "Progress reset. Start again.", "Progress reset for this session, but saved progress could not be cleared.": "Progress reset for this session, but saved progress could not be cleared.", "Paper": "Paper", "Paper Dark": "Paper Dark", "Focus": "Focus", "Focus Dark": "Focus Dark", "Sprint": "Sprint", "Sprint Dark": "Sprint Dark", "Appearance": "Appearance", "Light": "Light", "Dark": "Dark"}};</script>
   <script>window.__DECK__ = {"id": "http-caching-essentials", "title": "HTTP caching essentials", "source": "RFC 9111: HTTP Caching", "cards": [{"id": "cache-control-max-age", "type": "basic", "prompt": "What does `Cache-Control: max-age=60` permit a cache to do?", "answer": "Treat a stored response as fresh for 60 seconds after it was generated, so it can be reused without revalidation.", "hint": "Think in terms of a freshness lifetime."}, {"id": "cache-control-no-store", "type": "mcq", "prompt": "Which `Cache-Control` directive prevents a cache from storing a response?", "answer": "`no-store`", "distractors": ["`no-cache`", "`private`", "`max-age=60`"], "explanation": "Use this directive when retaining the response in a cache is not allowed."}, {"id": "cache-control-no-cache", "type": "basic", "prompt": "What does the HTTP `Cache-Control: no-cache` directive mean for a stored response?", "answer": "A cache may store the response, but it must revalidate it with the origin before reusing it.", "hint": "It is different from `no-store`: storage is allowed, reuse without validation is not."}, {"id": "etag-validator", "type": "cloze", "prompt": "Which response header gives a representation an opaque validator that a client can send in `If-None-Match`? The header is `{{ETag}}`.", "explanation": "A validator lets the client ask whether its stored representation is still current without downloading the full representation again."}, {"id": "if-none-match-not-modified", "type": "basic", "prompt": "For a conditional `GET`, what status can an origin return when `If-None-Match` confirms that a cached representation is still current?", "answer": "`304 Not Modified`, allowing the cache to reuse its stored response body."}, {"id": "vary-shared-cache", "type": "basic", "prompt": "What does the HTTP `Vary` response header tell a shared cache?", "answer": "Which request-header fields must match before a stored response can be reused for another request.", "hint": "The response may vary based on fields such as `Accept-Language`."}, {"id": "cache-control-private", "type": "basic", "prompt": "When should a response be marked `Cache-Control: private`?", "answer": "When it may be stored by a private browser cache but must not be stored by a shared cache.", "explanation": "This is useful for user-specific responses that a browser may reuse for that same user."}]};</script>
   <script>
     (() => {
@@ -1379,6 +1355,7 @@
         settingsToggle: document.getElementById("settings-toggle"),
         settingsPanel: document.getElementById("settings-panel"),
         themeSelect: document.getElementById("theme-select"),
+        appearanceSelect: document.getElementById("appearance-select"),
         cramModeToggle: document.getElementById("cram-mode-toggle"),
         status: document.getElementById("player-status"),
         announcer: document.getElementById("card-announcer")
@@ -1387,6 +1364,7 @@
       const NAVIGATION_HINT = t("Use H for a hint, A to reveal a basic answer, or the arrow keys to move through the deck.");
       const PROMPT_ID = "card-prompt";
       const THEME_STORAGE_KEY = "cram:theme";
+      const APPEARANCE_STORAGE_KEY = "cram:appearance";
       const REQUIRED_DRILL_STREAK = 2;
 
       const cardTypes = Object.create(null);
@@ -1411,8 +1389,20 @@
       };
 
       function initializeTheme() {
-        refs.themeSelect.value = document.documentElement.dataset.theme || "";
+        refs.themeSelect.value = document.documentElement.dataset.theme || "paper";
+        refs.appearanceSelect.value = document.documentElement.dataset.appearance || "";
         updateCramModeToggle();
+      }
+
+      function setAppearancePreference(preference) {
+        if (![...refs.appearanceSelect.options].some(option => option.value === preference)) return;
+        if (preference) document.documentElement.dataset.appearance = preference;
+        else document.documentElement.removeAttribute("data-appearance");
+        refs.appearanceSelect.value = preference;
+        try {
+          if (preference) window.localStorage.setItem(APPEARANCE_STORAGE_KEY, preference);
+          else window.localStorage.removeItem(APPEARANCE_STORAGE_KEY);
+        } catch {}
       }
 
       function setThemePreference(preference) {
@@ -2720,6 +2710,9 @@
 
       refs.themeSelect.addEventListener("change", () => {
         setThemePreference(refs.themeSelect.value);
+      });
+      refs.appearanceSelect.addEventListener("change", () => {
+        setAppearancePreference(refs.appearanceSelect.value);
       });
 
       refs.settingsPanel.addEventListener("change", (event) => {

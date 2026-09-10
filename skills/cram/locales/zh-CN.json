@@ -6,9 +6,6 @@
   "Settings": "设置",
   "Theme": "主题",
   "System": "跟随系统",
-  "Sepia": "棕褐色",
-  "Night neon": "夜间霓虹",
-  "Bluebell": "风铃草",
   "Cram mode": "强化记忆模式",
   "Requeue missed cards during this session.": "在本次学习中重新练习答错的卡片。",
   "Deck progress": "卡组进度",
@@ -110,5 +107,8 @@
   "Focus": "专注",
   "Focus Dark": "专注深色",
   "Sprint": "冲刺",
-  "Sprint Dark": "冲刺深色"
+  "Sprint Dark": "冲刺深色",
+  "Appearance": "外观",
+  "Light": "浅色",
+  "Dark": "深色"
 }

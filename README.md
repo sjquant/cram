@@ -88,10 +88,8 @@ also reads Claude-compatible plugin marketplaces.
 ## Player appearance
 
 Open **Settings → Theme** to choose **Paper**, **Focus**, or **Sprint**, each
-with its own card layout, typography, and colors. Each also has a **Dark**
-variant in the same list. **Sepia**, **Night neon**, and **Bluebell** remain
-available as named themes. The default **System** option uses Paper and follows
-the device's light/dark preference.
+with its own card layout, typography, and colors. Use the separate
+**Appearance** setting to choose Light, Dark, or System.
 
 The theme is saved in the browser independently of deck progress. Switching
 themes keeps the current card, revealed answer, and unfinished input. On narrow

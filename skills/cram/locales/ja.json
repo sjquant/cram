@@ -6,9 +6,6 @@
   "Settings": "設定",
   "Theme": "テーマ",
   "System": "システム",
-  "Sepia": "セピア",
-  "Night neon": "ナイトネオン",
-  "Bluebell": "ブルーベル",
   "Cram mode": "集中暗記モード",
   "Requeue missed cards during this session.": "このセッションで間違えたカードを再出題します。",
   "Deck progress": "デッキの進捗",
@@ -110,5 +107,8 @@
   "Focus": "フォーカス",
   "Focus Dark": "フォーカス・ダーク",
   "Sprint": "スプリント",
-  "Sprint Dark": "スプリント・ダーク"
+  "Sprint Dark": "スプリント・ダーク",
+  "Appearance": "表示",
+  "Light": "ライト",
+  "Dark": "ダーク"
 }

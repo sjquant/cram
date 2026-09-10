@@ -897,40 +897,33 @@ test.describe("basic cards", () => {
   });
 });
 
-test("follows the device appearance until a named theme is selected", async ({ page }) => {
-  // Given: a fresh player follows the device's dark appearance through System.
+test("keeps appearance independent from the selected theme", async ({ page }) => {
+  // Given: a fresh player with separate Theme and Appearance controls.
   await page.emulateMedia({ colorScheme: "dark" });
   await openPlayer(page, BASIC_DECK);
   await page.getByTestId("settings-toggle").click();
   const theme = page.getByRole("combobox", { name: "Theme", exact: true });
-  await expect(page.getByRole("combobox")).toHaveCount(1);
-  await expect(theme).toHaveValue("");
+  const appearance = page.getByRole("combobox", { name: "Appearance", exact: true });
+  await expect(page.getByRole("combobox")).toHaveCount(2);
+  await expect(theme).toHaveValue("paper");
   const darkBackground = await page.locator("body").evaluate(element => getComputedStyle(element).backgroundColor);
 
-  // When: the device changes appearance without an explicit theme choice.
-  await page.emulateMedia({ colorScheme: "light" });
-
-  // Then: System follows the device, while a named light theme stays light.
-  await expect.poll(() => page.locator("body").evaluate(element => getComputedStyle(element).backgroundColor))
-    .not.toBe(darkBackground);
+  // When: the learner chooses Focus and then explicitly chooses Light.
   await theme.selectOption("focus");
-  const focusBackground = await page.locator("body").evaluate(element => getComputedStyle(element).backgroundColor);
-  await page.emulateMedia({ colorScheme: "dark" });
-  await expect(page.locator("body")).toHaveCSS("background-color", focusBackground);
-
-  // When: a dark variant is chosen, the file is reopened, and System is selected again.
-  await theme.selectOption("focus-dark");
+  await appearance.selectOption("light");
   await page.reload();
   await page.getByTestId("settings-toggle").click();
 
-  // Then: the named variant is remembered; returning to System resumes device following.
-  await expect(theme).toHaveValue("focus-dark");
+  // Then: both independent preferences are remembered.
+  await expect(theme).toHaveValue("focus");
+  await expect(appearance).toHaveValue("light");
+  await expect(page.locator("html")).toHaveCSS("color-scheme", "light");
+  await appearance.selectOption("dark");
   await expect(page.locator("html")).toHaveCSS("color-scheme", "dark");
-  await theme.selectOption("");
-  await expect(page.locator("body")).toHaveCSS("background-color", darkBackground);
+  await appearance.selectOption("");
   await page.reload();
   await page.getByTestId("settings-toggle").click();
-  await expect(theme).toHaveValue("");
+  await expect(appearance).toHaveValue("");
 });
 
 test("switches complete themes without losing an unfinished answer or saved progress", async ({ page }) => {
@@ -941,7 +934,7 @@ test("switches complete themes without losing an unfinished answer or saved prog
   await page.getByTestId("settings-toggle").click();
 
   // When: the learner compares light, dark, and tinted themes before submitting.
-  for (const theme of ["focus", "sprint-dark", "paper-dark", "sepia", "night-neon", "bluebell"]) {
+  for (const theme of ["focus", "sprint-dark", "paper-dark"]) {
     await page.getByRole("combobox", { name: "Theme", exact: true }).selectOption(theme);
     await page.keyboard.press("Escape");
 

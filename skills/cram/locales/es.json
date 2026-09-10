@@ -6,9 +6,6 @@
   "Settings": "Ajustes",
   "Theme": "Tema",
   "System": "Sistema",
-  "Sepia": "Sepia",
-  "Night neon": "Neón nocturno",
-  "Bluebell": "Campanilla",
   "Cram mode": "Modo intensivo",
   "Requeue missed cards during this session.": "Repite las tarjetas falladas durante esta sesión.",
   "Deck progress": "Progreso del mazo",
@@ -110,5 +107,8 @@
   "Focus": "Concentración",
   "Focus Dark": "Concentración oscura",
   "Sprint": "Sprint",
-  "Sprint Dark": "Sprint oscuro"
+  "Sprint Dark": "Sprint oscuro",
+  "Appearance": "Apariencia",
+  "Light": "Claro",
+  "Dark": "Oscuro"
 }
