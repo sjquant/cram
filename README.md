@@ -101,10 +101,11 @@ Revealed answers appear directly below the question; multiple-choice results
 follow the options, and cloze corrections follow the sentence. Hints collapse
 after answering, and keyboard focus moves to the result.
 
-On desktop, cards share a stable-height study panel with Previous and
-Skip/Next/See results in its bottom row. Long content scrolls inside the card
-body, keeping navigation nearby and outside the scrolling area. Made with
-Cram appears below the panel.
+On desktop, cards share a study panel with a 40rem baseline height. Longer
+questions can grow the panel when the viewport has room, up to its screen-safe
+bound. Previous and Skip/Next/See results stay in its bottom row. Long answer
+content scrolls inside the card body, keeping navigation nearby and outside
+the scrolling area. Made with Cram appears below the panel.
 
 Phones and short windows use content-height cards and page scrolling, with
 navigation fixed to the screen bottom. Click targets keep the same size and

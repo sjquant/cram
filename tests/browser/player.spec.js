@@ -416,9 +416,11 @@ test.describe("basic cards", () => {
     await enableCramMode(page);
 
     // When: the learner turns Cram mode off before selecting another deck.
+    await page.getByTestId("settings-toggle").click();
     await page.getByTestId("cram-mode-toggle").uncheck();
     await expect(page.getByTestId("cram-mode-toggle")).not.toBeChecked();
     expect(await page.evaluate(() => window.CRAM_PLAYER.getState().cramMode)).toBe(false);
+    await page.keyboard.press("Escape");
 
     // Then: selecting a new deck keeps the default off and a missed card ends normally.
     await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), OTHER_DECK);
@@ -1022,6 +1024,32 @@ test("shows four desktop choices and their check action without scrolling", asyn
   }
 });
 
+test("grows the desktop study panel for a long question when space allows", async ({ page }) => {
+  // Given: a desktop viewport with enough room for a question taller than the baseline panel.
+  await page.setViewportSize({ width: 1280, height: 1200 });
+  await openPlayer(page, {
+    ...BASIC_DECK,
+    cards: [
+      BASIC_DECK.cards[0],
+      { ...BASIC_DECK.cards[1], prompt: "Long question.\n".repeat(28) },
+    ],
+  });
+  const initialPanel = await page.locator(".player__study-panel").boundingBox();
+
+  // When: the learner advances to the long question.
+  await page.getByTestId("next-card").click();
+
+  // Then: the panel grows within the viewport and keeps its navigation reachable.
+  const expandedPanel = await page.locator(".player__study-panel").boundingBox();
+  expect(expandedPanel.height).toBeGreaterThan(initialPanel.height);
+  expect(expandedPanel.height).toBeLessThanOrEqual(768);
+  const prompt = await page.getByTestId("card-prompt").boundingBox();
+  const navigation = await page.getByTestId("next-card").boundingBox();
+  expect(prompt.y).toBeGreaterThanOrEqual(expandedPanel.y);
+  expect(prompt.y).toBeLessThan(expandedPanel.y + expandedPanel.height);
+  expect(navigation.y + navigation.height).toBeLessThanOrEqual(1200);
+});
+
 test("scrolls long desktop cards internally and switches to page scrolling on phones", async ({ page }) => {
   // Given: a desktop card with an answer longer than the available screen.
   await page.setViewportSize({ width: 1280, height: 844 });
@@ -1055,8 +1083,8 @@ test("scrolls long desktop cards internally and switches to page scrolling on ph
 });
 
 for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }, { width: 1280, height: 900 }]) {
-  test(`advances through changing cards from the same screen position at ${viewport.width}px`, async ({ page }) => {
-    // Given: short and long cards share a persistent navigation bar.
+  test(`advances through changing cards from a stable navigation target at ${viewport.width}px`, async ({ page }) => {
+    // Given: short and long cards share a navigation target; desktop panels may grow within the viewport.
     await page.setViewportSize(viewport);
     await openPlayer(page, { ...BASIC_DECK, cards: [
       BASIC_DECK.cards[0],
@@ -1089,7 +1117,13 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }
     // When: the long card is scrolled and skipped by clicking the same coordinates.
     await page.getByTestId("card-content").focus();
     await page.keyboard.press("PageDown");
-    expect(await next.boundingBox()).toEqual(anchor);
+    const longAnchor = await next.boundingBox();
+    expect(longAnchor.x).toBe(anchor.x);
+    expect(longAnchor.width).toBe(anchor.width);
+    expect(longAnchor.height).toBe(anchor.height);
+    expect(Math.abs(longAnchor.y - anchor.y)).toBeLessThanOrEqual(8);
+    expect(clickPoint.y).toBeGreaterThanOrEqual(longAnchor.y);
+    expect(clickPoint.y).toBeLessThanOrEqual(longAnchor.y + longAnchor.height);
     await page.mouse.click(clickPoint.x, clickPoint.y);
 
     // Then: the final card's See results button also stays put and can be clicked again.
@@ -1736,4 +1770,6 @@ async function enableCramMode(page) {
   await page.getByTestId("cram-mode-toggle").check();
   await expect(page.getByTestId("cram-mode-toggle")).toBeChecked();
   expect(await page.evaluate(() => window.CRAM_PLAYER.getState().cramMode)).toBe(true);
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId("settings-panel")).toBeHidden();
 }

@@ -1210,7 +1210,8 @@
       .player__study-panel {
         display: flex;
         flex-direction: column;
-        height: min(40rem, calc(100dvh - 16rem));
+        min-height: min(40rem, calc(100dvh - 16rem));
+        max-height: min(48rem, calc(100dvh - 16rem));
         border: 1px solid var(--card-border);
         border-radius: var(--card-radius);
         background: var(--surface);
@@ -1218,7 +1219,7 @@
       }
       [data-theme^="sprint"] .player__study-panel { border-width: 2px; }
       .player__study-panel .player__card {
-        flex: 1;
+        flex: 1 1 auto;
         min-height: 0;
         padding: 1.5rem 2rem;
         border: 0;
