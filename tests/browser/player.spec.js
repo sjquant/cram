@@ -1024,6 +1024,25 @@ test("shows four desktop choices and their check action without scrolling", asyn
   }
 });
 
+test("renders the brand mark as a themed inline icon", async ({ page }) => {
+  // Given: the player is ready in each of its visual themes.
+  await openPlayer(page, BASIC_DECK);
+  const brandMark = page.locator(".player__brand-mark");
+
+  // When: the learner switches between Paper, Focus, and Sprint.
+  for (const theme of ["paper", "focus", "sprint"]) {
+    await page.getByTestId("settings-toggle").click();
+    await page.getByRole("combobox", { name: "Theme", exact: true }).selectOption(theme);
+    await page.keyboard.press("Escape");
+
+    // Then: the brand remains an accessible, self-contained SVG with themed paths.
+    await expect(brandMark).toHaveAttribute("aria-hidden", "true");
+    expect(await brandMark.evaluate(element => element.tagName)).toBe("svg");
+    expect(await brandMark.locator("path").count()).toBe(2);
+    expect(await brandMark.locator(".player__brand-seal").evaluate(element => getComputedStyle(element).fill)).not.toBe("none");
+  }
+});
+
 test("grows the desktop study panel for a long question when space allows", async ({ page }) => {
   // Given: a desktop viewport with enough room for a question taller than the baseline panel.
   await page.setViewportSize({ width: 1280, height: 1200 });

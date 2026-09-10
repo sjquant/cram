@@ -1096,17 +1096,20 @@
     }
 
     .player__brand-mark {
-      display: grid;
-      place-items: center;
+      display: block;
+      flex: none;
       width: 1.8rem;
       height: 1.8rem;
-      border-radius: 0.3rem;
-      color: var(--paper);
-      background: var(--accent);
-      font-family: var(--sans);
-      font-size: 1.1rem;
-      transform: rotate(-4deg);
+      overflow: visible;
     }
+
+    .player__brand-seal { fill: var(--accent); }
+    .player__brand-cutout { fill: var(--paper); }
+
+    [data-theme^="focus"] .player__brand-seal,
+    [data-theme^="sprint"] .player__brand-seal { fill: var(--action); }
+    [data-theme^="focus"] .player__brand-cutout,
+    [data-theme^="sprint"] .player__brand-cutout { fill: var(--action-ink); }
 
     .player__settings-group > label { font-size: 0.9rem; }
     .player__hint-button { min-height: 2.75rem; font-size: 0.9rem; }
@@ -1133,13 +1136,6 @@
     [data-theme^="focus"] .player__title,
     [data-theme^="sprint"] .player__brand,
     [data-theme^="sprint"] .player__title { font-family: var(--sans); }
-
-    [data-theme^="focus"] .player__brand-mark {
-      background: var(--action);
-      color: var(--action-ink);
-      border-radius: 0.5rem;
-      transform: none;
-    }
 
     [data-theme^="focus"] .player__progress-bar::-webkit-progress-value { background: var(--action); }
     [data-theme^="focus"] .player__progress-bar::-moz-progress-bar { background: var(--action); }
@@ -1169,7 +1165,6 @@
     }
 
     [data-theme^="sprint"] .player__brand { font-weight: 850; letter-spacing: -0.04em; }
-    [data-theme^="sprint"] .player__brand-mark { display: none; }
     [data-theme^="sprint"] .player__card { border-width: 2px; }
     [data-theme^="sprint"] .player__card-prompt { font-weight: 750; line-height: 1.4; }
     [data-theme^="sprint"] .player__card-position { color: var(--ink); font-size: 1.35rem; font-weight: 750; }
@@ -1270,7 +1265,15 @@
 <body>
   <div class="player" id="player" data-testid="player" data-state="loading">
     <header class="player__header">
-      <div class="player__brand"><span class="player__brand-mark" aria-hidden="true">C</span>Cram</div>
+      <div class="player__brand">
+        <svg class="player__brand-mark" viewBox="0 0 128 128" aria-hidden="true" focusable="false">
+          <g transform="rotate(-4 64 64)">
+            <path class="player__brand-seal" d="M20,17 L64,13 L108,18 L112,63 L109,110 L64,114 L19,109 L16,64 Z"></path>
+            <path class="player__brand-cutout" d="M38,40 H92 V56 H54 V72 H92 V88 H38 Z"></path>
+          </g>
+        </svg>
+        Cram
+      </div>
       <h1 class="player__title" id="deck-title" data-testid="deck-title" data-i18n>Loading deck…</h1>
       <div class="player__header-tools">
         <button type="button" class="player__settings-toggle" id="settings-toggle" data-testid="settings-toggle" data-action="toggle-settings" aria-expanded="false" aria-controls="settings-panel" aria-label="Open settings" title="Open settings" data-i18n-attrs="aria-label title">
