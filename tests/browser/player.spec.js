@@ -998,6 +998,30 @@ for (const width of [390, 1280]) {
   });
 }
 
+test("shows four desktop choices and their check action without scrolling", async ({ page }) => {
+  // Given: the example's four-choice question in each desktop theme.
+  const example = JSON.parse(fs.readFileSync(path.join(ROOT, "examples/http-caching-essentials.json"), "utf8"));
+  await page.setViewportSize({ width: 1000, height: 850 });
+  for (const theme of ["paper", "focus", "sprint"]) {
+    await openPlayer(page, { ...example, cards: [example.cards.find(card => card.type === "mcq")] });
+    await page.getByTestId("settings-toggle").click();
+    await page.getByRole("combobox", { name: "Theme", exact: true }).selectOption(theme);
+    await page.keyboard.press("Escape");
+    const readingArea = page.getByTestId("card-content");
+    const navigation = await page.getByTestId("next-card").boundingBox();
+
+    // When: choosing an answer exposes the check action below all four options.
+    await page.getByTestId("mcq-option").first().click();
+
+    // Then: the entire question and response fit, and navigation remains in place.
+    await expect(page.getByTestId("mcq-option")).toHaveCount(4);
+    await expect.poll(() => readingArea.evaluate(element => element.scrollHeight - element.clientHeight)).toBeLessThanOrEqual(1);
+    await expect(page.getByTestId("card-prompt")).toBeInViewport({ ratio: 1 });
+    await expect(page.getByTestId("mcq-check-answer")).toBeInViewport({ ratio: 1 });
+    expect(await page.getByTestId("next-card").boundingBox()).toEqual(navigation);
+  }
+});
+
 test("scrolls long desktop cards internally and switches to page scrolling on phones", async ({ page }) => {
   // Given: a desktop card with an answer longer than the available screen.
   await page.setViewportSize({ width: 1280, height: 844 });
