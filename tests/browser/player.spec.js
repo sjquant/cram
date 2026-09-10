@@ -1097,34 +1097,51 @@ test("keeps the last mobile answer controls above the fixed navigation bar", asy
   await expect(page.getByTestId("grade-known")).toHaveAttribute("aria-pressed", "true");
 });
 
-test("keeps appearance independent from the selected theme", async ({ page }) => {
-  // Given: a fresh player with separate Theme and Appearance controls.
-  await page.emulateMedia({ colorScheme: "dark" });
-  await openPlayer(page, BASIC_DECK);
-  await page.getByTestId("settings-toggle").click();
-  const theme = page.getByRole("combobox", { name: "Theme", exact: true });
-  const appearance = page.getByRole("combobox", { name: "Appearance", exact: true });
-  await expect(page.getByRole("combobox")).toHaveCount(2);
-  await expect(theme).toHaveValue("paper");
-  const darkBackground = await page.locator("body").evaluate(element => getComputedStyle(element).backgroundColor);
+for (const themeName of ["paper", "focus", "sprint"]) {
+  test(`keeps appearance independent from the ${themeName} theme`, async ({ page }) => {
+    // Given: a named theme with an explicitly dark appearance.
+    await page.emulateMedia({ colorScheme: "dark" });
+    await openPlayer(page, BASIC_DECK);
+    await page.getByTestId("settings-toggle").click();
+    const theme = page.getByRole("combobox", { name: "Theme", exact: true });
+    const appearance = page.getByRole("combobox", { name: "Appearance", exact: true });
+    const body = page.locator("body");
+    await theme.selectOption(themeName);
+    await appearance.selectOption("dark");
+    const darkBackground = await body.evaluate(element => getComputedStyle(element).backgroundColor);
 
-  // When: the learner chooses Focus and then explicitly chooses Light.
-  await theme.selectOption("focus");
-  await appearance.selectOption("light");
-  await page.reload();
-  await page.getByTestId("settings-toggle").click();
+    // When: the OS changes to light, then the learner explicitly chooses Light.
+    await page.emulateMedia({ colorScheme: "light" });
+    await expect(body).toHaveCSS("background-color", darkBackground);
+    await appearance.selectOption("light");
+    const lightBackground = await body.evaluate(element => getComputedStyle(element).backgroundColor);
 
-  // Then: both independent preferences are remembered.
-  await expect(theme).toHaveValue("focus");
-  await expect(appearance).toHaveValue("light");
-  await expect(page.locator("html")).toHaveCSS("color-scheme", "light");
-  await appearance.selectOption("dark");
-  await expect(page.locator("html")).toHaveCSS("color-scheme", "dark");
-  await appearance.selectOption("");
-  await page.reload();
-  await page.getByTestId("settings-toggle").click();
-  await expect(appearance).toHaveValue("");
-});
+    // Then: explicit modes differ, ignore OS changes, and persist with the theme.
+    expect(lightBackground).not.toBe(darkBackground);
+    await page.emulateMedia({ colorScheme: "dark" });
+    await expect(body).toHaveCSS("background-color", lightBackground);
+    await page.reload();
+    await page.getByTestId("settings-toggle").click();
+    await expect(theme).toHaveValue(themeName);
+    await expect(appearance).toHaveValue("light");
+    await expect(body).toHaveCSS("background-color", lightBackground);
+
+    // When: System is restored while the OS is dark, including after reopening the file.
+    await appearance.selectOption("");
+    await expect(body).toHaveCSS("background-color", darkBackground);
+    await page.reload();
+    await page.getByTestId("settings-toggle").click();
+    await expect(theme).toHaveValue(themeName);
+    await expect(appearance).toHaveValue("");
+    await expect(body).toHaveCSS("background-color", darkBackground);
+
+    // Then: the visible theme follows subsequent OS changes in both directions.
+    await page.emulateMedia({ colorScheme: "light" });
+    await expect(body).toHaveCSS("background-color", lightBackground);
+    await page.emulateMedia({ colorScheme: "dark" });
+    await expect(body).toHaveCSS("background-color", darkBackground);
+  });
+}
 
 test("switches complete themes without losing an unfinished answer or saved progress", async ({ page }) => {
   // Given: an unfinished cloze answer in a mobile player.
