@@ -434,6 +434,11 @@
 
     .player__card-content > * { flex-shrink: 0; }
 
+    /* Inset focus rings stay visible at the scrollable body's edges. */
+    .player__card-content :is(button, input, a):focus-visible {
+      outline-offset: -3px;
+    }
+
     .player__action-rail {
       display: flex;
       width: 100%;
@@ -598,11 +603,6 @@
       color: var(--ink);
       background: transparent;
       text-align: center;
-    }
-
-    .cloze__input:focus-visible {
-      /* Keep the focus ring inside the scrollable card edge. */
-      outline-offset: -2px;
     }
 
     .cloze__input--correct {
