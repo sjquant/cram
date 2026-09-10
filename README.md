@@ -87,13 +87,16 @@ also reads Claude-compatible plugin marketplaces.
 
 ## Player appearance
 
-Open **Settings → Design style** to switch between **A · Paper**, **B · Focus**,
-and **C · Sprint**. Paper is the default. Design and color theme are separate
-choices, so each style supports the system color scheme and all named palettes.
-Both preferences are saved in the browser independently of deck progress;
-switching styles keeps the current card, revealed answer, and unfinished input.
-On narrow screens, response buttons expand to the card width and long cards
-scroll with the page.
+Open **Settings → Theme** to choose **Paper**, **Focus**, or **Sprint**, each
+with its own card layout, typography, and colors. Each also has a **Dark**
+variant in the same list. **Sepia**, **Night neon**, and **Bluebell** remain
+available as named themes. The default **System** option uses Paper and follows
+the device's light/dark preference.
+
+The theme is saved in the browser independently of deck progress. Switching
+themes keeps the current card, revealed answer, and unfinished input. On narrow
+screens, response buttons expand to the card width and long cards scroll with
+the page.
 
 ## Player language
 

@@ -42,5 +42,5 @@ python3 -m unittest discover -s tests -t . -v
 ```
 
 Browser checks specify card behavior and accessibility through public controls,
-including design switching, saved appearance preferences, and narrow-screen
+including theme switching, saved appearance preferences, and narrow-screen
 control reachability.

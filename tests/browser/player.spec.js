@@ -897,127 +897,60 @@ test.describe("basic cards", () => {
   });
 });
 
-test("selects color themes and persists the explicit choice independently of progress", async ({ page }) => {
+test("follows the device appearance until a named theme is selected", async ({ page }) => {
+  // Given: a fresh player follows the device's dark appearance through System.
   await page.emulateMedia({ colorScheme: "dark" });
   await openPlayer(page, BASIC_DECK);
-  const themeSelect = page.getByTestId("theme-select");
-
-  // Given: the settings panel starts closed behind the header tools.
-  await expect(page.getByTestId("settings-panel")).toBeHidden();
   await page.getByTestId("settings-toggle").click();
-  await expect(page.getByTestId("settings-panel")).toBeVisible();
-  await expect(page.getByTestId("settings-toggle")).toHaveAttribute("aria-expanded", "true");
-  await expect(themeSelect).toBeVisible();
+  const theme = page.getByRole("combobox", { name: "Theme", exact: true });
+  await expect(page.getByRole("combobox")).toHaveCount(1);
+  await expect(theme).toHaveValue("");
+  const darkBackground = await page.locator("body").evaluate(element => getComputedStyle(element).backgroundColor);
 
-  // Given: the learner has not chosen a theme, so the dark system preference applies.
-  const systemTheme = await page.evaluate(() => ({
-    rootTheme: document.documentElement.getAttribute("data-theme"),
-    paper: getComputedStyle(document.documentElement).getPropertyValue("--paper").trim()
-  }));
-  expect(systemTheme.rootTheme).toBeNull();
-  expect(systemTheme.paper).toBe("#151310");
-  await expect(themeSelect).toHaveRole("combobox", { name: "Color theme" });
-  await expect(themeSelect.locator("option")).toHaveText([
-    "System",
-    "Light",
-    "Dark",
-    "Sepia",
-    "Night neon",
-    "Bluebell"
-  ]);
-  await expect(themeSelect).toHaveValue("");
-  await expect(themeSelect).toHaveAttribute("aria-label", "Color theme");
-
-  // When: the operating-system preference changes while the player stays in system mode.
+  // When: the device changes appearance without an explicit theme choice.
   await page.emulateMedia({ colorScheme: "light" });
 
-  // Then: the system-driven UI follows the new effective theme.
-  await expect(themeSelect).toHaveValue("");
-  await expect.poll(() => page.evaluate(() => (
-    getComputedStyle(document.documentElement).getPropertyValue("--paper").trim()
-  ))).toBe("#f4efe4");
+  // Then: System follows the device, while a named light theme stays light.
+  await expect.poll(() => page.locator("body").evaluate(element => getComputedStyle(element).backgroundColor))
+    .not.toBe(darkBackground);
+  await theme.selectOption("focus");
+  const focusBackground = await page.locator("body").evaluate(element => getComputedStyle(element).backgroundColor);
   await page.emulateMedia({ colorScheme: "dark" });
-  await expect.poll(() => page.evaluate(() => (
-    getComputedStyle(document.documentElement).getPropertyValue("--paper").trim()
-  ))).toBe("#151310");
+  await expect(page.locator("body")).toHaveCSS("background-color", focusBackground);
 
-  // Given: progress belongs to the deck-specific store before the theme changes.
-  await page.getByTestId("reveal-answer").click();
-  await page.getByTestId("grade-known").click();
-  const progressBeforeThemeChange = await page.evaluate(
-    (deckId) => localStorage.getItem(`fc:${deckId}:v1`),
-    BASIC_DECK.id
-  );
-
-  // When: the learner selects each named theme from the picker.
-  await page.getByTestId("settings-toggle").click();
-  await expect(page.getByTestId("settings-panel")).toBeVisible();
-
-  const namedThemes = [
-    { name: "light", paper: "#f4efe4" },
-    { name: "dark", paper: "#151310" },
-    { name: "sepia", paper: "#eadcc5" },
-    { name: "bluebell", paper: "#eaf3fa" },
-    { name: "night-neon", paper: "#101820" }
-  ];
-  for (const theme of namedThemes) {
-    await themeSelect.selectOption(theme.name);
-    await expect(page.locator("html")).toHaveAttribute("data-theme", theme.name);
-    await expect(themeSelect).toHaveValue(theme.name);
-    await expect.poll(() => page.evaluate(() => (
-      getComputedStyle(document.documentElement).getPropertyValue("--paper").trim()
-    ))).toBe(theme.paper);
-  }
-
-  // Then: the global theme key persists independently of deck progress.
-  const storedTheme = await page.evaluate((deckId) => ({
-    theme: localStorage.getItem("cram:theme:v2"),
-    progress: localStorage.getItem(`fc:${deckId}:v1`)
-  }), BASIC_DECK.id);
-  expect(storedTheme.theme).toBe("night-neon");
-  expect(storedTheme.progress).toBe(progressBeforeThemeChange);
-
-  // When: the file:// player is reloaded.
+  // When: a dark variant is chosen, the file is reopened, and System is selected again.
+  await theme.selectOption("focus-dark");
   await page.reload();
   await page.getByTestId("settings-toggle").click();
-  await expect(page.getByTestId("settings-panel")).toBeVisible();
 
-  // Then: the explicit theme remains applied without changing the deck session machinery.
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "night-neon");
-  await expect(themeSelect).toHaveValue("night-neon");
-  expect(await page.evaluate((deckId) => localStorage.getItem(`fc:${deckId}:v1`), BASIC_DECK.id))
-    .toBe(progressBeforeThemeChange);
-
-  // Returning to system removes the explicit v2 preference and resumes OS following.
-  await themeSelect.selectOption("");
-  expect(await page.locator("html").getAttribute("data-theme")).toBeNull();
-  expect(await page.evaluate(() => localStorage.getItem("cram:theme:v2"))).toBeNull();
-  await expect(themeSelect).toHaveValue("");
-  await expect.poll(() => page.evaluate(() => (
-    getComputedStyle(document.documentElement).getPropertyValue("--paper").trim()
-  ))).toBe("#151310");
+  // Then: the named variant is remembered; returning to System resumes device following.
+  await expect(theme).toHaveValue("focus-dark");
+  await expect(page.locator("html")).toHaveCSS("color-scheme", "dark");
+  await theme.selectOption("");
+  await expect(page.locator("body")).toHaveCSS("background-color", darkBackground);
+  await page.reload();
+  await page.getByTestId("settings-toggle").click();
+  await expect(theme).toHaveValue("");
 });
 
-test("changes design without losing an unfinished answer or the color preference", async ({ page }) => {
-  // Given: an unfinished cloze answer in a dark mobile player.
+test("switches complete themes without losing an unfinished answer or saved progress", async ({ page }) => {
+  // Given: an unfinished cloze answer in a mobile player.
   await page.setViewportSize({ width: 390, height: 844 });
   await openPlayer(page, CLOZE_DECK);
   await page.getByRole("textbox", { name: "Blank 1", exact: true }).fill("If-None-Match");
   await page.getByTestId("settings-toggle").click();
-  await page.getByRole("combobox", { name: "Color theme", exact: true }).selectOption("dark");
 
-  // When: the learner compares all three designs before submitting.
-  for (const design of ["focus", "sprint", "paper"]) {
-    await page.getByRole("combobox", { name: "Design style", exact: true }).selectOption(design);
+  // When: the learner compares light, dark, and tinted themes before submitting.
+  for (const theme of ["focus", "sprint-dark", "paper-dark", "sepia", "night-neon", "bluebell"]) {
+    await page.getByRole("combobox", { name: "Theme", exact: true }).selectOption(theme);
     await page.keyboard.press("Escape");
 
-    // Then: the input survives and the color setting stays independent.
+    // Then: changing the complete appearance preserves the unfinished input.
     await expect(page.getByRole("textbox", { name: "Blank 1", exact: true })).toHaveValue("If-None-Match");
-    await expect(page.locator("html")).toHaveAttribute("data-design", design);
-    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
     await page.getByTestId("settings-toggle").click();
   }
-  await page.getByRole("combobox", { name: "Design style", exact: true }).selectOption("sprint");
+  await page.getByRole("combobox", { name: "Theme", exact: true }).selectOption("sprint-dark");
   await page.keyboard.press("Escape");
   await page.getByRole("textbox", { name: "Blank 2", exact: true }).fill("304");
   await page.getByRole("button", { name: "Check answers", exact: true }).click();
@@ -1027,20 +960,19 @@ test("changes design without losing an unfinished answer or the color preference
   await page.evaluate(deck => window.CRAM_PLAYER.setDeck(deck), CLOZE_DECK);
   await page.getByTestId("settings-toggle").click();
 
-  // Then: both appearance choices and the recorded answer are restored.
-  await expect(page.getByRole("combobox", { name: "Design style", exact: true })).toHaveValue("sprint");
-  await expect(page.getByRole("combobox", { name: "Color theme", exact: true })).toHaveValue("dark");
+  // Then: the single theme preference and the recorded answer are restored.
+  await expect(page.getByRole("combobox", { name: "Theme", exact: true })).toHaveValue("sprint-dark");
   await page.keyboard.press("Escape");
   await expect(page.getByTestId("cloze-feedback-summary")).toHaveText("Correct.");
 });
 
-for (const design of ["paper", "focus", "sprint"]) {
-  test(`completes every card type on a narrow screen in the ${design} design`, async ({ page }) => {
-    // Given: a phone-width player using the selected design.
+for (const theme of ["paper", "focus", "sprint"]) {
+  test(`completes every card type on a narrow screen in the ${theme} theme`, async ({ page }) => {
+    // Given: a phone-width player using the selected theme.
     await page.setViewportSize({ width: 320, height: 568 });
     await openPlayer(page, ADAPTIVE_TYPES_DECK);
     await page.getByTestId("settings-toggle").click();
-    await page.getByRole("combobox", { name: "Design style", exact: true }).selectOption(design);
+    await page.getByRole("combobox", { name: "Theme", exact: true }).selectOption(theme);
     await page.keyboard.press("Escape");
 
     // When: a learner reveals, self-grades, selects, and types through the deck.
@@ -1064,7 +996,7 @@ for (const design of ["paper", "focus", "sprint"]) {
   });
 }
 
-test("keeps style switching usable when preference storage is blocked", async ({ page }) => {
+test("keeps theme switching usable when preference storage is blocked", async ({ page }) => {
   // Given: this browser cannot read or write local preferences.
   await page.addInitScript(() => {
     Storage.prototype.getItem = () => { throw new Error("Storage blocked"); };
@@ -1073,13 +1005,13 @@ test("keeps style switching usable when preference storage is blocked", async ({
   await openPlayer(page, BASIC_DECK);
   await page.getByTestId("reveal-answer").click();
 
-  // When: the learner changes the design while inspecting an answer.
+  // When: the learner changes the theme while inspecting an answer.
   await page.getByTestId("settings-toggle").click();
-  await page.getByRole("combobox", { name: "Design style", exact: true }).selectOption("focus");
+  await page.getByRole("combobox", { name: "Theme", exact: true }).selectOption("focus");
   await page.keyboard.press("Escape");
 
-  // Then: the style applies for this session without hiding the answer.
-  await expect(page.locator("html")).toHaveAttribute("data-design", "focus");
+  // Then: the theme applies for this session without hiding the answer.
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "focus");
   await expect(page.getByTestId("card-answer")).toBeVisible();
   await page.getByTestId("grade-known").click();
   await expect(page.getByTestId("grade-known")).toHaveAttribute("aria-pressed", "true");

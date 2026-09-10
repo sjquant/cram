@@ -5,10 +5,7 @@
   "Close settings": "설정 닫기",
   "Settings": "설정",
   "Theme": "테마",
-  "Color theme": "색상 테마",
   "System": "시스템",
-  "Light": "라이트",
-  "Dark": "다크",
   "Sepia": "세피아",
   "Night neon": "나이트 네온",
   "Bluebell": "블루벨",
@@ -108,8 +105,10 @@
   "unknown": "알 수 없음",
   "Progress reset. Start again.": "진행 상황을 초기화했습니다. 다시 시작하세요.",
   "Progress reset for this session, but saved progress could not be cleared.": "이번 학습은 초기화했지만 저장된 진행 상황은 지우지 못했습니다.",
-  "Design style": "디자인 스타일",
-  "A · Paper": "A · 종이 카드",
-  "B · Focus": "B · 집중 모드",
-  "C · Sprint": "C · 빠른 암기"
+  "Paper": "페이퍼",
+  "Paper Dark": "페이퍼 다크",
+  "Focus": "포커스",
+  "Focus Dark": "포커스 다크",
+  "Sprint": "스프린트",
+  "Sprint Dark": "스프린트 다크"
 }
