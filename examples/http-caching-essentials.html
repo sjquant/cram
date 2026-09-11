@@ -1214,10 +1214,17 @@
     [data-theme^="sprint"] .player__progress-bar::-webkit-progress-value { background: var(--ink); }
     [data-theme^="sprint"] .player__progress-bar::-moz-progress-bar { background: var(--ink); }
 
-    @supports (background: color-mix(in srgb, black, white)) {
+    @supports (background: color-mix(in srgb, black, white)) and (color: light-dark(#000, #fff)) {
       :root {
-        --surface: color-mix(in srgb, var(--paper) 28%, #ffffff);
-        --canvas: color-mix(in srgb, var(--paper) 78%, #d9d9d9);
+        /* Keep the light mix independent from --paper's dark branch. */
+        --surface: light-dark(
+          color-mix(in srgb, #f4efe4 28%, #ffffff),
+          #252525
+        );
+        --canvas: light-dark(
+          color-mix(in srgb, #f4efe4 78%, #d9d9d9),
+          #080808
+        );
       }
 
       .mcq__option--correct {
@@ -1229,13 +1236,25 @@
       }
 
       [data-theme^="focus"] {
-        --canvas: color-mix(in srgb, var(--paper) 20%, #eff3fa);
-        --surface: color-mix(in srgb, var(--paper) 12%, #ffffff);
+        --canvas: light-dark(
+          color-mix(in srgb, #f4efe4 20%, #eff3fa),
+          #101722
+        );
+        --surface: light-dark(
+          color-mix(in srgb, #f4efe4 12%, #ffffff),
+          #202938
+        );
       }
 
       [data-theme^="sprint"] {
-        --canvas: color-mix(in srgb, var(--paper) 25%, #f5f6f0);
-        --surface: color-mix(in srgb, var(--paper) 15%, #ffffff);
+        --canvas: light-dark(
+          color-mix(in srgb, #f4efe4 25%, #f5f6f0),
+          #131711
+        );
+        --surface: light-dark(
+          color-mix(in srgb, #f4efe4 15%, #ffffff),
+          #252923
+        );
       }
     }
 

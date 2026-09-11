@@ -1300,6 +1300,26 @@ for (const themeName of ["paper", "focus", "sprint"]) {
   });
 }
 
+test("keeps dark cards and settings readable across themes", async ({ page }) => {
+  // Given: each named theme is shown with an explicitly dark appearance.
+  await page.emulateMedia({ colorScheme: "light" });
+  for (const themeName of ["paper", "focus", "sprint"]) {
+    await openPlayer(page, BASIC_DECK);
+    await page.getByTestId("settings-toggle").click();
+    await page.getByRole("combobox", { name: "Theme", exact: true }).selectOption(themeName);
+    await page.getByRole("combobox", { name: "Appearance", exact: true }).selectOption("dark");
+
+    // When: the learner inspects the card while the settings panel is open.
+    const palette = await readSurfacePalette(page);
+
+    // Then: dark surfaces stay dark while their text remains light enough to read.
+    expect(palette.card.background).toBeLessThan(0.1);
+    expect(palette.settings.background).toBeLessThan(0.1);
+    expect(palette.card.color).toBeGreaterThan(0.65);
+    expect(palette.settings.color).toBeGreaterThan(0.65);
+  }
+});
+
 test("switches complete themes without losing an unfinished answer or saved progress", async ({ page }) => {
   // Given: an unfinished cloze answer in a mobile player.
   await page.setViewportSize({ width: 390, height: 844 });
@@ -2015,4 +2035,36 @@ async function enableCramMode(page) {
   expect(await page.evaluate(() => window.CRAM_PLAYER.getState().cramMode)).toBe(true);
   await page.keyboard.press("Escape");
   await expect(page.getByTestId("settings-panel")).toBeHidden();
+}
+
+async function readSurfacePalette(page) {
+  return page.evaluate(() => {
+    function read(selector) {
+      const style = getComputedStyle(document.querySelector(selector));
+      return {
+        background: luminance(style.backgroundColor),
+        color: luminance(style.color),
+      };
+    }
+
+    function luminance(color) {
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+      context.fillStyle = color;
+      context.fillRect(0, 0, 1, 1);
+      const [red, green, blue] = context.getImageData(0, 0, 1, 1).data;
+      const channel = (value) => {
+        const normalized = value / 255;
+        return normalized <= 0.03928
+          ? normalized / 12.92
+          : ((normalized + 0.055) / 1.055) ** 2.4;
+      };
+      return 0.2126 * channel(red) + 0.7152 * channel(green) + 0.0722 * channel(blue);
+    }
+
+    return {
+      card: read(".player__card"),
+      settings: read(".player__settings-panel"),
+    };
+  });
 }
