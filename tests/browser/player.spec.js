@@ -204,6 +204,56 @@ const REQUIRED_CUSTOM_DECK = {
 };
 
 test.describe("basic cards", () => {
+  test("reveals a basic explanation with its answer and restores it on return", async ({ page }) => {
+    // Given: a basic card with an optional explanation.
+    await openPlayer(page, BASIC_DECK);
+    await page.getByTestId("next-card").click();
+    const explanation = page.getByText(BASIC_DECK.cards[1].explanation, { exact: true });
+    await expect(explanation).toBeHidden();
+
+    // When: the learner reveals the answer and grades it as known.
+    await page.getByTestId("reveal-answer").click();
+    await expect(explanation).toBeVisible();
+    await page.getByTestId("grade-known").click();
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("previous-card").click();
+
+    // Then: revisiting the answered card restores its reasoning too.
+    await expect(explanation).toBeVisible();
+    await expect(page.getByTestId("grade-known")).toHaveAttribute("aria-pressed", "true");
+  });
+
+  test("reviewing earlier drill attempts does not add retries or change mastery", async ({ page }) => {
+    // Given: three attempts on one card, with a miss resetting its correct streak.
+    await openPlayer(page, OTHER_DECK);
+    await enableCramMode(page);
+    for (const grade of ["missed", "known", "missed"]) {
+      await page.getByTestId("reveal-answer").click();
+      await page.getByTestId(`grade-${grade}`).click();
+      await page.getByTestId("next-card").click();
+    }
+    await expect(page.getByTestId("progress-label")).toHaveText("Card 4 of 4");
+
+    // When: the learner reviews an older attempt without answering again.
+    await page.getByTestId("previous-card").click();
+    await page.getByTestId("previous-card").click();
+    await page.getByTestId("next-card").click();
+
+    // Then: navigation preserves the queue, and two fresh correct answers finish it.
+    await expect(page.getByTestId("progress-label")).toHaveText("Card 3 of 4");
+    await page.getByTestId("next-card").click();
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      await page.getByTestId("reveal-answer").click();
+      await page.getByTestId("grade-known").click();
+      await page.getByTestId("next-card").click();
+      if (attempt === 0) {
+        await expect(page.getByTestId("progress-label")).toHaveText("Card 5 of 5");
+      }
+    }
+    await expect(page.getByTestId("score-value")).toHaveText("1/1");
+    await expect(page.getByTestId("score-screen")).toBeVisible();
+  });
+
   test("reveals a basic-card answer and records the selected grade", async ({ page }) => {
     await openPlayer(page, BASIC_DECK);
 
@@ -1500,6 +1550,150 @@ test.describe("hints", () => {
 });
 
 test.describe("card controls", () => {
+  test("remembers disabled letter shortcuts while keeping controls usable", async ({ page }) => {
+    // Given: letter shortcuts are disabled in settings.
+    await openPlayer(page, HINT_DECK);
+    await page.getByTestId("settings-toggle").click();
+    await page.getByRole("checkbox", { name: "Single-letter shortcuts", exact: true }).uncheck();
+    await page.keyboard.press("Escape");
+
+    // When: the preference is restored after a reload.
+    await page.reload();
+    await page.evaluate(deck => window.CRAM_PLAYER.setDeck(deck), HINT_DECK);
+    await page.keyboard.press("h");
+    await page.keyboard.press("a");
+
+    // Then: letters do nothing, but explicit controls and arrow navigation still work.
+    await expect(page.getByTestId("card-hint")).toBeHidden();
+    await expect(page.getByTestId("card-answer")).toBeHidden();
+    await expect(page.getByTestId("reveal-answer")).not.toHaveAttribute("aria-keyshortcuts");
+    await page.getByTestId("reveal-answer").click();
+    await expect(page.getByTestId("card-answer")).toBeVisible();
+    await page.keyboard.press("ArrowRight");
+    await expect(page.getByTestId("card-prompt")).toHaveText(HINT_DECK.cards[1].prompt);
+
+    // When: shortcuts are enabled again while a cloze answer is in progress.
+    await page.keyboard.press("ArrowRight");
+    await page.getByTestId("cloze-input").fill("draft");
+    await page.getByTestId("settings-toggle").click();
+    await page.getByRole("checkbox", { name: "Single-letter shortcuts", exact: true }).check();
+    await page.keyboard.press("Escape");
+    await page.keyboard.press("h");
+
+    // Then: enabling shortcuts preserves the draft and restores hint activation.
+    await expect(page.getByTestId("cloze-input")).toHaveValue("draft");
+    await expect(page.getByTestId("card-hint")).toBeVisible();
+  });
+
+  test("keeps card shortcuts out of the theme selector", async ({ page }) => {
+    // Given: the learner is using a native selection control in settings.
+    await openPlayer(page, HINT_DECK);
+    await page.getByTestId("settings-toggle").click();
+    await page.getByTestId("theme-select").focus();
+
+    // When: keys that also have player shortcuts are sent to the selector.
+    await page.keyboard.press("ArrowRight");
+    await page.keyboard.press("h");
+    await page.keyboard.press("a");
+
+    // Then: the current card stays unanswered and navigation does not run.
+    await expect(page.getByTestId("theme-select")).toBeFocused();
+    await expect(page.getByTestId("card-prompt")).toHaveText(HINT_DECK.cards[0].prompt);
+    await expect(page.getByTestId("card-hint")).toBeHidden();
+    await expect(page.getByTestId("card-answer")).toBeHidden();
+  });
+
+  for (const forcedColors of ["none", "active"]) {
+    test(`keeps focus on revealed content with forced colors ${forcedColors}`, async ({ page }) => {
+      await page.emulateMedia({ forcedColors });
+      // Given: a deck with all three card types and hints.
+      await openPlayer(page, HINT_DECK);
+      await page.getByTestId("show-hint").focus();
+
+      // When: a keyboard action hides its button, focus follows the revealed content.
+      await page.keyboard.press("Enter");
+      await expect(page.getByTestId("card-hint")).toBeFocused();
+      await page.keyboard.press("Tab");
+      await expect(page.getByTestId("reveal-answer")).toBeFocused();
+      await page.keyboard.press("Enter");
+      await expect(page.getByTestId("card-answer")).toBeFocused();
+      await page.keyboard.press("Tab");
+      await expect(page.getByTestId("grade-missed")).toBeFocused();
+      await page.keyboard.press("Enter");
+      await page.keyboard.press("ArrowRight");
+      await page.getByRole("button", { name: "no-store", exact: true }).focus();
+      await page.keyboard.press("Enter");
+      await page.getByTestId("mcq-check-answer").focus();
+      await page.keyboard.press("Enter");
+      await expect(page.getByTestId("mcq-feedback")).toBeFocused();
+      await page.keyboard.press("ArrowRight");
+      await page.getByTestId("cloze-input").fill("If-None-Match");
+      await page.getByTestId("cloze-check-answer").focus();
+      await page.keyboard.press("Enter");
+
+      // Then: the last feedback remains focused and keyboard navigation still works.
+      await expect(page.getByTestId("cloze-feedback")).toBeFocused();
+      await page.keyboard.press("ArrowRight");
+      await page.keyboard.press("ArrowRight");
+      await expect(page.locator("#score-title")).toBeFocused();
+    });
+  }
+
+  for (const { width, height, textSize } of [
+    { width: 320, height: 256, textSize: "16px" },
+    { width: 640, height: 512, textSize: "32px" },
+  ]) {
+    test(`keeps study and retry controls reachable at ${width} by ${height} with ${textSize} text`, async ({ page }) => {
+      // Given: a short viewport representing zoom, optionally with doubled text size.
+      await page.setViewportSize({ width, height });
+      await openPlayer(page, RETRY_DECK);
+      await page.addStyleTag({ content: `:root { font-size: ${textSize}; }` });
+      await page.mouse.move(width - 2, height / 2);
+      await page.mouse.wheel(0, 5000);
+      await expect(page.getByTestId("next-card")).toBeInViewport({ ratio: 0.99 });
+
+      // When: each card is answered using controls scrolled into view.
+      for (let index = 0; index < RETRY_DECK.cards.length; index += 1) {
+        for (const name of ["reveal-answer", "grade-missed", "next-card"]) {
+          const control = page.getByTestId(name);
+          await control.scrollIntoViewIfNeeded();
+          await expect(control).toBeInViewport({ ratio: 0.99 });
+          await control.click();
+        }
+      }
+
+      // Then: results and retry remain reachable without horizontal scrolling.
+      const retry = page.getByTestId("retry-missed");
+      await retry.scrollIntoViewIfNeeded();
+      await expect(retry).toBeInViewport({ ratio: 0.99 });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+      await retry.click();
+      await page.getByTestId("settings-toggle").click();
+      const shortcuts = page.getByRole("checkbox", { name: "Single-letter shortcuts", exact: true });
+      await shortcuts.scrollIntoViewIfNeeded();
+      await expect(shortcuts).toBeInViewport({ ratio: 0.99 });
+      await shortcuts.uncheck();
+    });
+  }
+
+  test("announces prompts and cloze blanks without revealing answers or hints", async ({ page }) => {
+    // Given: unanswered basic, MCQ, and cloze cards with hidden hints.
+    await openPlayer(page, HINT_DECK);
+    const announcement = page.locator("#card-announcer");
+    await expect(page.getByTestId("card-answer")).toBeHidden();
+    await expect(page.getByTestId("card-hint")).toBeHidden();
+
+    // When: the learner navigates through the unanswered cards.
+    // Then: only each prompt is announced, with a spoken placeholder for the cloze blank.
+    await expect(announcement).toHaveText(`Card 1 of 4. ${HINT_DECK.cards[0].prompt}`);
+    await page.getByTestId("next-card").click();
+    await expect(announcement).toHaveText(`Card 2 of 4. ${HINT_DECK.cards[1].prompt}`);
+    await page.getByTestId("next-card").click();
+    await expect(announcement).toHaveText("Card 3 of 4. A cache revalidates with Blank 1.");
+    await expect(page.getByTestId("cloze-input")).toHaveValue("");
+    await expect(page.getByTestId("card-hint")).toBeHidden();
+  });
+
   test("uses state-aware keyboard shortcuts for help, answers, and navigation", async ({ page }) => {
     await openPlayer(page, HINT_DECK);
 

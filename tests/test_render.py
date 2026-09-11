@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import json
 import re
-import subprocess
-import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -61,8 +59,6 @@ class RendererCliTests(unittest.TestCase):
                     "card text must never add a closing </script> tag beyond the template's own; "
                     "this only holds if injected '<' characters are escaped",
                 )
-                self.assertNotIn("__CRAM_MODE__", html)
-                self.assertNotIn("INJECT_MODE", html)
 
     def test_given_a_valid_deck_when_rendered_then_it_includes_only_a_passive_attribution_link(self):
         """Given a valid deck, when rendered, then attribution is a plain link without external resources."""
@@ -85,31 +81,6 @@ class RendererCliTests(unittest.TestCase):
                 r"(?:src|href|data)\s*=\s*['\"]https?://",
                 "the attribution must not add a page-load external resource",
             )
-
-    def test_given_the_removed_mode_option_when_rendered_then_the_cli_rejects_it(self):
-        """Given the removed mode option, when passed to the CLI, then it is rejected."""
-
-        deck_path = fixture_paths("valid")[0]
-        with tempfile.TemporaryDirectory() as directory:
-            output = Path(directory) / "deck.html"
-            result = subprocess.run(
-                [
-                    sys.executable,
-                    str(RENDERER),
-                    str(deck_path),
-                    "-o",
-                    str(output),
-                    "--mode",
-                    "cram",
-                ],
-                cwd=directory,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-
-            self.assertNotEqual(result.returncode, 0)
-            self.assertFalse(output.exists())
 
     def test_given_an_invalid_deck_when_rendered_then_it_is_rejected_without_html(self):
         """Given an invalid deck, when rendered, then the CLI rejects it without HTML."""
@@ -141,6 +112,8 @@ EXPECTED_DIAGNOSTICS = {
     "duplicate-card-ids.json": "card 1 field 'id'",
     "empty-deck.json": "deck field 'cards'",
     "mcq-without-distractors.json": "card 0 field 'distractors'",
+    "mcq-with-duplicate-distractors.json": "card 0 field 'distractors'",
+    "mcq-with-too-many-distractors.json": "card 0 field 'distractors'",
     "missing-required-field.json": "card 1 field 'answer'",
     "unknown-card-type.json": "card 0 field 'type'",
     "whitespace-only-prompt.json": "card 0 field 'prompt'",

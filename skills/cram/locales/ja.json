@@ -34,7 +34,7 @@
   "See results": "結果を見る",
   "Skip to next card": "次のカードにスキップ",
   "Made with Cram": "Cramで作成",
-  "Use H for a hint, A to reveal a basic answer, or the arrow keys to move through the deck.": "Hでヒント、Aで基本カードの答えを表示し、矢印キーで移動できます。",
+  "Use the arrow keys to move through the deck.": "矢印キーでカードを移動できます。",
   "Cram mode is unavailable during retry sessions": "再挑戦中は集中暗記モードを利用できません",
   "Disable Cram mode": "集中暗記モードを無効にする",
   "Enable Cram mode": "集中暗記モードを有効にする",
@@ -107,5 +107,7 @@
   "Sprint": "スプリント",
   "Appearance": "表示",
   "Light": "ライト",
-  "Dark": "ダーク"
+  "Dark": "ダーク",
+  "Single-letter shortcuts": "1文字のショートカット",
+  "A reveals answers; H reveals hints.": "Aで答え、Hでヒントを表示します。"
 }

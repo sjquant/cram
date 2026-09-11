@@ -34,7 +34,7 @@
   "See results": "결과 보기",
   "Skip to next card": "다음 카드로 건너뛰기",
   "Made with Cram": "Cram으로 제작",
-  "Use H for a hint, A to reveal a basic answer, or the arrow keys to move through the deck.": "H로 힌트, A로 기본 카드 정답을 보고 화살표 키로 이동하세요.",
+  "Use the arrow keys to move through the deck.": "방향키로 카드를 이동하세요.",
   "Cram mode is unavailable during retry sessions": "다시 풀기 중에는 집중 암기 모드를 사용할 수 없습니다",
   "Disable Cram mode": "집중 암기 모드 끄기",
   "Enable Cram mode": "집중 암기 모드 켜기",
@@ -107,5 +107,7 @@
   "Sprint": "스프린트",
   "Appearance": "표시 방식",
   "Light": "라이트",
-  "Dark": "다크"
+  "Dark": "다크",
+  "Single-letter shortcuts": "한 글자 단축키",
+  "A reveals answers; H reveals hints.": "A는 정답을, H는 힌트를 보여 줍니다."
 }

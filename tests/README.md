@@ -41,6 +41,12 @@ installation:
 python3 -m unittest discover -s tests -t . -v
 ```
 
-Browser checks specify card behavior and accessibility through public controls,
-including theme switching, saved appearance preferences, and narrow-screen
-control reachability.
+Browser checks cover card behavior, theme and appearance preferences, keyboard
+focus, shortcut preferences,
+forced-colors keyboard flows, and control visibility at zoom-equivalent
+viewport sizes and enlarged text.
+
+These checks do not establish WCAG conformance. Manual validation still needs
+complete study, retry, and settings flows with VoiceOver/Safari and
+NVDA/Firefox or Chrome, actual browser zoom and text resizing, and a visual
+check of focus and selection indicators in Windows High Contrast.
