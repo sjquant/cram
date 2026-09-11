@@ -85,35 +85,6 @@ Kiro Powers and Cursor's public marketplace require their own import or
 review/publish flow; Antigravity and Grok can use the portable skill, and Grok
 also reads Claude-compatible plugin marketplaces.
 
-## Player appearance
-
-Open **Settings → Theme** to choose **Paper**, **Focus**, or **Sprint**, each
-with its own card layout, typography, and colors. Use the separate
-**Appearance** setting to choose Light, Dark, or System.
-
-The theme is saved in the browser independently of deck progress. Switching
-themes keeps the current card, revealed answer, and unfinished input. On narrow
-screens, response buttons expand to the card width and long cards scroll with
-the page.
-
-Reveal and check buttons stay near the question.
-Revealed answers appear directly below the question; multiple-choice results
-follow the options, and cloze corrections follow the sentence. Hints collapse
-after answering, and keyboard focus moves to the result.
-
-On desktop, cards share a study panel with a 40rem baseline height. Longer
-questions can grow the panel when the viewport has room, up to its screen-safe
-bound. Previous and Skip/Next/See results stay in its bottom row. Long answer
-content scrolls inside the card body, keeping navigation nearby and outside
-the scrolling area. Made with Cram stays fixed in the viewport footer, independent
-of the panel height.
-
-Phones and short windows use content-height cards and page scrolling, with
-navigation fixed to the screen bottom. Click targets keep the same size and
-position as card content changes, with space reserved so the bar does not
-cover the end of an answer. Long answers open at their beginning, and each
-new card starts with its question in view.
-
 ## Player language
 
 Study with controls in English, Korean, Japanese, Simplified Chinese,
