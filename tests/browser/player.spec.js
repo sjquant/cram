@@ -274,6 +274,8 @@ test.describe("basic cards", () => {
     await expect(page.getByTestId("grade-known")).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByTestId("grade-missed")).toHaveAttribute("aria-pressed", "false");
     await expect(page.locator("#player-status")).toHaveText("Marked as known.");
+    await expect(page.locator("#player-status")).toHaveAttribute("aria-live", "polite");
+    await expect(page.locator("#player-status")).toHaveCSS("clip", "rect(0px, 0px, 0px, 0px)");
   });
 
   for (const width of [390, 1280]) {
@@ -482,6 +484,171 @@ test.describe("basic cards", () => {
     await expect(page.getByTestId("score-screen")).toBeVisible();
   });
 
+  test("starts fresh shuffled rounds and restores original order without erasing history", async ({ page }) => {
+    await openPlayer(page, BASIC_DECK);
+
+    // Given: one card has saved progress and a deterministic random source makes the shuffled order observable.
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+    await page.evaluate(() => {
+      let seed = 1;
+      crypto.getRandomValues = values => { values[0] = seed++; return values; };
+    });
+
+    // When: the learner enables card shuffling from settings.
+    await page.getByTestId("settings-toggle").click();
+    await page.getByTestId("shuffle-cards").click();
+
+    // Then: every card is still present, but the first pass uses a different order.
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getState().shuffleMode)).toBe(true);
+    const shuffledPrompts = [];
+    for (let index = 0; index < BASIC_DECK.cards.length; index += 1) {
+      shuffledPrompts.push(await page.getByTestId("card-prompt").textContent());
+      await expect(page.getByTestId("card-answer")).toBeHidden();
+      await page.getByTestId("next-card").click();
+    }
+    expect(new Set(shuffledPrompts)).toEqual(new Set(BASIC_DECK.cards.map(card => card.prompt)));
+    expect(shuffledPrompts).not.toEqual(BASIC_DECK.cards.map(card => card.prompt));
+
+    await expect(page.getByTestId("score-value")).toHaveText("0/5");
+    // When: another shuffle is requested without an off/on cycle.
+    await page.getByTestId("settings-toggle").click();
+    await page.getByTestId("shuffle-cards").click();
+    const secondOrder = [];
+    for (let index = 0; index < BASIC_DECK.cards.length; index += 1) {
+      secondOrder.push(await page.getByTestId("card-prompt").textContent());
+      await page.getByTestId("next-card").click();
+    }
+    expect(secondOrder).not.toEqual(shuffledPrompts);
+    await page.getByTestId("settings-toggle").click();
+    await page.getByTestId("restore-order").click();
+
+    // Then: the session restarts from the original deck order without losing saved progress.
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getState().shuffleMode)).toBe(false);
+    await expect(page.getByTestId("card-prompt")).toHaveText(BASIC_DECK.cards[0].prompt);
+    await expect(page.getByTestId("card-answer")).toBeHidden();
+    expect(await page.evaluate(id => JSON.parse(localStorage.getItem(`fc:${id}:v1`)), BASIC_DECK.id))
+      .toEqual({ [BASIC_DECK.cards[0].id]: "known" });
+    await expect(page.locator("#player-status")).toHaveText("Card order restored for this session.");
+  });
+
+  test("resumes a shuffled round and its results after reload", async ({ page }) => {
+    // Given: a shuffled round has reached its second card.
+    await openPlayer(page, BASIC_DECK);
+    await page.getByTestId("settings-toggle").click();
+    await page.getByTestId("shuffle-cards").click();
+    const first = await page.getByTestId("card-prompt").textContent();
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+    await page.getByTestId("next-card").click();
+    const second = await page.getByTestId("card-prompt").textContent();
+
+    // When: the same deck is reopened.
+    await page.reload();
+    await page.evaluate(deck => window.CRAM_PLAYER.setDeck(deck), BASIC_DECK);
+
+    // Then: position, order and answers belong to the saved round.
+    await expect(page.getByTestId("card-prompt")).toHaveText(second);
+    await expect(page.getByTestId("card-position")).toHaveText("2/5");
+    await expect(page.getByTestId("card-answer")).toBeHidden();
+    await page.getByTestId("previous-card").click();
+    await expect(page.getByTestId("card-prompt")).toHaveText(first);
+    await expect(page.getByTestId("grade-known")).toHaveAttribute("aria-pressed", "true");
+    for (let index = 0; index < BASIC_DECK.cards.length; index += 1) await page.getByTestId("next-card").click();
+    await page.reload();
+    await page.evaluate(deck => window.CRAM_PLAYER.setDeck(deck), BASIC_DECK);
+    await expect(page.getByTestId("score-value")).toHaveText("1/5");
+    await expect(page.getByTestId("score-screen")).toBeVisible();
+
+    // When: a missed-card retry is shuffled, it remains a fresh four-card round.
+    await page.getByTestId("retry-missed").click();
+    await page.getByTestId("settings-toggle").click();
+    await page.getByTestId("shuffle-cards").click();
+    const retryPrompts = [];
+    for (let index = 0; index < 4; index += 1) {
+      retryPrompts.push(await page.getByTestId("card-prompt").textContent());
+      await expect(page.getByTestId("card-answer")).toBeHidden();
+      await page.getByTestId("next-card").click();
+    }
+    expect(retryPrompts).not.toContain(first);
+    expect(new Set(retryPrompts).size).toBe(4);
+    await expect(page.getByTestId("score-value")).toHaveText("0/4");
+  });
+
+  test("resumes fresh drill attempts and the mastery streak after reload", async ({ page }) => {
+    // Given: a shuffled one-card round has a miss followed by one correct drill attempt.
+    await openPlayer(page, OTHER_DECK);
+    await page.getByTestId("settings-toggle").click();
+    await page.getByTestId("shuffle-cards").click();
+    await enableCramMode(page);
+    for (const grade of ["missed", "known"]) {
+      await page.getByTestId("reveal-answer").click();
+      await page.getByTestId(`grade-${grade}`).click();
+      await page.getByTestId("next-card").click();
+    }
+    // When: the page reloads on the pending second drill attempt.
+    await page.reload();
+    await page.evaluate(deck => window.CRAM_PLAYER.setDeck(deck), OTHER_DECK);
+    // Then: the fresh attempt is unanswered and one more correct answer completes mastery.
+    await expect(page.getByTestId("card-position")).toHaveText("3/3");
+    await expect(page.getByTestId("card-answer")).toBeHidden();
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+    await page.getByTestId("next-card").click();
+    await expect(page.getByTestId("score-screen")).toBeVisible();
+    await expect(page.getByTestId("score-value")).toHaveText("1/1");
+  });
+
+  test("discards invalid or outdated sessions without discarding grade history", async ({ page }) => {
+    // Given: a graded card and a saved session that references an unknown card.
+    await openPlayer(page, BASIC_DECK);
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+    await page.getByTestId("next-card").click();
+    await page.evaluate(id => {
+      const key = `fc:${id}:session`;
+      const saved = JSON.parse(localStorage.getItem(key));
+      saved.queue[0] = "missing-card";
+      localStorage.setItem(key, JSON.stringify(saved));
+    }, BASIC_DECK.id);
+    // When: the deck is reopened, the invalid queue is rejected as a whole.
+    await page.reload();
+    await page.evaluate(deck => window.CRAM_PLAYER.setDeck(deck), BASIC_DECK);
+    // Then: original order and recorded history remain usable.
+    await expect(page.getByTestId("card-position")).toHaveText("1/5");
+    await expect(page.getByTestId("grade-known")).toHaveAttribute("aria-pressed", "true");
+    await page.getByTestId("next-card").click();
+    const changed = structuredClone(BASIC_DECK);
+    changed.cards[0].prompt = "Updated question";
+    await page.evaluate(deck => window.CRAM_PLAYER.setDeck(deck), changed);
+    await expect(page.getByTestId("card-prompt")).toHaveText("Updated question");
+    await expect(page.getByTestId("card-position")).toHaveText("1/5");
+  });
+
+  test("keeps shuffle usable and warns when session storage is unavailable", async ({ page }) => {
+    // Given: session writes fail while grade history remains writable.
+    await openPlayer(page, BASIC_DECK);
+    await page.evaluate(() => {
+      const original = Storage.prototype.setItem;
+      Storage.prototype.setItem = function(key, value) {
+        if (key.endsWith(":session")) throw new Error("Session storage blocked");
+        return original.call(this, key, value);
+      };
+    });
+    // When: the learner starts a shuffled round and answers a card.
+    await page.getByTestId("settings-toggle").click();
+    await page.getByTestId("shuffle-cards").click();
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+    // Then: the answer works and the warning describes the loss of resumability.
+    await expect(page.getByTestId("grade-known")).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator("#player-status")).toHaveText("This session could not be saved. Reloading may lose your place.");
+    await expect(page.locator("#player-status")).toBeVisible();
+    await expect(page.locator("#player-status")).toHaveCSS("clip", "auto");
+    await page.getByTestId("next-card").click();
+    await expect(page.getByTestId("card-position")).toHaveText("2/5");
+  });
+
   test("closes the settings panel with Escape or an outside click", async ({ page }) => {
     await openPlayer(page, BASIC_DECK);
 
@@ -576,6 +743,8 @@ test.describe("basic cards", () => {
     await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), BASIC_DECK);
 
     // Then: the selected grade is restored from the deck-scoped localStorage entry.
+    await expect(page.getByTestId("card-position")).toHaveText("2/5");
+    await page.getByTestId("previous-card").click();
     await expect(page.getByTestId("grade-known")).toHaveAttribute("aria-pressed", "true");
     await page.getByTestId("next-card").click();
     await expect(page.getByTestId("grade-missed")).toHaveAttribute("aria-pressed", "true");
@@ -613,6 +782,8 @@ test.describe("basic cards", () => {
     await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), ALL_TYPES_DECK);
 
     // Then: each renderer restores its own persisted grade state.
+    await expect(page.getByTestId("cloze-feedback-summary")).toBeVisible();
+    for (let index = 0; index < 3; index += 1) await page.getByTestId("previous-card").click();
     await expect(page.getByTestId("grade-known")).toHaveAttribute("aria-pressed", "true");
     await page.getByTestId("next-card").click();
     await expect(page.getByTestId("mcq-feedback")).toHaveAttribute("data-result", "correct");
@@ -825,12 +996,12 @@ test.describe("basic cards", () => {
     await expect(page.getByTestId("retry-missed")).toBeHidden();
     await expect(page.getByTestId("review-scroll-cue")).toBeHidden();
 
-    // And: selecting the original deck again counts the corrected card as positive.
+    // And: reopening resumes retry results, with corrected grades retained in history.
     await page.reload();
     await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), RETRY_DECK);
-    await page.getByTestId("next-card").click();
-    await page.getByTestId("next-card").click();
-    await expect(page.getByTestId("score-value")).toHaveText("2/2");
+    await expect(page.getByTestId("score-value")).toHaveText("1/1");
+    expect(await page.evaluate(id => JSON.parse(localStorage.getItem(`fc:${id}:v1`)), RETRY_DECK.id))
+      .toEqual(Object.fromEntries(RETRY_DECK.cards.map(card => [card.id, "known"])));
   });
 
   test("retries missed MCQ and cloze cards with fresh answer controls", async ({ page }) => {
@@ -872,8 +1043,7 @@ test.describe("basic cards", () => {
     // And: the corrected grades persist when the original deck is reopened.
     await page.reload();
     await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), RETRY_TYPES_DECK);
-    await page.getByTestId("next-card").click();
-    await page.getByTestId("next-card").click();
+    await expect(page.getByTestId("score-screen")).toBeVisible();
     await expect(page.getByTestId("score-value")).toHaveText("2/2");
   });
 
@@ -1095,6 +1265,36 @@ test("renders the brand mark as a themed inline icon", async ({ page }) => {
 
   // Then: each theme gives the inline seal its own action color.
   expect(new Set(sealFills.values()).size).toBe(3);
+});
+
+test("themes settings controls together in light and dark appearances", async ({ page }) => {
+  // Given: settings remain open while the learner compares themes.
+  await openPlayer(page, BASIC_DECK);
+  await page.getByTestId("settings-toggle").click();
+  for (const appearance of ["light", "dark"]) {
+    await page.getByTestId("appearance-select").selectOption(appearance);
+    const colors = [];
+    const shapes = [];
+    for (const theme of ["paper", "focus", "sprint"]) {
+      // When: changing the theme without leaving settings.
+      await page.getByTestId("theme-select").selectOption(theme);
+      const shuffle = page.getByTestId("shuffle-cards");
+      const panel = page.getByTestId("settings-panel");
+      // Then: the controls share a theme color and the panel adopts its shape.
+      await expect(panel).toBeVisible();
+      const color = await panel.locator('input[type="checkbox"]').first()
+        .evaluate(element => getComputedStyle(element).accentColor);
+      // The button color eases into the new theme; wait for that transition.
+      await expect(shuffle).toHaveCSS("color", color);
+      colors.push(color);
+      shapes.push(await panel.evaluate(element => {
+        const style = getComputedStyle(element);
+        return `${style.borderRadius} ${style.boxShadow}`;
+      }));
+    }
+    expect(new Set(colors).size).toBe(3);
+    expect(new Set(shapes).size).toBe(3);
+  }
 });
 
 test("grows the desktop study panel for a long question when space allows", async ({ page }) => {
@@ -1539,13 +1739,13 @@ test.describe("hints", () => {
     expect(await page.evaluate(() => window.CRAM_PLAYER.getState().hintsUsed)).toEqual({});
   });
 
-  test("does not persist hint usage in deck progress", async ({ page }) => {
+  test("restores hint usage with the session while keeping grade history separate", async ({ page }) => {
     await openPlayer(page, HINT_DECK);
 
     // Given/When: the learner requests a hint before recording a grade.
     await page.getByTestId("show-hint").click();
 
-    // Then: hint usage stays in memory and creates no localStorage entry.
+    // Then: hint usage does not create an entry in grade history.
     expect(await page.evaluate((deckId) => localStorage.getItem(`fc:${deckId}:v1`), HINT_DECK.id)).toBeNull();
     expect(await page.evaluate(() => window.CRAM_PLAYER.getHintUsed("hint-basic-card"))).toBe(true);
     await page.getByTestId("reveal-answer").click();
@@ -1558,11 +1758,11 @@ test.describe("hints", () => {
     await page.reload();
     await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), HINT_DECK);
 
-    // Then: the restored answer keeps hints collapsed, and hint usage is not restored.
+    // Then: the restored answer keeps hints collapsed, but retains their use for review.
     await expect(page.getByTestId("show-hint")).toBeHidden();
     await expect(page.getByTestId("card-answer")).toBeVisible();
     await expect(page.getByTestId("card-hint")).toBeHidden();
-    expect(await page.evaluate(() => window.CRAM_PLAYER.getHintUsed("hint-basic-card"))).toBe(false);
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getHintUsed("hint-basic-card"))).toBe(true);
     expect(await page.evaluate((deckId) => JSON.parse(localStorage.getItem(`fc:${deckId}:v1`)), HINT_DECK.id)).toEqual({
       "hint-basic-card": "missed",
     });
