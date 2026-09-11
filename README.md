@@ -15,8 +15,16 @@ The generated player supports:
 - basic, multiple-choice (MCQ), and cloze cards;
 - self-grading with a score and review screen;
 - retrying only the cards you missed;
+- shuffling or restoring card order from Settings;
 - optional hints and explanations; and
-- progress persisted in the browser, so you can come back to a deck later.
+- session order, position, results, and Cram-mode repeat attempts saved in the
+  browser, so you can continue after a reload.
+
+In Settings → Study order, **Shuffle** starts a new round with hidden
+answers while keeping recorded grades in learning history. **Restore original
+order** returns to the source order. Retry rounds keep their missed-card scope.
+Saved sessions belong to the same deck in the same browser; changing the deck's
+card content starts a new session.
 
 Controls support keyboard navigation, reduced-motion preferences, and
 high-contrast mode. Settings lets you turn off the A/H single-letter

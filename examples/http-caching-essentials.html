@@ -37,6 +37,11 @@
       --card-radius: 0.75rem;
       --card-border: var(--rule);
       --card-shadow: 0 0.4rem 1.5rem rgb(0 0 0 / 7%), 0 0.3rem 0 -1px var(--surface), 0 0.3rem 0 var(--rule);
+      --settings-accent: light-dark(#b5342b, #e0645a);
+      --settings-border: var(--rule-strong);
+      --settings-radius: 0.85rem;
+      --control-radius: 0.5rem;
+      --settings-shadow: 0 0.75rem 2rem rgb(0 0 0 / 16%);
 
       --s1: 0.5rem;
       --s2: 1rem;
@@ -225,43 +230,65 @@
       transform: translateY(-70%) rotate(45deg);
     }
 
-    .player__theme-picker--plain .player__theme-select {
-      padding-left: 0.85rem;
-    }
-
     .player__theme-icon {
       position: absolute;
       left: 0.75rem;
+      top: 50%;
       width: 1.1rem;
       height: 1.1rem;
+      transform: translateY(-50%);
       color: var(--ink);
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.75;
+      stroke-linecap: round;
+      stroke-linejoin: round;
       pointer-events: none;
     }
 
-    .player__theme-icon path { fill: currentColor; }
-
-    .player__theme-icon circle {
-      fill: var(--paper);
-      stroke: currentColor;
-      stroke-width: 1.5;
-    }
+    .player__theme-icon > g { display: none; }
+    :root:not([data-theme]) .player__theme-icon--paper,
+    [data-theme="paper"] .player__theme-icon--paper,
+    [data-theme="focus"] .player__theme-icon--focus,
+    [data-theme="sprint"] .player__theme-icon--sprint { display: inline; }
 
     .player__theme-select {
       width: min(11rem, calc(100vw - 4rem));
-      min-height: 2.75rem;
-      border: 1px solid var(--rule-strong);
-      border-radius: 0.5rem;
-      padding: 0.5rem 2.2rem 0.5rem 1.9rem;
+      height: 2.75rem;
+      border: 1px solid var(--settings-border);
+      border-radius: var(--control-radius);
+      padding: 0 2.2rem 0 2.1rem;
       color: var(--ink);
       background: var(--surface);
       font-size: 0.9rem;
+      line-height: normal;
       cursor: pointer;
       appearance: none;
     }
 
+    .player__appearance-icon {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      width: 1.1rem;
+      height: 1.1rem;
+      transform: translateY(-50%);
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.75;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      pointer-events: none;
+    }
+
+    .player__appearance-icon > g { display: none; }
+    :root:not([data-appearance]) .player__appearance-icon--system,
+    [data-appearance="light"] .player__appearance-icon--light,
+    [data-appearance="dark"] .player__appearance-icon--dark { display: inline; }
+
     .player__settings-toggle:hover:not(:disabled),
     .player__settings-toggle:focus-visible {
-      color: var(--accent);
+      color: var(--settings-accent);
       background: var(--rule);
     }
 
@@ -276,6 +303,7 @@
     }
 
     .player__settings-panel {
+      --accent: var(--settings-accent);
       position: absolute;
       top: 3.5rem;
       right: 0.5rem;
@@ -283,13 +311,11 @@
       max-height: calc(100dvh - 6rem);
       overflow-y: auto;
       padding: 1rem;
-      border: 1px solid var(--rule-strong);
-      border-radius: 0.85rem;
+      border: 1px solid var(--settings-border);
+      border-radius: var(--settings-radius);
       color: var(--ink);
       background: var(--surface);
-      box-shadow: 0 0.75rem 2rem rgb(0 0 0 / 16%);
-      max-height: calc(100dvh - 6rem);
-      overflow-y: auto;
+      box-shadow: var(--settings-shadow);
     }
 
     .player__settings-panel[hidden] {
@@ -337,22 +363,15 @@
       line-height: 1.35;
     }
 
-    .player__theme-icon {
-      display: block;
-      position: absolute;
-      left: 0.75rem;
-      width: 1.1rem;
-      height: 1.1rem;
-      pointer-events: none;
-    }
-
-    .player__theme-icon path { fill: currentColor; }
-
-    .player__theme-icon circle {
-      fill: var(--paper);
-      stroke: currentColor;
-      stroke-width: 1.5;
-    }
+    .player__order-settings { border-top: 1px solid var(--rule); padding-top: 0.75rem; }
+    .player__order-label { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; font-size: 0.9rem; }
+    .player__order-label [role="status"] { color: var(--ink-soft); font-size: 0.8rem; }
+    .player__order-settings button { display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; min-height: 2.75rem; border-radius: var(--control-radius); margin-top: 0.6rem; }
+    .player__order-settings svg { width: 1.1rem; height: 1.1rem; flex: none; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+    .player__order-shuffle { color: var(--accent); background: color-mix(in srgb, var(--accent) 9%, var(--surface)); }
+    .player__order-shuffle:hover:not(:disabled) { color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, var(--surface)); }
+    .player__order-settings .player__order-restore { margin-top: 0.15rem; font-size: 0.8rem; }
+    .player__order-settings button[hidden] { display: none; }
 
     .player__theme-select:hover {
       border-color: var(--accent);
@@ -727,10 +746,6 @@
       border-color: var(--accent);
     }
 
-    .player__footer {
-      flex: none;
-    }
-
     .player__attribution {
       position: fixed;
       inset-inline: 0;
@@ -1077,19 +1092,8 @@
       color: var(--ink-soft);
     }
 
-    .player__visually-hidden {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      white-space: nowrap;
-      border: 0;
-    }
-
-    .player[data-state="results"] .player__status {
+    .player__visually-hidden,
+    .player__status:not(.player__status--error) {
       position: absolute;
       width: 1px;
       height: 1px;
@@ -1146,6 +1150,11 @@
     }
 
     [data-theme^="focus"] {
+      --settings-accent: var(--action);
+      --settings-border: light-dark(#bac8e2, #485a75);
+      --settings-radius: 1.25rem;
+      --control-radius: 0.75rem;
+      --settings-shadow: 0 0.75rem 2rem rgb(25 45 85 / 12%);
       --canvas: #eff3fa;
       --surface: #ffffff;
       --action: #315be8;
@@ -1191,6 +1200,11 @@
     [data-theme^="sprint"] .player__hint-button { align-self: center; }
 
     [data-theme^="sprint"] {
+      --settings-accent: light-dark(#42600f, #d5ef68);
+      --settings-border: var(--ink);
+      --settings-radius: 0.75rem;
+      --control-radius: 0.25rem;
+      --settings-shadow: 4px 4px 0 var(--ink);
       --canvas: #f5f6f0;
       --surface: #ffffff;
       --action: #d5ef68;
@@ -1267,7 +1281,6 @@
       .player__card { padding: 1.5rem 1.25rem; }
       .player__card-prompt { font-size: 1.35rem; }
       .player__response-actions > .player__primary-action { align-self: stretch; width: 100%; }
-      .player__status--navigation-hint { display: none; }
       .player__shortcut { display: none; }
       .cloze__input { margin-inline: 0.15em; }
       .player__settings-group { align-items: flex-start; flex-direction: column; gap: 0.35rem; }
@@ -1381,10 +1394,17 @@
             <label class="player__settings-label" for="theme-select" data-i18n>Theme</label>
             <div class="player__theme-picker">
               <svg class="player__theme-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path d="M12 3.5a8.5 8.5 0 1 0 0 17h1.4a2.1 2.1 0 0 0 1.4-3.66 2.1 2.1 0 0 1 1.4-3.66H18a2.5 2.5 0 0 0 2.5-2.5A8.5 8.5 0 0 0 12 3.5Z"></path>
-                <circle cx="8" cy="9" r="1"></circle>
-                <circle cx="12" cy="7.5" r="1"></circle>
-                <circle cx="15.5" cy="9" r="1"></circle>
+                <g class="player__theme-icon--paper">
+                  <path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8Zm0 0v5h5M9 12h6m-6 4h6"></path>
+                </g>
+                <g class="player__theme-icon--focus">
+                  <circle cx="12" cy="12" r="9"></circle>
+                  <circle cx="12" cy="12" r="4"></circle>
+                  <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"></circle>
+                </g>
+                <g class="player__theme-icon--sprint">
+                  <path d="m13 2-9 12h7l-1 8 10-13h-8Z"></path>
+                </g>
               </svg>
               <select class="player__theme-select" id="theme-select" data-testid="theme-select">
                 <option value="paper" data-i18n>Paper</option>
@@ -1395,7 +1415,20 @@
           </div>
           <div class="player__settings-group">
             <label class="player__settings-label" for="appearance-select" data-i18n>Appearance</label>
-            <div class="player__theme-picker player__theme-picker--plain">
+            <div class="player__theme-picker">
+              <svg class="player__appearance-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <g class="player__appearance-icon--system">
+                  <rect x="3" y="4" width="18" height="13" rx="2"></rect>
+                  <path d="M12 17v4m-4 0h8"></path>
+                </g>
+                <g class="player__appearance-icon--light">
+                  <circle cx="12" cy="12" r="4"></circle>
+                  <path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"></path>
+                </g>
+                <g class="player__appearance-icon--dark">
+                  <path d="M20.5 14A9 9 0 0 1 10 3.5 9 9 0 1 0 20.5 14Z"></path>
+                </g>
+              </svg>
               <select class="player__theme-select" id="appearance-select" data-testid="appearance-select">
                 <option value="" data-i18n>System</option>
                 <option value="light" data-i18n>Light</option>
@@ -1417,6 +1450,20 @@
               <small data-i18n>A reveals answers; H reveals hints.</small>
             </span>
           </label>
+          <div class="player__order-settings" role="group" aria-labelledby="order-label">
+            <div class="player__order-label">
+              <span id="order-label" data-i18n>Study order</span>
+              <span id="order-status" role="status"></span>
+            </div>
+            <button type="button" class="player__order-shuffle" data-action="shuffle" data-testid="shuffle-cards">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h3c5 0 7 12 12 12h3m-4-4 4 4-4 4M3 18h3c2 0 3.5-2 5-5m2-2c1.5-3 3-5 5-5h3m-4-4 4 4-4 4"></path></svg>
+              <span data-i18n>Shuffle</span>
+            </button>
+            <button type="button" class="player__order-restore" data-action="restore-order" id="restore-order" data-testid="restore-order" hidden>
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 10a9 9 0 1 1 2 9M3 4v6h6"></path></svg>
+              <span data-i18n>Restore original order</span>
+            </button>
+          </div>
         </section>
       </div>
     </header>
@@ -1485,13 +1532,11 @@
         </button>
       </div>
 
-      <footer class="player__footer">
-        <p class="player__status" id="player-status" role="status" aria-live="polite"></p>
-      </footer>
+      <p class="player__status" id="player-status" role="status" aria-live="polite"></p>
 
       <!-- Swapping card content in place is silent for a screen reader, so each card is
-           announced here instead. Kept separate from the visible status line, which
-           carries hints and errors rather than the card itself. -->
+           announced here instead. The separate status region announces feedback
+           and only becomes visible for errors. -->
       <p class="player__visually-hidden" id="card-announcer" role="status" aria-live="polite"></p>
     </main>
   </div>
@@ -1502,7 +1547,7 @@
 
   <!-- Render this template with render.py; examples/ contains the generated preview.
        Injected JSON escapes every less-than character to keep inline scripts safe. -->
-  <script>window.__LOCALE__ = {"language": "en", "messages": {"Cram player": "Cram player", "Loading deck\u2026": "Loading deck\u2026", "Open settings": "Open settings", "Close settings": "Close settings", "Settings": "Settings", "Theme": "Theme", "System": "System", "Cram mode": "Cram mode", "Requeue missed cards during this session.": "Requeue missed cards during this session.", "Deck progress": "Deck progress", "Card 0 of 0": "Card 0 of 0", "Preparing card": "Preparing card", "Preparing your deck\u2026": "Preparing your deck\u2026", "Results": "Results", "Session complete": "Session complete", "0 correct \u00b7 Nothing to review": "0 correct \u00b7 Nothing to review", "Score breakdown": "Score breakdown", "0 correct": "0 correct", "Nothing to review": "Nothing to review", "Retry missed cards": "Retry missed cards", "Reset progress": "Reset progress", "Review missed cards": "Review missed cards", "Perfect score \u2014 nothing to review.": "Perfect score \u2014 nothing to review.", "Scroll down to see more missed cards": "Scroll down to see more missed cards", "More cards below": "More cards below", "Card navigation": "Card navigation", "Previous card": "Previous card", "\u2190 Previous": "\u2190 Previous", "Next card": "Next card", "Skip \u2192": "Skip \u2192", "Next \u2192": "Next \u2192", "See results \u2192": "See results \u2192", "See results": "See results", "Skip to next card": "Skip to next card", "Made with Cram": "Made with Cram", "Use the arrow keys to move through the deck.": "Use the arrow keys to move through the deck.", "Cram mode is unavailable during retry sessions": "Cram mode is unavailable during retry sessions", "Disable Cram mode": "Disable Cram mode", "Enable Cram mode": "Enable Cram mode", "Cram mode is unavailable during retry sessions.": "Cram mode is unavailable during retry sessions.", "Cram mode enabled for this session.": "Cram mode enabled for this session.", "Cram mode disabled for this session.": "Cram mode disabled for this session.", "The page needs a deck with a title and at least one card.": "The page needs a deck with a title and at least one card.", "This card could not be rendered.": "This card could not be rendered.", "The card renderer failed.": "The card renderer failed.", "This card has no prompt.": "This card has no prompt.", "This card has no answer.": "This card has no answer.", "Show answer": "Show answer", "Missed it": "Missed it", "Knew it": "Knew it", "Grade your recall": "Grade your recall", "Optional hint": "Optional hint", "Answer actions": "Answer actions", "The grade could not be recorded.": "The grade could not be recorded.", "Marked as known.": "Marked as known.", "Marked as missed.": "Marked as missed.", "Choose an answer": "Choose an answer", "This option has no text.": "This option has no text.", "Check answer": "Check answer", "Correct.": "Correct.", "Incorrect.": "Incorrect.", "Incorrect. The correct answer is: {answer}": "Incorrect. The correct answer is: {answer}", "Answer selected. Check it when ready.": "Answer selected. Check it when ready.", "Blank {number}": "Blank {number}", "Check answers": "Check answers", "Blank {number}: Correct.": "Blank {number}: Correct.", "Blank {number}: Incorrect. Correct answer: {answer}": "Blank {number}: Incorrect. Correct answer: {answer}", "This card was previously marked incorrect.": "This card was previously marked incorrect.", "Show hint": "Show hint", "The hint could not be recorded.": "The hint could not be recorded.", "The \u201c{type}\u201d card renderer is not installed yet.": "The \u201c{type}\u201d card renderer is not installed yet.", "Unable to load deck": "Unable to load deck", "No cards loaded": "No cards loaded", "Deck error": "Deck error", "Card {position} of {total}": "Card {position} of {total}", "Session complete. Score {score}/{total}.": "Session complete. Score {score}/{total}.", "{score} correct \u00b7 {missedCount} to review": "{score} correct \u00b7 {missedCount} to review", "All {total} correct \u00b7 Nothing to review": "All {total} correct \u00b7 Nothing to review", "{score} correct": "{score} correct", "{missedCount} to review": "{missedCount} to review", "Retry {count} missed card": {"one": "Retry {count} missed card", "other": "Retry {count} missed cards"}, "Retrying {count} missed card.": {"one": "Retrying {count} missed card.", "other": "Retrying {count} missed cards."}, "Session complete: score {score} of {total}": "Session complete: score {score} of {total}", "Session complete: {score} of {total}": "Session complete: {score} of {total}", "Nothing to retry.": "Nothing to retry.", "Needed a hint": "Needed a hint", "Answer:": "Answer:", "Explanation:": "Explanation:", "Hint:": "Hint:", "Card {position} of {total}. {content}": "Card {position} of {total}. {content}", "Progress could not be saved. Try again.": "Progress could not be saved. Try again.", "basic": "basic", "mcq": "mcq", "cloze": "cloze", "unknown": "unknown", "Progress reset. Start again.": "Progress reset. Start again.", "Progress reset for this session, but saved progress could not be cleared.": "Progress reset for this session, but saved progress could not be cleared.", "Paper": "Paper", "Focus": "Focus", "Sprint": "Sprint", "Appearance": "Appearance", "Light": "Light", "Dark": "Dark", "Single-letter shortcuts": "Single-letter shortcuts", "A reveals answers; H reveals hints.": "A reveals answers; H reveals hints."}};</script>
+  <script>window.__LOCALE__ = {"language": "en", "messages": {"Cram player": "Cram player", "Loading deck\u2026": "Loading deck\u2026", "Open settings": "Open settings", "Close settings": "Close settings", "Settings": "Settings", "Theme": "Theme", "System": "System", "Cram mode": "Cram mode", "Requeue missed cards during this session.": "Requeue missed cards during this session.", "Study order": "Study order", "Original order": "Original", "Shuffled order": "Shuffled", "Shuffle": "Shuffle", "Restore original order": "Restore original order", "This session could not be saved. Reloading may lose your place.": "This session could not be saved. Reloading may lose your place.", "Deck progress": "Deck progress", "Card 0 of 0": "Card 0 of 0", "Preparing card": "Preparing card", "Preparing your deck\u2026": "Preparing your deck\u2026", "Results": "Results", "Session complete": "Session complete", "0 correct \u00b7 Nothing to review": "0 correct \u00b7 Nothing to review", "Score breakdown": "Score breakdown", "0 correct": "0 correct", "Nothing to review": "Nothing to review", "Retry missed cards": "Retry missed cards", "Reset progress": "Reset progress", "Review missed cards": "Review missed cards", "Perfect score \u2014 nothing to review.": "Perfect score \u2014 nothing to review.", "Scroll down to see more missed cards": "Scroll down to see more missed cards", "More cards below": "More cards below", "Card navigation": "Card navigation", "Previous card": "Previous card", "\u2190 Previous": "\u2190 Previous", "Next card": "Next card", "Skip \u2192": "Skip \u2192", "Next \u2192": "Next \u2192", "See results \u2192": "See results \u2192", "See results": "See results", "Skip to next card": "Skip to next card", "Made with Cram": "Made with Cram", "Use the arrow keys to move through the deck.": "Use the arrow keys to move through the deck.", "Cram mode is unavailable during retry sessions": "Cram mode is unavailable during retry sessions", "Disable Cram mode": "Disable Cram mode", "Enable Cram mode": "Enable Cram mode", "Cram mode is unavailable during retry sessions.": "Cram mode is unavailable during retry sessions.", "Cram mode enabled for this session.": "Cram mode enabled for this session.", "Cram mode disabled for this session.": "Cram mode disabled for this session.", "Cards shuffled for this session.": "Cards shuffled for this session.", "Card order restored for this session.": "Card order restored for this session.", "The page needs a deck with a title and at least one card.": "The page needs a deck with a title and at least one card.", "This card could not be rendered.": "This card could not be rendered.", "The card renderer failed.": "The card renderer failed.", "This card has no prompt.": "This card has no prompt.", "This card has no answer.": "This card has no answer.", "Show answer": "Show answer", "Missed it": "Missed it", "Knew it": "Knew it", "Grade your recall": "Grade your recall", "Optional hint": "Optional hint", "Answer actions": "Answer actions", "The grade could not be recorded.": "The grade could not be recorded.", "Marked as known.": "Marked as known.", "Marked as missed.": "Marked as missed.", "Choose an answer": "Choose an answer", "This option has no text.": "This option has no text.", "Check answer": "Check answer", "Correct.": "Correct.", "Incorrect.": "Incorrect.", "Incorrect. The correct answer is: {answer}": "Incorrect. The correct answer is: {answer}", "Answer selected. Check it when ready.": "Answer selected. Check it when ready.", "Blank {number}": "Blank {number}", "Check answers": "Check answers", "Blank {number}: Correct.": "Blank {number}: Correct.", "Blank {number}: Incorrect. Correct answer: {answer}": "Blank {number}: Incorrect. Correct answer: {answer}", "This card was previously marked incorrect.": "This card was previously marked incorrect.", "Show hint": "Show hint", "The hint could not be recorded.": "The hint could not be recorded.", "The \u201c{type}\u201d card renderer is not installed yet.": "The \u201c{type}\u201d card renderer is not installed yet.", "Unable to load deck": "Unable to load deck", "No cards loaded": "No cards loaded", "Deck error": "Deck error", "Card {position} of {total}": "Card {position} of {total}", "Session complete. Score {score}/{total}.": "Session complete. Score {score}/{total}.", "{score} correct \u00b7 {missedCount} to review": "{score} correct \u00b7 {missedCount} to review", "All {total} correct \u00b7 Nothing to review": "All {total} correct \u00b7 Nothing to review", "{score} correct": "{score} correct", "{missedCount} to review": "{missedCount} to review", "Retry {count} missed card": {"one": "Retry {count} missed card", "other": "Retry {count} missed cards"}, "Retrying {count} missed card.": {"one": "Retrying {count} missed card.", "other": "Retrying {count} missed cards."}, "Session complete: score {score} of {total}": "Session complete: score {score} of {total}", "Session complete: {score} of {total}": "Session complete: {score} of {total}", "Nothing to retry.": "Nothing to retry.", "Needed a hint": "Needed a hint", "Answer:": "Answer:", "Explanation:": "Explanation:", "Hint:": "Hint:", "Card {position} of {total}. {content}": "Card {position} of {total}. {content}", "Progress could not be saved. Try again.": "Progress could not be saved. Try again.", "basic": "basic", "mcq": "mcq", "cloze": "cloze", "unknown": "unknown", "Progress reset. Start again.": "Progress reset. Start again.", "Progress reset for this session, but saved progress could not be cleared.": "Progress reset for this session, but saved progress could not be cleared.", "Paper": "Paper", "Focus": "Focus", "Sprint": "Sprint", "Appearance": "Appearance", "Light": "Light", "Dark": "Dark", "Single-letter shortcuts": "Single-letter shortcuts", "A reveals answers; H reveals hints.": "A reveals answers; H reveals hints."}};</script>
   <script>window.__DECK__ = {"id": "http-caching-essentials", "title": "HTTP caching essentials", "source": "RFC 9111: HTTP Caching", "cards": [{"id": "cache-control-max-age", "type": "basic", "prompt": "What does `Cache-Control: max-age=60` permit a cache to do?", "answer": "Treat a stored response as fresh for 60 seconds after it was generated, so it can be reused without revalidation.", "hint": "Think in terms of a freshness lifetime."}, {"id": "cache-control-no-store", "type": "mcq", "prompt": "Which `Cache-Control` directive prevents a cache from storing a response?", "answer": "`no-store`", "distractors": ["`no-cache`", "`private`", "`max-age=60`"], "explanation": "Use this directive when retaining the response in a cache is not allowed."}, {"id": "cache-control-no-cache", "type": "basic", "prompt": "What does the HTTP `Cache-Control: no-cache` directive mean for a stored response?", "answer": "A cache may store the response, but it must revalidate it with the origin before reusing it.", "hint": "It is different from `no-store`: storage is allowed, reuse without validation is not."}, {"id": "etag-validator", "type": "cloze", "prompt": "Which response header gives a representation an opaque validator that a client can send in `If-None-Match`? The header is `{{ETag}}`.", "explanation": "A validator lets the client ask whether its stored representation is still current without downloading the full representation again."}, {"id": "if-none-match-not-modified", "type": "basic", "prompt": "For a conditional `GET`, what status can an origin return when `If-None-Match` confirms that a cached representation is still current?", "answer": "`304 Not Modified`, allowing the cache to reuse its stored response body."}, {"id": "vary-shared-cache", "type": "basic", "prompt": "What does the HTTP `Vary` response header tell a shared cache?", "answer": "Which request-header fields must match before a stored response can be reused for another request.", "hint": "The response may vary based on fields such as `Accept-Language`."}, {"id": "cache-control-private", "type": "basic", "prompt": "When should a response be marked `Cache-Control: private`?", "answer": "When it may be stored by a private browser cache but must not be stored by a shared cache.", "explanation": "This is useful for user-specific responses that a browser may reuse for that same user."}]};</script>
   <script>
     (() => {
@@ -1540,6 +1585,8 @@
         themeSelect: document.getElementById("theme-select"),
         appearanceSelect: document.getElementById("appearance-select"),
         cramModeToggle: document.getElementById("cram-mode-toggle"),
+        orderStatus: document.getElementById("order-status"),
+        restoreOrder: document.getElementById("restore-order"),
         shortcutsToggle: document.getElementById("shortcuts-toggle"),
         status: document.getElementById("player-status"),
         announcer: document.getElementById("card-announcer")
@@ -1562,6 +1609,9 @@
         scoreCards: [],
         isRetry: false,
         cramMode: false,
+        shuffleMode: false,
+        shuffleSeed: null,
+        freshRound: false,
         index: 0,
         cleanup: () => {},
         grades: Object.create(null),
@@ -1658,6 +1708,11 @@
         );
       }
 
+      function updateShuffleToggle() {
+        refs.orderStatus.textContent = state.shuffleMode ? t("Shuffled order") : t("Original order");
+        refs.restoreOrder.hidden = !state.shuffleMode;
+      }
+
       function setCramMode(enabled) {
         if (state.isRetry) {
           updateCramModeToggle();
@@ -1665,10 +1720,51 @@
           return;
         }
         state.cramMode = Boolean(enabled);
+        saveSession();
         updateCramModeToggle();
         setStatus(state.cramMode
           ? t("Cram mode enabled for this session.")
           : t("Cram mode disabled for this session."));
+      }
+
+      function setShuffleMode(enabled) {
+        if (!state.deck) return;
+        state.shuffleMode = Boolean(enabled);
+        state.shuffleSeed = enabled ? crypto.getRandomValues(new Uint32Array(1))[0] : null;
+        updateShuffleToggle();
+        restartSessionForShuffle();
+        setStatus(enabled
+          ? t("Cards shuffled for this session.")
+          : t("Card order restored for this session."));
+      }
+
+      function restartSessionForShuffle() {
+        const sourceCards = state.isRetry ? state.scoreCards : state.deck.cards;
+        state.sessionCards = state.shuffleMode
+          ? shuffleCards(sourceCards)
+          : sourceCards.slice();
+        state.index = 0;
+        state.freshRound = true;
+        state.grades = Object.create(null);
+        state.hintsUsed = Object.create(null);
+        resetDrillState();
+        setViewState("ready");
+        renderCurrentCard();
+        closeSettings();
+        refs.cardFrame.focus();
+      }
+
+      function shuffleCards(cards) {
+        const shuffled = cards.slice();
+        let seed = state.shuffleSeed >>> 0;
+        for (let index = shuffled.length - 1; index > 0; index -= 1) {
+          seed = (seed + 0x6D2B79F5) | 0;
+          let random = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+          random ^= random + Math.imul(random ^ (random >>> 7), 61 | random);
+          const swapIndex = Math.floor(((random ^ (random >>> 14)) >>> 0) / 4294967296 * (index + 1));
+          [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+        }
+        return shuffled;
       }
 
       // Renderer options keep grade vocabulary, scoring, and navigation policy with the
@@ -1739,20 +1835,28 @@
           return;
         }
         state.deck = deck;
+        state.shuffleSeed = null;
+        state.freshRound = false;
         state.sessionCards = deck.cards.slice();
         state.scoreCards = deck.cards.slice();
         state.isRetry = false;
         state.cramMode = false;
+        state.shuffleMode = false;
         updateCramModeToggle();
+        updateShuffleToggle();
         state.index = 0;
         state.persistenceWarning = "";
         state.grades = progressStore.load(deck);
         state.hintsUsed = Object.create(null);
         resetDrillState();
         seedPersistedAttemptGrades();
-        setViewState("ready");
+        const view = restoreSession();
+        updateCramModeToggle();
+        updateShuffleToggle();
+        setViewState(view);
         refs.title.textContent = deck.title;
-        renderCurrentCard();
+        if (view === "results") renderScoreScreen();
+        else renderCurrentCard();
       }
 
       function resetProgress() {
@@ -1765,7 +1869,11 @@
         state.scoreCards = state.deck.cards.slice();
         state.isRetry = false;
         state.cramMode = false;
+        state.shuffleMode = false;
+        state.shuffleSeed = null;
+        state.freshRound = false;
         updateCramModeToggle();
+        updateShuffleToggle();
         state.index = 0;
         resetDrillState();
         seedPersistedAttemptGrades();
@@ -1891,6 +1999,7 @@
         updateCardShortcuts();
         updateProgress();
         announceCard();
+        saveSession();
       }
 
       function rendererContext(card) {
@@ -2438,6 +2547,7 @@
             setStatus(state.persistenceWarning, true);
           }
           updateProgress();
+          saveSession();
           return persisted;
         }
         return true;
@@ -2459,6 +2569,7 @@
           }
         }
         state.hintsUsed[cardId] = true;
+        saveSession();
         return true;
       }
 
@@ -2495,7 +2606,9 @@
         state.scoreCards = [];
         state.isRetry = false;
         state.cramMode = false;
+        state.shuffleMode = false;
         updateCramModeToggle();
+        updateShuffleToggle();
         resetDrillState();
         setViewState("error");
         state.hintsUsed = Object.create(null);
@@ -2528,7 +2641,6 @@
         // Rewriting a live region re-announces it, so an unchanged hint stays untouched
         // rather than repeating itself on every card change.
         if (refs.status.textContent !== text) refs.status.textContent = text;
-        refs.status.classList.toggle("player__status--navigation-hint", text === NAVIGATION_HINT);
         refs.status.classList.toggle("player__status--error", Boolean(isError));
       }
 
@@ -2570,6 +2682,7 @@
         state.cleanup = () => {};
         const result = renderScoreScreen();
         setViewState("results");
+        saveSession();
         setStatus(t("Session complete. Score {score}/{total}.", result));
         refs.scoreTitle.focus();
       }
@@ -2621,8 +2734,10 @@
           return;
         }
 
-        state.sessionCards = missedCards.slice();
         state.scoreCards = missedCards.slice();
+        state.sessionCards = state.shuffleMode
+          ? shuffleCards(state.scoreCards)
+          : state.scoreCards.slice();
         state.isRetry = true;
         state.cramMode = false;
         updateCramModeToggle();
@@ -2894,6 +3009,77 @@
 
       const progressStore = createProgressStore();
 
+      function saveSession() {
+        if (!state.deck || !state.deck.id || !state.sessionCards.length) return;
+        try {
+          window.localStorage.setItem(`fc:${state.deck.id}:session`, JSON.stringify({
+            deck: JSON.stringify(state.deck.cards),
+            queue: state.sessionCards.map(card => card.id),
+            score: state.scoreCards.map(card => card.id),
+            index: state.index,
+            view: refs.player.dataset.state,
+            seed: state.shuffleSeed,
+            freshRound: state.freshRound,
+            isRetry: state.isRetry,
+            cramMode: state.cramMode,
+            grades: state.grades,
+            hints: state.hintsUsed,
+            streaks: state.drillStreaks,
+            drilled: state.drilledCards,
+            fresh: [...state.freshAttempts],
+            processed: [...state.processedAttempts]
+          }));
+        } catch {
+          state.persistenceWarning ||= t("This session could not be saved. Reloading may lose your place.");
+          setStatus(state.persistenceWarning, true);
+        }
+      }
+
+      function restoreSession() {
+        try {
+          const saved = JSON.parse(window.localStorage.getItem(`fc:${state.deck.id}:session`));
+          if (!saved || saved.deck !== JSON.stringify(state.deck.cards)) return "ready";
+          const cards = new Map(state.deck.cards.map(card => [card.id, card]));
+          const validCards = ids => Array.isArray(ids) && ids.length > 0 && ids.every(id => cards.has(id));
+          const validIndices = indices => Array.isArray(indices) && indices.every(index =>
+            Number.isInteger(index) && index >= 0 && index < saved.queue.length);
+          const validMap = (values, check) => values && typeof values === "object" && !Array.isArray(values) &&
+            Object.entries(values).every(([id, value]) => cards.has(id) && check(value));
+          if (!validCards(saved.queue) || !validCards(saved.score) ||
+              new Set(saved.score).size !== saved.score.length ||
+              saved.queue.some(id => !saved.score.includes(id)) || saved.score.some(id => !saved.queue.includes(id)) ||
+              !Number.isInteger(saved.index) || saved.index < 0 || saved.index >= saved.queue.length ||
+              !["ready", "results"].includes(saved.view) ||
+              ![saved.freshRound, saved.isRetry, saved.cramMode].every(value => typeof value === "boolean") ||
+              (saved.isRetry && saved.cramMode) ||
+              (!saved.isRetry && saved.score.length !== cards.size) ||
+              (saved.seed !== null && (!Number.isInteger(saved.seed) || saved.seed < 0 || saved.seed > 4294967295)) ||
+              !validIndices(saved.fresh) || !validIndices(saved.processed) ||
+              !validMap(saved.hints, value => value === true) ||
+              !validMap(saved.drilled, value => value === true) ||
+              !validMap(saved.streaks, value => Number.isInteger(value) && value >= 0)) return "ready";
+          const grades = sanitizeGrades(state.deck, saved.grades);
+          if (!grades) return "ready";
+          state.sessionCards = saved.queue.map(id => cards.get(id));
+          state.scoreCards = saved.score.map(id => cards.get(id));
+          state.index = saved.index;
+          state.shuffleSeed = saved.seed;
+          state.shuffleMode = saved.seed !== null;
+          state.freshRound = saved.freshRound;
+          state.isRetry = saved.isRetry;
+          state.cramMode = saved.cramMode;
+          if (saved.freshRound) state.grades = grades;
+          state.hintsUsed = Object.assign(Object.create(null), saved.hints);
+          state.drillStreaks = Object.assign(Object.create(null), saved.streaks);
+          state.drilledCards = Object.assign(Object.create(null), saved.drilled);
+          state.freshAttempts = new Set(saved.fresh);
+          state.processedAttempts = new Set(saved.processed);
+          return saved.view;
+        } catch {
+          return "ready";
+        }
+      }
+
       // Every renderer should build its prompt with this: the card frame is labelled by
       // the element's id, so a renderer that rolls its own leaves the card unnamed.
       function createPromptElement(text) {
@@ -2922,6 +3108,7 @@
           index: state.index,
           total: state.sessionCards.length,
           cramMode: state.cramMode,
+          shuffleMode: state.shuffleMode,
           grades: { ...state.grades },
           hintsUsed: { ...state.hintsUsed }
         })
@@ -2969,6 +3156,8 @@
         if (button.dataset.action === "reset-progress") resetProgress();
         if (button.dataset.action === "scroll-review") scrollReview();
         if (button.dataset.action === "toggle-settings") toggleSettings();
+        if (button.dataset.action === "shuffle") setShuffleMode(true);
+        if (button.dataset.action === "restore-order") setShuffleMode(false);
       });
 
       refs.themeSelect.addEventListener("change", () => {
@@ -2997,6 +3186,7 @@
 
       window.addEventListener("storage", (event) => {
         if (!state.deck) return;
+        if (state.freshRound) return;
         const currentCard = state.sessionCards[state.index];
         const previousGrade = currentCard && state.grades[currentCard.id];
         const grades = progressStore.sync(state.deck, state.grades, event);
