@@ -1028,6 +1028,7 @@ test("renders the brand mark as a themed inline icon", async ({ page }) => {
   // Given: the player is ready in each of its visual themes.
   await openPlayer(page, BASIC_DECK);
   const brandMark = page.locator(".player__brand-mark");
+  const sealFills = new Map();
 
   // When: the learner switches between Paper, Focus, and Sprint.
   for (const theme of ["paper", "focus", "sprint"]) {
@@ -1039,8 +1040,11 @@ test("renders the brand mark as a themed inline icon", async ({ page }) => {
     await expect(brandMark).toHaveAttribute("aria-hidden", "true");
     expect(await brandMark.evaluate(element => element.tagName)).toBe("svg");
     expect(await brandMark.locator("path").count()).toBe(2);
-    expect(await brandMark.locator(".player__brand-seal").evaluate(element => getComputedStyle(element).fill)).not.toBe("none");
+    sealFills.set(theme, await brandMark.locator(".player__brand-seal").evaluate(element => getComputedStyle(element).fill));
   }
+
+  // Then: each theme gives the inline seal its own action color.
+  expect(new Set(sealFills.values()).size).toBe(3);
 });
 
 test("grows the desktop study panel for a long question when space allows", async ({ page }) => {
