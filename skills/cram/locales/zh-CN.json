@@ -5,13 +5,7 @@
   "Close settings": "关闭设置",
   "Settings": "设置",
   "Theme": "主题",
-  "Color theme": "颜色主题",
   "System": "跟随系统",
-  "Light": "浅色",
-  "Dark": "深色",
-  "Sepia": "棕褐色",
-  "Night neon": "夜间霓虹",
-  "Bluebell": "风铃草",
   "Cram mode": "强化记忆模式",
   "Requeue missed cards during this session.": "在本次学习中重新练习答错的卡片。",
   "Deck progress": "卡组进度",
@@ -107,5 +101,11 @@
   "cloze": "填空题",
   "unknown": "未知",
   "Progress reset. Start again.": "进度已重置，请重新开始。",
-  "Progress reset for this session, but saved progress could not be cleared.": "本次学习已重置，但无法清除已保存的进度。"
+  "Progress reset for this session, but saved progress could not be cleared.": "本次学习已重置，但无法清除已保存的进度。",
+  "Paper": "纸张",
+  "Focus": "专注",
+  "Sprint": "冲刺",
+  "Appearance": "外观",
+  "Light": "浅色",
+  "Dark": "深色"
 }

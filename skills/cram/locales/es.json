@@ -5,13 +5,7 @@
   "Close settings": "Cerrar ajustes",
   "Settings": "Ajustes",
   "Theme": "Tema",
-  "Color theme": "Tema de color",
   "System": "Sistema",
-  "Light": "Claro",
-  "Dark": "Oscuro",
-  "Sepia": "Sepia",
-  "Night neon": "Neón nocturno",
-  "Bluebell": "Campanilla",
   "Cram mode": "Modo intensivo",
   "Requeue missed cards during this session.": "Repite las tarjetas falladas durante esta sesión.",
   "Deck progress": "Progreso del mazo",
@@ -107,5 +101,11 @@
   "cloze": "rellenar huecos",
   "unknown": "desconocido",
   "Progress reset. Start again.": "Progreso restablecido. Empieza de nuevo.",
-  "Progress reset for this session, but saved progress could not be cleared.": "Se reinició esta sesión, pero no se pudo borrar el progreso guardado."
+  "Progress reset for this session, but saved progress could not be cleared.": "Se reinició esta sesión, pero no se pudo borrar el progreso guardado.",
+  "Paper": "Papel",
+  "Focus": "Concentración",
+  "Sprint": "Sprint",
+  "Appearance": "Apariencia",
+  "Light": "Claro",
+  "Dark": "Oscuro"
 }

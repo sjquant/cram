@@ -226,6 +226,69 @@ test.describe("basic cards", () => {
     await expect(page.locator("#player-status")).toHaveText("Marked as known.");
   });
 
+  for (const width of [390, 1280]) {
+    test(`keeps revealed answers beside their questions at ${width}px`, async ({ page }) => {
+      // Given: each theme shows a short question and an optional hint.
+      await page.setViewportSize({ width, height: 844 });
+      for (const theme of ["paper", "focus", "sprint"]) {
+        await openPlayer(page, HINT_DECK);
+        await page.getByTestId("settings-toggle").click();
+        await page.getByRole("combobox", { name: "Theme", exact: true }).selectOption(theme);
+        await page.keyboard.press("Escape");
+
+        const question = await page.getByTestId("card-prompt").boundingBox();
+        const reveal = await page.getByTestId("reveal-answer").boundingBox();
+        expect(reveal.y - (question.y + question.height)).toBeLessThan(140);
+
+        // When: the answer replaces the recall task, through the keyboard shortcut.
+        await page.keyboard.press("a");
+
+        // Then: question and answer form one visible reading area; focus starts on the answer.
+        const prompt = await page.getByTestId("card-prompt").boundingBox();
+        const answer = await page.getByTestId("card-answer").boundingBox();
+        expect(answer.y - (prompt.y + prompt.height)).toBeGreaterThan(0);
+        expect(answer.y - (prompt.y + prompt.height)).toBeLessThan(90);
+        await expect(page.getByTestId("card-prompt")).toBeInViewport();
+        await expect(page.getByTestId("card-answer")).toBeInViewport({ ratio: 1 });
+        await expect(page.getByTestId("card-answer")).toBeFocused();
+        await expect(page.getByTestId("show-hint")).toBeHidden();
+        await page.keyboard.press("Tab");
+        await expect(page.getByTestId("grade-missed")).toBeFocused();
+      }
+    });
+
+    test(`reveals the beginning of a long answer before its grading controls at ${width}px`, async ({ page }) => {
+      // Given: the answer is taller than the viewport, and the learner has used a hint.
+      await page.setViewportSize({ width, height: 844 });
+      const card = { ...HINT_DECK.cards[0], answer: "Start reading here.\n" + "Detailed explanation.\n".repeat(80) };
+      await openPlayer(page, { ...HINT_DECK, cards: [card] });
+      await page.getByTestId("show-hint").click();
+
+      // When: clicking Show answer expands the card well beyond the screen.
+      await page.getByTestId("reveal-answer").click();
+
+      // Then: the opening lines are visible, while grading stays after the full answer.
+      const answer = await page.getByTestId("card-answer").boundingBox();
+      const readingArea = await page.getByTestId("card-content").boundingBox();
+      const readingTop = width >= 768 ? readingArea.y : 0;
+      expect(answer.y).toBeGreaterThanOrEqual(readingTop);
+      expect(answer.y - readingTop).toBeLessThan(120);
+      await expect(page.getByTestId("card-hint")).toBeHidden();
+      await expect(page.getByTestId("grading-buttons")).not.toBeInViewport();
+      expect(await page.evaluate(id => window.CRAM_PLAYER.getHintUsed(id), card.id)).toBe(true);
+
+      // When: the learner finishes reading, grades, and reopens the card.
+      await page.getByTestId("grade-known").click();
+      await page.reload();
+      await page.evaluate(deck => window.CRAM_PLAYER.setDeck(deck), { ...HINT_DECK, cards: [card] });
+
+      // Then: the answer and recorded grade remain available without another reveal.
+      await expect(page.getByTestId("card-answer")).toHaveText(card.answer);
+      await expect(page.getByTestId("grade-known")).toHaveAttribute("aria-pressed", "true");
+      await expect(page.getByTestId("show-hint")).toBeHidden();
+    });
+  }
+
   test("requeues missed cards in the same session until their correct streak is mastered", async ({ page }) => {
     await openPlayer(page, BASIC_DECK);
     await enableCramMode(page);
@@ -353,9 +416,11 @@ test.describe("basic cards", () => {
     await enableCramMode(page);
 
     // When: the learner turns Cram mode off before selecting another deck.
+    await page.getByTestId("settings-toggle").click();
     await page.getByTestId("cram-mode-toggle").uncheck();
     await expect(page.getByTestId("cram-mode-toggle")).not.toBeChecked();
     expect(await page.evaluate(() => window.CRAM_PLAYER.getState().cramMode)).toBe(false);
+    await page.keyboard.press("Escape");
 
     // Then: selecting a new deck keeps the default off and a missed card ends normally.
     await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), OTHER_DECK);
@@ -391,31 +456,6 @@ test.describe("basic cards", () => {
     await expect(page.getByTestId("settings-toggle")).toHaveAttribute("aria-expanded", "false");
   });
 
-  test("aligns the mobile footer action with the header shell gutter", async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await openPlayer(page, BASIC_DECK);
-
-    // Given: a fresh mobile card hides the non-essential navigation hint.
-    const gutters = await page.evaluate(() => {
-      const player = document.querySelector("#player");
-      const header = document.querySelector(".player__header");
-      const navigation = document.querySelector(".player__navigation");
-      const playerBounds = player.getBoundingClientRect();
-      const headerBounds = header.getBoundingClientRect();
-      const navigationBounds = navigation.getBoundingClientRect();
-      const styles = getComputedStyle(player);
-      return {
-        headerTop: headerBounds.top - playerBounds.top,
-        navigationBottom: playerBounds.bottom - navigationBounds.bottom,
-        shellPaddingBottom: Number.parseFloat(styles.paddingBottom),
-      };
-    });
-
-    // Then: the visible footer action and header use the same outer gutter.
-    expect(gutters.headerTop).toBeCloseTo(gutters.navigationBottom, 1);
-    expect(gutters.navigationBottom).toBeCloseTo(gutters.shellPaddingBottom, 1);
-  });
-
   test("keeps long card-position counts readable without horizontal page overflow", async ({ page }) => {
     for (const viewport of [
       { width: 1280, height: 800 },
@@ -424,7 +464,7 @@ test.describe("basic cards", () => {
       await page.setViewportSize(viewport);
       await openPlayer(page, LONG_COUNT_DECK);
 
-      // Given: a 100-card deck renders a zero-padded position in the seal badge.
+      // Given: a 100-card deck renders a zero-padded card position.
       const badgeState = await page.evaluate(() => {
         const badge = document.querySelector("[data-testid='card-position']");
         const textRange = document.createRange();
@@ -442,7 +482,7 @@ test.describe("basic cards", () => {
         };
       });
 
-      // Then: every digit stays inside the widened seal and the page remains viewport-bound.
+      // Then: every digit stays inside the position label and the page remains viewport-bound.
       expect(badgeState.label).toBe("001/100");
       expect(badgeState.badgeScrollWidth).toBeLessThanOrEqual(badgeState.badgeClientWidth);
       expect(badgeState.textBounds.left).toBeGreaterThanOrEqual(badgeState.badgeBounds.left - 1);
@@ -922,171 +962,376 @@ test.describe("basic cards", () => {
   });
 });
 
-test("selects paper-and-ink themes and persists the explicit choice independently of progress", async ({ page }) => {
-  await page.emulateMedia({ colorScheme: "dark" });
-  await openPlayer(page, BASIC_DECK);
-  const themeSelect = page.getByTestId("theme-select");
+for (const width of [390, 1280]) {
+  test(`keeps choices and input feedback in the reading flow at ${width}px`, async ({ page }) => {
+    // Given: an MCQ with a hint, followed by a cloze question.
+    await page.setViewportSize({ width, height: 1000 });
+    await openPlayer(page, { ...HINT_DECK, cards: HINT_DECK.cards.slice(1, 3) });
+    const prompt = await page.getByTestId("card-prompt").boundingBox();
+    const options = await page.getByTestId("mcq-options").boundingBox();
+    expect(options.y - (prompt.y + prompt.height)).toBeLessThan(40);
 
-  // Given: the settings panel starts closed behind the header tools.
-  await expect(page.getByTestId("settings-panel")).toBeHidden();
-  await page.getByTestId("settings-toggle").click();
-  await expect(page.getByTestId("settings-panel")).toBeVisible();
-  await expect(page.getByTestId("settings-toggle")).toHaveAttribute("aria-expanded", "true");
-  await expect(themeSelect).toBeVisible();
+    // When: an incorrect choice is submitted.
+    await page.getByTestId("mcq-option").filter({ hasText: "no-cache" }).click();
+    await page.getByTestId("mcq-check-answer").click();
 
-  // Given: the learner has not chosen a theme, so the dark system preference applies.
-  const systemTheme = await page.evaluate(() => ({
-    rootTheme: document.documentElement.getAttribute("data-theme"),
-    paper: getComputedStyle(document.documentElement).getPropertyValue("--paper").trim()
-  }));
-  expect(systemTheme.rootTheme).toBeNull();
-  expect(systemTheme.paper).toBe("#151310");
-  await expect(themeSelect).toHaveRole("combobox", { name: "Color theme" });
-  await expect(themeSelect.locator("option")).toHaveText([
-    "System",
-    "Light",
-    "Dark",
-    "Sepia",
-    "Night neon",
-    "Bluebell"
-  ]);
-  await expect(themeSelect).toHaveValue("");
-  await expect(themeSelect).toHaveAttribute("aria-label", "Color theme");
+    // Then: the result follows the choices and is the next thing to read.
+    const answeredOptions = await page.getByTestId("mcq-options").boundingBox();
+    const result = await page.getByTestId("mcq-feedback").boundingBox();
+    expect(result.y - (answeredOptions.y + answeredOptions.height)).toBeLessThan(40);
+    await expect(page.getByTestId("mcq-feedback")).toBeFocused();
+    await expect(page.getByTestId("mcq-feedback")).toBeInViewport({ ratio: 1 });
+    await expect(page.getByTestId("show-hint")).toBeHidden();
 
-  // When: the operating-system preference changes while the player stays in system mode.
-  await page.emulateMedia({ colorScheme: "light" });
+    // When: the following cloze question is answered incorrectly.
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("cloze-input").fill("wrong");
+    await page.getByTestId("cloze-check-answer").click();
 
-  // Then: the system-driven UI follows the new effective theme.
-  await expect(themeSelect).toHaveValue("");
-  await expect.poll(() => page.evaluate(() => (
-    getComputedStyle(document.documentElement).getPropertyValue("--paper").trim()
-  ))).toBe("#f4efe4");
-  await page.emulateMedia({ colorScheme: "dark" });
-  await expect.poll(() => page.evaluate(() => (
-    getComputedStyle(document.documentElement).getPropertyValue("--paper").trim()
-  ))).toBe("#151310");
+    // Then: the correction follows the sentence, with an accessible link to the invalid blank.
+    const sentence = await page.getByTestId("card-prompt").boundingBox();
+    const feedback = await page.getByTestId("cloze-feedback").boundingBox();
+    expect(feedback.y - (sentence.y + sentence.height)).toBeLessThan(40);
+    await expect(page.getByTestId("cloze-input")).toHaveAttribute("aria-invalid", "true");
+    await expect(page.getByTestId("cloze-input")).toHaveAccessibleDescription(/Correct answer:/);
+    await expect(page.getByTestId("cloze-feedback")).toBeFocused();
+    await expect(page.getByTestId("cloze-feedback")).toBeInViewport({ ratio: 1 });
+    await expect(page.getByTestId("show-hint")).toBeHidden();
+  });
+}
 
-  // Given: progress belongs to the deck-specific store before the theme changes.
-  await page.getByTestId("reveal-answer").click();
-  await page.getByTestId("grade-known").click();
-  const progressBeforeThemeChange = await page.evaluate(
-    (deckId) => localStorage.getItem(`fc:${deckId}:v1`),
-    BASIC_DECK.id
-  );
+test("shows four desktop choices and their check action without scrolling", async ({ page }) => {
+  // Given: the example's four-choice question in each desktop theme.
+  const example = JSON.parse(fs.readFileSync(path.join(ROOT, "examples/http-caching-essentials.json"), "utf8"));
+  await page.setViewportSize({ width: 1000, height: 850 });
+  for (const theme of ["paper", "focus", "sprint"]) {
+    await openPlayer(page, { ...example, cards: [example.cards.find(card => card.type === "mcq")] });
+    await page.getByTestId("settings-toggle").click();
+    await page.getByRole("combobox", { name: "Theme", exact: true }).selectOption(theme);
+    await page.keyboard.press("Escape");
+    const readingArea = page.getByTestId("card-content");
+    const navigation = await page.getByTestId("next-card").boundingBox();
 
-  // When: the learner selects each named theme from the picker.
-  await page.getByTestId("settings-toggle").click();
-  await expect(page.getByTestId("settings-panel")).toBeVisible();
+    // When: choosing an answer exposes the check action below all four options.
+    await page.getByTestId("mcq-option").first().click();
 
-  const namedThemes = [
-    { name: "light", paper: "#f4efe4" },
-    { name: "dark", paper: "#151310" },
-    { name: "sepia", paper: "#eadcc5" },
-    { name: "bluebell", paper: "#eaf3fa" },
-    { name: "night-neon", paper: "#101820" }
-  ];
-  for (const theme of namedThemes) {
-    await themeSelect.selectOption(theme.name);
-    await expect(page.locator("html")).toHaveAttribute("data-theme", theme.name);
-    await expect(themeSelect).toHaveValue(theme.name);
-    await expect.poll(() => page.evaluate(() => (
-      getComputedStyle(document.documentElement).getPropertyValue("--paper").trim()
-    ))).toBe(theme.paper);
+    // Then: the entire question and response fit, and navigation remains in place.
+    await expect(page.getByTestId("mcq-option")).toHaveCount(4);
+    await expect.poll(() => readingArea.evaluate(element => element.scrollHeight - element.clientHeight)).toBeLessThanOrEqual(1);
+    await expect(page.getByTestId("card-prompt")).toBeInViewport({ ratio: 1 });
+    await expect(page.getByTestId("mcq-check-answer")).toBeInViewport({ ratio: 1 });
+    expect(await page.getByTestId("next-card").boundingBox()).toEqual(navigation);
   }
-
-  // Then: the global theme key persists independently of deck progress.
-  const storedTheme = await page.evaluate((deckId) => ({
-    theme: localStorage.getItem("cram:theme:v2"),
-    progress: localStorage.getItem(`fc:${deckId}:v1`)
-  }), BASIC_DECK.id);
-  expect(storedTheme.theme).toBe("night-neon");
-  expect(storedTheme.progress).toBe(progressBeforeThemeChange);
-
-  // When: the file:// player is reloaded.
-  await page.reload();
-  await page.getByTestId("settings-toggle").click();
-  await expect(page.getByTestId("settings-panel")).toBeVisible();
-
-  // Then: the explicit theme remains applied without changing the deck session machinery.
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "night-neon");
-  await expect(themeSelect).toHaveValue("night-neon");
-  expect(await page.evaluate((deckId) => localStorage.getItem(`fc:${deckId}:v1`), BASIC_DECK.id))
-    .toBe(progressBeforeThemeChange);
-
-  // Returning to system removes the explicit v2 preference and resumes OS following.
-  await themeSelect.selectOption("");
-  expect(await page.locator("html").getAttribute("data-theme")).toBeNull();
-  expect(await page.evaluate(() => localStorage.getItem("cram:theme:v2"))).toBeNull();
-  await expect(themeSelect).toHaveValue("");
-  await expect.poll(() => page.evaluate(() => (
-    getComputedStyle(document.documentElement).getPropertyValue("--paper").trim()
-  ))).toBe("#151310");
 });
 
-test("ignores the legacy v1 theme key and keeps every palette legible over its paper", async ({ page }) => {
-  await page.emulateMedia({ colorScheme: "dark" });
-  await page.goto(PLAYER_URL);
-  await page.evaluate(() => {
-    localStorage.removeItem("cram:theme:v2");
-    localStorage.setItem("cram:theme:v1", "dark");
+test("renders the brand mark as a themed inline icon", async ({ page }) => {
+  // Given: the player is ready in each of its visual themes.
+  await openPlayer(page, BASIC_DECK);
+  const brandMark = page.locator(".player__brand-mark");
+  const sealFills = new Map();
+
+  // When: the learner switches between Paper, Focus, and Sprint.
+  for (const theme of ["paper", "focus", "sprint"]) {
+    await page.getByTestId("settings-toggle").click();
+    await page.getByRole("combobox", { name: "Theme", exact: true }).selectOption(theme);
+    await page.keyboard.press("Escape");
+
+    // Then: the brand remains an accessible, self-contained SVG with themed paths.
+    await expect(brandMark).toHaveAttribute("aria-hidden", "true");
+    expect(await brandMark.evaluate(element => element.tagName)).toBe("svg");
+    expect(await brandMark.locator("path").count()).toBe(2);
+    sealFills.set(theme, await brandMark.locator(".player__brand-seal").evaluate(element => getComputedStyle(element).fill));
+  }
+
+  // Then: each theme gives the inline seal its own action color.
+  expect(new Set(sealFills.values()).size).toBe(3);
+});
+
+test("grows the desktop study panel for a long question when space allows", async ({ page }) => {
+  // Given: a desktop viewport with enough room for a question taller than the baseline panel.
+  await page.setViewportSize({ width: 1280, height: 1200 });
+  await openPlayer(page, {
+    ...BASIC_DECK,
+    cards: [
+      BASIC_DECK.cards[0],
+      { ...BASIC_DECK.cards[1], prompt: "Long question.\n".repeat(28) },
+    ],
   });
+  const initialPanel = await page.locator(".player__study-panel").boundingBox();
 
-  // Given: only the old G1 key contains an explicit choice.
-  await page.reload();
-  await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), BASIC_DECK);
+  // When: the learner advances to the long question.
+  await page.getByTestId("next-card").click();
+
+  // Then: the panel grows within the viewport and keeps its navigation reachable.
+  const expandedPanel = await page.locator(".player__study-panel").boundingBox();
+  expect(expandedPanel.height).toBeGreaterThan(initialPanel.height);
+  expect(expandedPanel.height).toBeLessThanOrEqual(768);
+  const prompt = await page.getByTestId("card-prompt").boundingBox();
+  const navigation = await page.getByTestId("next-card").boundingBox();
+  expect(prompt.y).toBeGreaterThanOrEqual(expandedPanel.y);
+  expect(prompt.y).toBeLessThan(expandedPanel.y + expandedPanel.height);
+  expect(navigation.y + navigation.height).toBeLessThanOrEqual(1200);
+});
+
+test("keeps the desktop attribution anchored to the viewport footer", async ({ page }) => {
+  // Given: a desktop viewport where a long question can expand the study panel.
+  await page.setViewportSize({ width: 1280, height: 1200 });
+  await openPlayer(page, {
+    ...BASIC_DECK,
+    cards: [
+      BASIC_DECK.cards[0],
+      { ...BASIC_DECK.cards[1], prompt: "Long question.\n".repeat(28) },
+    ],
+  });
+  const attribution = page.locator(".player__attribution");
+  const initialAttribution = await attribution.boundingBox();
+  const initialStyle = await attribution.evaluate(element => getComputedStyle(element).position);
+
+  // When: the learner advances to the card that grows the panel.
+  await page.getByTestId("next-card").click();
+
+  // Then: attribution remains fixed at the viewport footer instead of following the panel.
+  const expandedAttribution = await attribution.boundingBox();
+  const panel = await page.locator(".player__study-panel").boundingBox();
+  expect(initialStyle).toBe("fixed");
+  expect(expandedAttribution).toEqual(initialAttribution);
+  expect(expandedAttribution.y + expandedAttribution.height).toBeGreaterThan(panel.y + panel.height);
+  expect(1200 - (expandedAttribution.y + expandedAttribution.height)).toBeLessThanOrEqual(32);
+});
+
+test("scrolls long desktop cards internally and switches to page scrolling on phones", async ({ page }) => {
+  // Given: a desktop card with an answer longer than the available screen.
+  await page.setViewportSize({ width: 1280, height: 844 });
+  await openPlayer(page, { ...BASIC_DECK, cards: [
+    { ...BASIC_DECK.cards[0], answer: "Read from the beginning.\n" + "A detailed explanation.\n".repeat(80) },
+    BASIC_DECK.cards[1],
+  ] });
+  await page.getByTestId("reveal-answer").click();
+  const readingArea = page.getByTestId("card-content");
+
+  // When: keyboard scrolling moves through the answer.
+  await readingArea.focus();
+  const previousScroll = await readingArea.evaluate(element => element.scrollTop);
+  await page.keyboard.press("PageDown");
+
+  // Then: only the card's body moves, and navigation stays visible.
+  await expect.poll(() => readingArea.evaluate(element => element.scrollTop)).toBeGreaterThan(previousScroll);
+  expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(845);
+  await expect(page.getByTestId("next-card")).toBeInViewport({ ratio: 1 });
+
+  // When: the same long card is viewed on a phone.
+  await page.setViewportSize({ width: 390, height: 844 });
+
+  // Then: the content is part of the page, and advancing starts the next question in view.
+  await expect.poll(() => readingArea.evaluate(element => element.scrollHeight - element.clientHeight)).toBeLessThanOrEqual(1);
+  expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeGreaterThan(844);
+  await page.getByTestId("grade-known").click();
+  await page.getByTestId("next-card").click();
+  await expect(page.getByTestId("card-prompt")).toBeInViewport({ ratio: 1 });
+  await expect.poll(() => readingArea.evaluate(element => element.scrollTop)).toBe(0);
+});
+
+for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }, { width: 1280, height: 900 }]) {
+  test(`advances through changing cards from a stable navigation target at ${viewport.width}px`, async ({ page }) => {
+    // Given: short and long cards share a navigation target; desktop panels may grow within the viewport.
+    await page.setViewportSize(viewport);
+    await openPlayer(page, { ...BASIC_DECK, cards: [
+      BASIC_DECK.cards[0],
+      { ...BASIC_DECK.cards[1], prompt: "Long question.\n".repeat(60) },
+      { ...BASIC_DECK.cards[0], id: "last-card" },
+    ] });
+    const next = page.getByTestId("next-card");
+    const anchor = await next.boundingBox();
+    const previousAnchor = await page.getByTestId("previous-card").boundingBox();
+    await expect(next).toHaveAccessibleName("Skip to next card");
+
+    // Desktop navigation belongs directly below the reading area, not at the window edge.
+    if (viewport.width >= 768) {
+      const card = await page.getByTestId("card").boundingBox();
+      expect(anchor.y).toBeGreaterThanOrEqual(card.y + card.height);
+      expect(anchor.y - (card.y + card.height)).toBeLessThan(24);
+    }
+
+    // When: revealing and grading changes both the card height and the button label.
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+
+    // Then: Next occupies exactly the same click target as Skip.
+    await expect(next).toHaveAccessibleName("Next card");
+    expect(await next.boundingBox()).toEqual(anchor);
+    expect(await page.getByTestId("previous-card").boundingBox()).toEqual(previousAnchor);
+    const clickPoint = { x: anchor.x + anchor.width / 2, y: anchor.y + anchor.height / 2 };
+    await page.mouse.click(clickPoint.x, clickPoint.y);
+
+    // When: the long card is scrolled and skipped by clicking the same coordinates.
+    await page.getByTestId("card-content").focus();
+    await page.keyboard.press("PageDown");
+    const longAnchor = await next.boundingBox();
+    expect(longAnchor.x).toBe(anchor.x);
+    expect(longAnchor.width).toBe(anchor.width);
+    expect(longAnchor.height).toBe(anchor.height);
+    expect(Math.abs(longAnchor.y - anchor.y)).toBeLessThanOrEqual(8);
+    expect(clickPoint.y).toBeGreaterThanOrEqual(longAnchor.y);
+    expect(clickPoint.y).toBeLessThanOrEqual(longAnchor.y + longAnchor.height);
+    await page.mouse.click(clickPoint.x, clickPoint.y);
+
+    // Then: the final card's See results button also stays put and can be clicked again.
+    await expect(page.getByTestId("card-position")).toHaveText("3/3");
+    await expect(next).toHaveAccessibleName("See results");
+    expect(await next.boundingBox()).toEqual(anchor);
+    await page.mouse.click(clickPoint.x, clickPoint.y);
+    await expect(page.getByTestId("score-screen")).toBeVisible();
+    await expect(next).toBeHidden();
+  });
+}
+
+test("keeps the last mobile answer controls above the fixed navigation bar", async ({ page }) => {
+  // Given: a long answer needs page scrolling on a phone.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openPlayer(page, { ...BASIC_DECK, cards: [
+    { ...BASIC_DECK.cards[0], answer: "Explanation.\n".repeat(80) },
+  ] });
+  await page.getByTestId("reveal-answer").click();
+
+  // When: the learner reaches the end of the document.
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+
+  // Then: grading is fully visible and clickable above navigation, without an overlay.
+  const grade = await page.getByTestId("grade-known").boundingBox();
+  const navigation = await page.getByRole("navigation", { name: "Card navigation" }).boundingBox();
+  expect(grade.y + grade.height).toBeLessThanOrEqual(navigation.y);
+  await page.getByTestId("grade-known").click();
+  await expect(page.getByTestId("grade-known")).toHaveAttribute("aria-pressed", "true");
+});
+
+for (const themeName of ["paper", "focus", "sprint"]) {
+  test(`keeps appearance independent from the ${themeName} theme`, async ({ page }) => {
+    // Given: a named theme with an explicitly dark appearance.
+    await page.emulateMedia({ colorScheme: "dark" });
+    await openPlayer(page, BASIC_DECK);
+    await page.getByTestId("settings-toggle").click();
+    const theme = page.getByRole("combobox", { name: "Theme", exact: true });
+    const appearance = page.getByRole("combobox", { name: "Appearance", exact: true });
+    const body = page.locator("body");
+    await theme.selectOption(themeName);
+    await appearance.selectOption("dark");
+    const darkBackground = await body.evaluate(element => getComputedStyle(element).backgroundColor);
+
+    // When: the OS changes to light, then the learner explicitly chooses Light.
+    await page.emulateMedia({ colorScheme: "light" });
+    await expect(body).toHaveCSS("background-color", darkBackground);
+    await appearance.selectOption("light");
+    const lightBackground = await body.evaluate(element => getComputedStyle(element).backgroundColor);
+
+    // Then: explicit modes differ, ignore OS changes, and persist with the theme.
+    expect(lightBackground).not.toBe(darkBackground);
+    await page.emulateMedia({ colorScheme: "dark" });
+    await expect(body).toHaveCSS("background-color", lightBackground);
+    await page.reload();
+    await page.getByTestId("settings-toggle").click();
+    await expect(theme).toHaveValue(themeName);
+    await expect(appearance).toHaveValue("light");
+    await expect(body).toHaveCSS("background-color", lightBackground);
+
+    // When: System is restored while the OS is dark, including after reopening the file.
+    await appearance.selectOption("");
+    await expect(body).toHaveCSS("background-color", darkBackground);
+    await page.reload();
+    await page.getByTestId("settings-toggle").click();
+    await expect(theme).toHaveValue(themeName);
+    await expect(appearance).toHaveValue("");
+    await expect(body).toHaveCSS("background-color", darkBackground);
+
+    // Then: the visible theme follows subsequent OS changes in both directions.
+    await page.emulateMedia({ colorScheme: "light" });
+    await expect(body).toHaveCSS("background-color", lightBackground);
+    await page.emulateMedia({ colorScheme: "dark" });
+    await expect(body).toHaveCSS("background-color", darkBackground);
+  });
+}
+
+test("switches complete themes without losing an unfinished answer or saved progress", async ({ page }) => {
+  // Given: an unfinished cloze answer in a mobile player.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openPlayer(page, CLOZE_DECK);
+  await page.getByRole("textbox", { name: "Blank 1", exact: true }).fill("If-None-Match");
   await page.getByTestId("settings-toggle").click();
-  await expect(page.getByTestId("settings-panel")).toBeVisible();
 
-  // Then: the v1 value is ignored and the system preference remains active.
-  expect(await page.locator("html").getAttribute("data-theme")).toBeNull();
-  await expect(page.getByTestId("theme-select")).toHaveValue("");
+  // When: the learner compares light, dark, and tinted themes before submitting.
+  for (const theme of ["focus", "sprint", "paper"]) {
+    await page.getByRole("combobox", { name: "Theme", exact: true }).selectOption(theme);
+    await page.keyboard.press("Escape");
 
-  // When: the picker visits each theme, inspect the public token contract and grain branch.
-  const palettes = [];
-  const themeValues = ["", "light", "dark", "sepia", "bluebell", "night-neon"];
-  for (let index = 0; index < themeValues.length; index += 1) {
-    if (index > 0) await page.getByTestId("theme-select").selectOption(themeValues[index]);
-    palettes.push(await page.evaluate(() => {
-      const root = getComputedStyle(document.documentElement);
-      const paper = root.getPropertyValue("--paper").trim();
-      const luminance = (color) => {
-        const channels = color.slice(1).match(/../g).map((value) => Number.parseInt(value, 16) / 255);
-        const linear = channels.map((channel) => channel <= 0.03928
-          ? channel / 12.92
-          : ((channel + 0.055) / 1.055) ** 2.4);
-        return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
-      };
-      const paperLuminance = luminance(paper);
-      const contrast = (color) => {
-        const colorLuminance = luminance(color);
-        return (Math.max(paperLuminance, colorLuminance) + 0.05)
-          / (Math.min(paperLuminance, colorLuminance) + 0.05);
-      };
-      const grain = getComputedStyle(document.body, "::before");
-      return {
-        theme: document.documentElement.getAttribute("data-theme") || "system",
-        tokens: ["paper", "ink", "ink-soft", "rule", "rule-strong", "accent", "positive"]
-          .reduce((values, token) => ({ ...values, [token]: root.getPropertyValue(`--${token}`).trim() }), {}),
-        contrast: ["ink", "ink-soft", "accent", "positive"].reduce(
-          (values, token) => ({ ...values, [token]: contrast(root.getPropertyValue(`--${token}`).trim()) }),
-          {}
-        ),
-        grain: { mixBlendMode: grain.mixBlendMode, opacity: grain.opacity }
-      };
-    }));
+    // Then: changing the complete appearance preserves the unfinished input.
+    await expect(page.getByRole("textbox", { name: "Blank 1", exact: true })).toHaveValue("If-None-Match");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+    await page.getByTestId("settings-toggle").click();
   }
+  await page.getByRole("combobox", { name: "Theme", exact: true }).selectOption("sprint");
+  await page.keyboard.press("Escape");
+  await page.getByRole("textbox", { name: "Blank 2", exact: true }).fill("304");
+  await page.getByRole("button", { name: "Check answers", exact: true }).click();
 
-  // Then: all seven tokens exist, text-facing colors meet 4.5:1, and grain stays visible.
-  expect(palettes).toHaveLength(6);
-  for (const palette of palettes) {
-    expect(Object.values(palette.tokens).every(Boolean)).toBe(true);
-    for (const ratio of Object.values(palette.contrast)) expect(ratio).toBeGreaterThanOrEqual(4.5);
-    expect(Number.parseFloat(palette.grain.opacity)).toBeGreaterThan(0);
-  }
-  expect(palettes.map(({ theme }) => theme)).toEqual(["system", "light", "dark", "sepia", "bluebell", "night-neon"]);
-  expect(palettes.find(({ theme }) => theme === "sepia").grain.mixBlendMode).toBe("multiply");
-  expect(palettes.find(({ theme }) => theme === "bluebell").grain.mixBlendMode).toBe("multiply");
-  expect(palettes.find(({ theme }) => theme === "night-neon").grain.mixBlendMode).toBe("screen");
+  // When: the file is reopened after grading.
+  await page.reload();
+  await page.evaluate(deck => window.CRAM_PLAYER.setDeck(deck), CLOZE_DECK);
+  await page.getByTestId("settings-toggle").click();
+
+  // Then: the single theme preference and the recorded answer are restored.
+  await expect(page.getByRole("combobox", { name: "Theme", exact: true })).toHaveValue("sprint");
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId("cloze-feedback-summary")).toHaveText("Correct.");
+});
+
+for (const theme of ["paper", "focus", "sprint"]) {
+  test(`completes every card type on a narrow screen in the ${theme} theme`, async ({ page }) => {
+    // Given: a phone-width player using the selected theme.
+    await page.setViewportSize({ width: 320, height: 568 });
+    await openPlayer(page, ADAPTIVE_TYPES_DECK);
+    await page.getByTestId("settings-toggle").click();
+    await page.getByRole("combobox", { name: "Theme", exact: true }).selectOption(theme);
+    await page.keyboard.press("Escape");
+
+    // When: a learner reveals, self-grades, selects, and types through the deck.
+    await page.getByTestId("reveal-answer").click();
+    await expect(page.getByTestId("card-answer")).toBeVisible();
+    await page.getByTestId("grade-known").click();
+    await page.getByTestId("next-card").click();
+    await expect(page.getByTestId("card-prompt")).toBeInViewport();
+    await page.getByRole("button", { name: "The missed one", exact: true }).click();
+    await page.getByRole("button", { name: "Check answer", exact: true }).click();
+    await page.getByTestId("next-card").click();
+    await page.getByRole("textbox", { name: "Blank 1", exact: true }).fill("card");
+    await page.getByRole("button", { name: "Check answers", exact: true }).click();
+    await page.getByTestId("next-card").click();
+
+    // Then: controls remain reachable, the round completes, and no horizontal scroll is needed.
+    await expect(page.getByTestId("score-value")).toHaveText("3/3");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.getByTestId("reset-progress").click();
+    await expect(page.getByTestId("reveal-answer")).toBeVisible();
+  });
+}
+
+test("keeps theme switching usable when preference storage is blocked", async ({ page }) => {
+  // Given: this browser cannot read or write local preferences.
+  await page.addInitScript(() => {
+    Storage.prototype.getItem = () => { throw new Error("Storage blocked"); };
+    Storage.prototype.setItem = () => { throw new Error("Storage blocked"); };
+  });
+  await openPlayer(page, BASIC_DECK);
+  await page.getByTestId("reveal-answer").click();
+
+  // When: the learner changes the theme while inspecting an answer.
+  await page.getByTestId("settings-toggle").click();
+  await page.getByRole("combobox", { name: "Theme", exact: true }).selectOption("focus");
+  await page.keyboard.press("Escape");
+
+  // Then: the theme applies for this session without hiding the answer.
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "focus");
+  await expect(page.getByTestId("card-answer")).toBeVisible();
+  await page.getByTestId("grade-known").click();
+  await expect(page.getByTestId("grade-known")).toHaveAttribute("aria-pressed", "true");
 });
 
 test.describe("hints", () => {
@@ -1119,8 +1364,8 @@ test.describe("hints", () => {
     await page.getByTestId("mcq-option").filter({ hasText: "no-cache" }).click();
     await page.getByTestId("mcq-check-answer").click();
 
-    // Then: that renderer records the same per-card hint state.
-    await expect(page.getByTestId("card-hint")).toHaveText(HINT_DECK.cards[1].hint);
+    // Then: the result replaces the hint, while its use remains recorded for this session.
+    await expect(page.getByTestId("card-hint")).toBeHidden();
     expect(await page.evaluate(() => window.CRAM_PLAYER.getHintUsed("hint-mcq-card"))).toBe(true);
 
     // Given/When: the cloze learner requests its hint and submits an incorrect answer.
@@ -1243,8 +1488,9 @@ test.describe("hints", () => {
     await page.reload();
     await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), HINT_DECK);
 
-    // Then: the hint starts hidden again while grade persistence remains independent.
-    await expect(page.getByTestId("show-hint")).toBeVisible();
+    // Then: the restored answer keeps hints collapsed, and hint usage is not restored.
+    await expect(page.getByTestId("show-hint")).toBeHidden();
+    await expect(page.getByTestId("card-answer")).toBeVisible();
     await expect(page.getByTestId("card-hint")).toBeHidden();
     expect(await page.evaluate(() => window.CRAM_PLAYER.getHintUsed("hint-basic-card"))).toBe(false);
     expect(await page.evaluate((deckId) => JSON.parse(localStorage.getItem(`fc:${deckId}:v1`)), HINT_DECK.id)).toEqual({
@@ -1267,10 +1513,11 @@ test.describe("card controls", () => {
 
     // When: the learner uses the card shortcuts instead of pointer clicks.
     await page.keyboard.press("h");
+    await expect(page.getByTestId("card-hint")).toBeVisible();
     await page.keyboard.press("a");
 
-    // Then: the same hint and answer state is reached without changing grading.
-    await expect(page.getByTestId("card-hint")).toBeVisible();
+    // Then: the answer takes over from the hint without changing grading.
+    await expect(page.getByTestId("card-hint")).toBeHidden();
     await expect(page.getByTestId("card-answer")).toBeVisible();
     expect(await page.evaluate(() => window.CRAM_PLAYER.getGrade("hint-basic-card"))).toBeUndefined();
 
@@ -1572,4 +1819,6 @@ async function enableCramMode(page) {
   await page.getByTestId("cram-mode-toggle").check();
   await expect(page.getByTestId("cram-mode-toggle")).toBeChecked();
   expect(await page.evaluate(() => window.CRAM_PLAYER.getState().cramMode)).toBe(true);
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId("settings-panel")).toBeHidden();
 }

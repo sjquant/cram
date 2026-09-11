@@ -5,13 +5,7 @@
   "Close settings": "設定を閉じる",
   "Settings": "設定",
   "Theme": "テーマ",
-  "Color theme": "カラーテーマ",
   "System": "システム",
-  "Light": "ライト",
-  "Dark": "ダーク",
-  "Sepia": "セピア",
-  "Night neon": "ナイトネオン",
-  "Bluebell": "ブルーベル",
   "Cram mode": "集中暗記モード",
   "Requeue missed cards during this session.": "このセッションで間違えたカードを再出題します。",
   "Deck progress": "デッキの進捗",
@@ -107,5 +101,11 @@
   "cloze": "穴埋め",
   "unknown": "不明",
   "Progress reset. Start again.": "進捗をリセットしました。もう一度始めましょう。",
-  "Progress reset for this session, but saved progress could not be cleared.": "このセッションはリセットしましたが、保存済みの進捗を削除できませんでした。"
+  "Progress reset for this session, but saved progress could not be cleared.": "このセッションはリセットしましたが、保存済みの進捗を削除できませんでした。",
+  "Paper": "ペーパー",
+  "Focus": "フォーカス",
+  "Sprint": "スプリント",
+  "Appearance": "表示",
+  "Light": "ライト",
+  "Dark": "ダーク"
 }

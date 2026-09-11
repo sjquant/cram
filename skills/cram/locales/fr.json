@@ -5,13 +5,7 @@
   "Close settings": "Fermer les paramètres",
   "Settings": "Paramètres",
   "Theme": "Thème",
-  "Color theme": "Thème de couleur",
   "System": "Système",
-  "Light": "Clair",
-  "Dark": "Sombre",
-  "Sepia": "Sépia",
-  "Night neon": "Néon nocturne",
-  "Bluebell": "Campanule",
   "Cram mode": "Mode intensif",
   "Requeue missed cards during this session.": "Repose les cartes ratées pendant cette session.",
   "Deck progress": "Progression du paquet",
@@ -107,5 +101,11 @@
   "cloze": "texte à trous",
   "unknown": "inconnu",
   "Progress reset. Start again.": "Progression réinitialisée. Recommencez.",
-  "Progress reset for this session, but saved progress could not be cleared.": "Cette session a été réinitialisée, mais la progression enregistrée n’a pas pu être effacée."
+  "Progress reset for this session, but saved progress could not be cleared.": "Cette session a été réinitialisée, mais la progression enregistrée n’a pas pu être effacée.",
+  "Paper": "Papier",
+  "Focus": "Concentration",
+  "Sprint": "Sprint",
+  "Appearance": "Apparence",
+  "Light": "Clair",
+  "Dark": "Sombre"
 }

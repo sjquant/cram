@@ -5,13 +5,7 @@
   "Close settings": "Close settings",
   "Settings": "Settings",
   "Theme": "Theme",
-  "Color theme": "Color theme",
   "System": "System",
-  "Light": "Light",
-  "Dark": "Dark",
-  "Sepia": "Sepia",
-  "Night neon": "Night neon",
-  "Bluebell": "Bluebell",
   "Cram mode": "Cram mode",
   "Requeue missed cards during this session.": "Requeue missed cards during this session.",
   "Deck progress": "Deck progress",
@@ -107,5 +101,11 @@
   "cloze": "cloze",
   "unknown": "unknown",
   "Progress reset. Start again.": "Progress reset. Start again.",
-  "Progress reset for this session, but saved progress could not be cleared.": "Progress reset for this session, but saved progress could not be cleared."
+  "Progress reset for this session, but saved progress could not be cleared.": "Progress reset for this session, but saved progress could not be cleared.",
+  "Paper": "Paper",
+  "Focus": "Focus",
+  "Sprint": "Sprint",
+  "Appearance": "Appearance",
+  "Light": "Light",
+  "Dark": "Dark"
 }
