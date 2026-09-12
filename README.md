@@ -116,6 +116,8 @@ order** returns to the source order. Retry rounds keep their missed-card scope.
 Session order, position, results, and Cram-mode repeat attempts are saved in
 the browser when storage is available. Saved sessions belong to the same deck
 in the same browser; changing the deck's card content starts a new session.
+To start over partway through, use **Reset progress** in Settings; after a
+warning, it clears that deck's answers and place while keeping your settings.
 
 Settings lets you turn off the A/H single-letter shortcuts; the choice is
 remembered when browser storage is available.

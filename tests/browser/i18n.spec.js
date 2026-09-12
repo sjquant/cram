@@ -16,12 +16,12 @@ const DECK = {
   ],
 };
 const LANGUAGES = [
-  { code: "en", settings: "Open settings", theme: "Theme", reveal: "Show answer", missed: "Missed it", hint: "Show hint", check: "Check answer", checks: "Check answers", blank: "Blank 1", correct: "Correct.", retry: "Retry 2 missed cards", single: "Retry 1 missed card", reset: "Reset progress" },
-  { code: "ko", settings: "설정 열기", theme: "테마", reveal: "정답 보기", missed: "몰랐어요", hint: "힌트 보기", check: "정답 확인", checks: "정답 확인", blank: "빈칸 1", correct: "정답입니다.", retry: "틀린 카드 2개 다시 풀기", single: "틀린 카드 1개 다시 풀기", reset: "진행 상황 초기화" },
-  { code: "ja", settings: "設定を開く", theme: "テーマ", reveal: "答えを見る", missed: "わからなかった", hint: "ヒントを見る", check: "答えを確認", checks: "答えを確認", blank: "空欄1", correct: "正解です。", retry: "間違えた2枚を再挑戦", single: "間違えた1枚を再挑戦", reset: "進捗をリセット" },
-  { code: "zh-CN", settings: "打开设置", theme: "主题", reveal: "显示答案", missed: "没记住", hint: "显示提示", check: "检查答案", checks: "检查答案", blank: "第1个空", correct: "正确。", retry: "重试2张错题卡片", single: "重试1张错题卡片", reset: "重置进度" },
-  { code: "es", settings: "Abrir ajustes", theme: "Tema", reveal: "Mostrar respuesta", missed: "No la sabía", hint: "Mostrar pista", check: "Comprobar respuesta", checks: "Comprobar respuestas", blank: "Espacio 1", correct: "Correcto.", retry: "Reintentar 2 tarjetas falladas", single: "Reintentar 1 tarjeta fallada", reset: "Restablecer progreso" },
-  { code: "fr", settings: "Ouvrir les paramètres", theme: "Thème", reveal: "Afficher la réponse", missed: "Je ne savais pas", hint: "Afficher l’indice", check: "Vérifier la réponse", checks: "Vérifier les réponses", blank: "Trou 1", correct: "Correct.", retry: "Reprendre 2 cartes ratées", single: "Reprendre 1 carte ratée", reset: "Réinitialiser la progression" },
+  { code: "en", settings: "Open settings", theme: "Theme", reveal: "Show answer", missed: "Missed it", hint: "Show hint", check: "Check answer", checks: "Check answers", blank: "Blank 1", correct: "Correct.", retry: "Retry 2 missed cards", single: "Retry 1 missed card", reset: "Reset progress", confirm: "Reset", cancel: "Cancel", warning: "This can’t be undone." },
+  { code: "ko", settings: "설정 열기", theme: "테마", reveal: "정답 보기", missed: "몰랐어요", hint: "힌트 보기", check: "정답 확인", checks: "정답 확인", blank: "빈칸 1", correct: "정답입니다.", retry: "틀린 카드 2개 다시 풀기", single: "틀린 카드 1개 다시 풀기", reset: "진행 상황 초기화", confirm: "초기화", cancel: "취소", warning: "되돌릴 수 없습니다." },
+  { code: "ja", settings: "設定を開く", theme: "テーマ", reveal: "答えを見る", missed: "わからなかった", hint: "ヒントを見る", check: "答えを確認", checks: "答えを確認", blank: "空欄1", correct: "正解です。", retry: "間違えた2枚を再挑戦", single: "間違えた1枚を再挑戦", reset: "進捗をリセット", confirm: "リセット", cancel: "キャンセル", warning: "元に戻せません。" },
+  { code: "zh-CN", settings: "打开设置", theme: "主题", reveal: "显示答案", missed: "没记住", hint: "显示提示", check: "检查答案", checks: "检查答案", blank: "第1个空", correct: "正确。", retry: "重试2张错题卡片", single: "重试1张错题卡片", reset: "重置进度", confirm: "重置", cancel: "取消", warning: "无法撤销。" },
+  { code: "es", settings: "Abrir ajustes", theme: "Tema", reveal: "Mostrar respuesta", missed: "No la sabía", hint: "Mostrar pista", check: "Comprobar respuesta", checks: "Comprobar respuestas", blank: "Espacio 1", correct: "Correcto.", retry: "Reintentar 2 tarjetas falladas", single: "Reintentar 1 tarjeta fallada", reset: "Restablecer progreso", confirm: "Restablecer", cancel: "Cancelar", warning: "No se puede deshacer." },
+  { code: "fr", settings: "Ouvrir les paramètres", theme: "Thème", reveal: "Afficher la réponse", missed: "Je ne savais pas", hint: "Afficher l’indice", check: "Vérifier la réponse", checks: "Vérifier les réponses", blank: "Trou 1", correct: "Correct.", retry: "Reprendre 2 cartes ratées", single: "Reprendre 1 carte ratée", reset: "Réinitialiser la progression", confirm: "Réinitialiser", cancel: "Annuler", warning: "Cette action est irréversible." },
 ];
 
 for (const language of LANGUAGES) {
@@ -72,6 +72,14 @@ for (const language of LANGUAGES) {
     await expect(page.getByRole("button", { name: language.single, exact: true })).toBeVisible();
     await page.getByRole("button", { name: language.reset, exact: true }).click();
     await page.reload();
+    await expect(page.getByRole("button", { name: language.reveal, exact: true })).toBeVisible();
+
+    // And: resetting from Settings warns in the same language before deleting anything.
+    await page.getByRole("button", { name: language.settings, exact: true }).click();
+    await page.getByRole("button", { name: language.reset, exact: true }).click();
+    await expect(page.getByTestId("reset-warning")).toContainText(language.warning);
+    await expect(page.getByRole("button", { name: language.cancel, exact: true })).toBeFocused();
+    await page.getByRole("button", { name: language.confirm, exact: true }).click();
     await expect(page.getByRole("button", { name: language.reveal, exact: true })).toBeVisible();
     expect(errors).toEqual([]);
     expect(requests).toEqual([]);
