@@ -851,6 +851,29 @@
     .player__card[hidden],
     .player__navigation[hidden] { display: none; }
 
+    .player__celebration {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .player__confetti {
+      position: absolute;
+      top: 30%;
+      left: 50%;
+      width: 0.5rem;
+      height: 0.8rem;
+      background: var(--confetti-color);
+      animation: celebrate 1.5s ease-out forwards;
+    }
+
+    @keyframes celebrate {
+      from { opacity: 1; transform: translate(-50%, -50%) scale(0.3) rotate(0deg); }
+      to { opacity: 0; transform: translate(var(--confetti-x), var(--confetti-y)) rotate(var(--confetti-turn)); }
+    }
+
     .player__score-screen {
       flex: 1;
       min-height: 0;
@@ -1120,6 +1143,7 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
+      .player__celebration { display: none; }
       .player__score-meter-segment { transition: none; }
     }
 
@@ -1630,6 +1654,7 @@
         freshRound: false,
         index: 0,
         cleanup: () => {},
+        celebrationCleanup: () => {},
         grades: Object.create(null),
         // In-memory only (never saved or synced): lets a renderer redraw the exact
         // submitted answer when a learner navigates back within this session, without
@@ -2755,6 +2780,37 @@
         saveSession();
         setStatus(t("Session complete. Score {score}/{total}.", result));
         refs.scoreTitle.focus();
+        celebrateResult(result);
+      }
+
+      function celebrateResult({ score, total }) {
+        const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+        if (!total || score / total < 0.9 || reducedMotion.matches) return;
+
+        const celebration = createElement("div", "player__celebration");
+        celebration.setAttribute("aria-hidden", "true");
+        celebration.dataset.testid = "result-celebration";
+        const colors = ["var(--accent)", "#e6b54a", "#72b7a1", "#cf83a5"];
+        for (let index = 0; index < 24; index += 1) {
+          const piece = createElement("span", "player__confetti");
+          const angle = (index / 24) * Math.PI * 2;
+          piece.style.setProperty("--confetti-color", colors[index % colors.length]);
+          piece.style.setProperty("--confetti-x", `${Math.cos(angle) * (30 + index % 3 * 7)}vw`);
+          piece.style.setProperty("--confetti-y", `${Math.sin(angle) * 30 + 15}vh`);
+          piece.style.setProperty("--confetti-turn", `${index % 2 ? 360 : -360}deg`);
+          celebration.append(piece);
+        }
+        refs.player.append(celebration);
+        const timeout = window.setTimeout(stopCelebration, 1500);
+        reducedMotion.addEventListener("change", stopCelebration);
+        state.celebrationCleanup = stopCelebration;
+
+        function stopCelebration() {
+          window.clearTimeout(timeout);
+          reducedMotion.removeEventListener("change", stopCelebration);
+          celebration.remove();
+          state.celebrationCleanup = () => {};
+        }
       }
 
       function renderScoreScreen() {
@@ -2869,6 +2925,7 @@
       }
 
       function setViewState(view) {
+        state.celebrationCleanup();
         const showingResults = view === "results";
         refs.player.dataset.state = view;
         refs.studyPanel.hidden = showingResults;

@@ -1173,6 +1173,118 @@ test.describe("basic cards", () => {
     await expect(page.getByTestId("no-missed-cards")).toBeVisible();
   });
 
+  for (const { deck, correct, celebrates } of [
+    { deck: LONG_COUNT_DECK, correct: 89, celebrates: false },
+    { deck: CUMULATIVE_RETRY_DECK, correct: 9, celebrates: true },
+    { deck: CUMULATIVE_RETRY_DECK, correct: 10, celebrates: true },
+  ]) {
+    test(`a ${correct}/${deck.cards.length} result ${celebrates ? "celebrates briefly" : "does not celebrate"}`, async ({ page }) => {
+      // Given: a session on either side of the exact 90% threshold.
+      await page.emulateMedia({ reducedMotion: "no-preference" });
+      await openPlayer(page, deck);
+      await page.clock.install({ time: new Date("2026-01-01T00:00:00Z") });
+      await page.clock.pauseAt("2026-01-01T01:00:00Z");
+
+      // When: the learner finishes the session.
+      await completeScoredSession(page, deck, correct);
+
+      // Then: only qualifying scores celebrate, without moving focus from results.
+      const celebration = page.getByTestId("result-celebration");
+      await expect(page.getByTestId("score-value")).toHaveText(`${correct}/${deck.cards.length}`);
+      await expect(page.locator("#score-title")).toBeFocused();
+      if (celebrates) {
+        await expect(celebration).toBeVisible();
+        await expect(celebration).toHaveAttribute("aria-hidden", "true");
+        // The clock pauses cleanup timers, but CSS animations may already have finished.
+        expect(await celebration.evaluate(element =>
+          element.getAnimations({ subtree: true }).length
+        )).toBeGreaterThan(0);
+        await page.clock.runFor(1600);
+      }
+      await expect(celebration).toHaveCount(0);
+    });
+  }
+
+  test("reopening a completed high score does not replay its celebration", async ({ page }) => {
+    // Given: a newly completed high score whose effect cannot expire during assertions.
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await page.clock.install({ time: new Date("2026-01-01T00:00:00Z") });
+    await openPlayer(page, CUMULATIVE_RETRY_DECK);
+    await page.clock.pauseAt("2026-01-01T01:00:00Z");
+    await completeScoredSession(page, CUMULATIVE_RETRY_DECK, 9);
+    await expect(page.getByTestId("result-celebration")).toBeVisible();
+
+    // When: the same deck is reopened through the public API.
+    await page.evaluate(deck => window.CRAM_PLAYER.setDeck(deck), CUMULATIVE_RETRY_DECK);
+
+    // Then: the saved results return without a celebration, including after reload.
+    await expect(page.getByTestId("score-value")).toHaveText("9/10");
+    await expect(page.getByTestId("result-celebration")).toHaveCount(0);
+    // The installed, paused clock survives reload, so an erroneous replay cannot expire.
+    await page.reload();
+    await page.evaluate(deck => window.CRAM_PLAYER.setDeck(deck), CUMULATIVE_RETRY_DECK);
+    await expect(page.getByTestId("score-value")).toHaveText("9/10");
+    await expect(page.getByTestId("result-celebration")).toHaveCount(0);
+  });
+
+  test("retry and reset remain usable during celebrations", async ({ page }) => {
+    // Given: a high score with one card left to review and the cleanup timer paused.
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await openPlayer(page, CUMULATIVE_RETRY_DECK);
+    await page.clock.install({ time: new Date("2026-01-01T00:00:00Z") });
+    await page.clock.pauseAt("2026-01-01T01:00:00Z");
+    await completeScoredSession(page, CUMULATIVE_RETRY_DECK, 9);
+    await expect(page.getByTestId("result-celebration")).toBeVisible();
+
+    // When: the learner immediately retries the missed card.
+    await page.getByTestId("retry-missed").click();
+
+    // Then: leaving results clears the effect and study controls work immediately.
+    await expect(page.getByTestId("result-celebration")).toHaveCount(0);
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+    await page.getByTestId("next-card").click();
+    await expect(page.getByTestId("score-value")).toHaveText("10/10");
+    await expect(page.getByTestId("result-celebration")).toBeVisible();
+
+    // When: the learner immediately resets the completed retry.
+    await page.getByTestId("reset-progress").click();
+
+    // Then: the effect is removed and a new qualifying completion can celebrate.
+    await expect(page.getByTestId("result-celebration")).toHaveCount(0);
+    await expect(page.getByTestId("player")).toHaveAttribute("data-state", "ready");
+    await completeScoredSession(page, CUMULATIVE_RETRY_DECK, 10);
+    await expect(page.getByTestId("result-celebration")).toBeVisible();
+  });
+
+  test("reduced motion suppresses celebrations and stops an active effect", async ({ page }) => {
+    // Given: the learner requests reduced motion before completing a perfect session.
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await openPlayer(page, CUMULATIVE_RETRY_DECK);
+
+    // When: the session completes.
+    await completeScoredSession(page, CUMULATIVE_RETRY_DECK, 10);
+
+    // Then: results remain available without an effect.
+    await expect(page.getByTestId("score-value")).toHaveText("10/10");
+    await expect(page.getByTestId("result-celebration")).toHaveCount(0);
+
+    // When: another session celebrates and reduced motion is enabled mid-effect.
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await page.getByTestId("reset-progress").click();
+    await page.clock.install({ time: new Date("2026-01-01T00:00:00Z") });
+    await page.clock.pauseAt("2026-01-01T01:00:00Z");
+    await completeScoredSession(page, CUMULATIVE_RETRY_DECK, 10);
+    await expect(page.getByTestId("result-celebration")).toBeVisible();
+    await page.emulateMedia({ reducedMotion: "reduce" });
+
+    // Then: the running effect is removed and does not resume when motion is reenabled.
+    await expect(page.getByTestId("result-celebration")).toHaveCount(0);
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await expect(page.getByTestId("result-celebration")).toHaveCount(0);
+    await expect(page.locator("#score-title")).toBeFocused();
+  });
+
   test("disables retry when the completed session has no missed cards", async ({ page }) => {
     await openPlayer(page, BASIC_DECK);
 
@@ -2491,6 +2603,17 @@ test("matches each blank's own correction to its position across multiple blanks
   // And: the incorrect input's accessible description names its own accepted answer, not another blank's.
   await expect(inputs.nth(1)).toHaveAccessibleDescription(/304/);
 });
+
+async function completeScoredSession(page, deck, correct) {
+  await page.evaluate(({ deck, correct }) => {
+    deck.cards.forEach((card, index) => {
+      window.CRAM_PLAYER.recordGrade(card.id, index < correct ? "known" : "missed");
+    });
+  }, { deck, correct });
+  for (let index = 0; index < deck.cards.length; index += 1) {
+    await page.getByTestId("next-card").click();
+  }
+}
 
 async function openPlayer(page, deck) {
   await page.goto(PLAYER_URL);
