@@ -2322,6 +2322,8 @@
         feedbackSummary.dataset.testid = "cloze-feedback-summary";
         feedbackSummary.hidden = true;
         feedback.append(feedbackSummary);
+        const feedbackAnnouncement = createElement("div", "player__visually-hidden");
+        feedback.append(feedbackAnnouncement);
 
         const explanationText = typeof card.explanation === "string" ? card.explanation : "";
         const explanation = explanationText
@@ -2382,6 +2384,7 @@
               ? t("Incorrect.")
               : t("This card was previously marked incorrect.");
           if (results) {
+            feedbackAnnouncement.replaceChildren();
             blanks.forEach((blank, index) => {
               const blankCorrect = results[index];
               blank.input.disabled = true;
@@ -2398,9 +2401,15 @@
               blank.correction.dataset.result = blankCorrect
                 ? CLOZE_GRADES.CORRECT
                 : CLOZE_GRADES.INCORRECT;
-              blank.correction.textContent = blankCorrect
+              const blankResult = blankCorrect
                 ? t("Correct.")
                 : blank.answers.join(" / ");
+              blank.correction.textContent = blankResult;
+              const blankLabel = t("Blank {number}", { number: index + 1 });
+              feedbackAnnouncement.append(
+                createElement("span", "", `${blankLabel}: ${blankResult}`),
+                document.createTextNode(" ")
+              );
             });
           } else {
             blanks.forEach((blank) => {
@@ -2414,6 +2423,7 @@
               blank.correction.removeAttribute("data-result");
               blank.correction.textContent = "";
             });
+            feedbackAnnouncement.replaceChildren();
           }
           feedback.hidden = false;
           checkAnswer.hidden = true;
@@ -2554,10 +2564,11 @@
             throw new Error(`The grade is not valid for the ${card.type || "unknown"} card.`);
           }
         }
+        const gradeDetail = snapshotGradeDetail(detail);
         state.grades[cardId] = grade;
         // Session-only, never persisted: lets a renderer redraw its exact submitted
         // answer if the learner navigates back before reloading. See getRendererGradeDetail.
-        state.gradeDetails[cardId] = detail;
+        state.gradeDetails[cardId] = gradeDetail;
         const currentCard = state.sessionCards[state.index];
         if (currentCard && currentCard.id === cardId) {
           state.freshAttempts.delete(state.index);
@@ -2578,6 +2589,17 @@
           return persisted;
         }
         return true;
+      }
+
+      function snapshotGradeDetail(detail, seen = new WeakMap()) {
+        if (!detail || typeof detail !== "object") return detail;
+        if (seen.has(detail)) return seen.get(detail);
+        const snapshot = Array.isArray(detail) ? [] : Object.create(null);
+        seen.set(detail, snapshot);
+        for (const [key, value] of Object.entries(detail)) {
+          snapshot[key] = snapshotGradeDetail(value, seen);
+        }
+        return Object.freeze(snapshot);
       }
 
       function getGrade(cardId) {
@@ -2645,6 +2667,7 @@
         state.isRetry = false;
         state.cramMode = false;
         state.shuffleMode = false;
+        state.gradeDetails = Object.create(null);
         updateCramModeToggle();
         updateShuffleToggle();
         resetDrillState();
@@ -3228,9 +3251,13 @@
         if (state.freshRound) return;
         const currentCard = state.sessionCards[state.index];
         const previousGrade = currentCard && state.grades[currentCard.id];
+        const previousGrades = state.grades;
         const grades = progressStore.sync(state.deck, state.grades, event);
         if (!grades) return;
         state.grades = grades;
+        for (const cardId of Object.keys(state.gradeDetails)) {
+          if (previousGrades[cardId] !== grades[cardId]) delete state.gradeDetails[cardId];
+        }
         if (refs.player.dataset.state === "results") {
           renderScoreScreen();
         } else if (currentCard && previousGrade !== state.grades[currentCard.id]) {

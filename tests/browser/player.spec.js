@@ -830,11 +830,26 @@ test.describe("basic cards", () => {
     await expect(page.getByTestId("mcq-option").filter({ hasText: "no-cache" })).toHaveClass(/mcq__option--incorrect/);
     await expect(page.getByTestId("mcq-option").filter({ hasText: "no-store" })).toHaveClass(/mcq__option--correct/);
 
+    // Then: the cloze submission is also restored before a reload.
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("next-card").click();
+    await expect(page.getByTestId("cloze-input").nth(0)).toHaveValue("wrong");
+    await expect(page.getByTestId("cloze-input").nth(0)).toHaveAttribute("data-result", "incorrect");
+    await expect(page.getByTestId("cloze-input").nth(1)).toHaveValue("304");
+    await expect(page.getByTestId("cloze-input").nth(1)).toHaveAttribute("data-result", "correct");
+
     // When: the page reloads.
-    await page.getByTestId("next-card").click();
-    await page.getByTestId("next-card").click();
     await page.reload();
     await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), ALL_TYPES_DECK);
+
+    // Then: the cloze grade remains, but its submitted values are forgotten after reload.
+    await expect(page.getByTestId("cloze-feedback")).toHaveAttribute("data-result", "incorrect");
+    await expect(page.getByTestId("cloze-input").nth(0)).toHaveValue("");
+    await expect(page.getByTestId("cloze-input").nth(0)).not.toHaveAttribute("data-result");
+    await expect(page.getByTestId("cloze-input").nth(1)).toHaveValue("");
+    await expect(page.getByTestId("cloze-input").nth(1)).not.toHaveAttribute("data-result");
+
+    // When: the learner navigates back to the MCQ after reloading.
     await page.getByTestId("previous-card").click();
     await page.getByTestId("previous-card").click();
 
@@ -2282,6 +2297,37 @@ test("updates an open player when another tab changes the same deck", async ({ p
   }
 });
 
+test("discards stale session-only answer details after a remote grade change", async ({ page, context }) => {
+  await openPlayer(page, ALL_TYPES_DECK);
+  const otherPage = await context.newPage();
+  try {
+    await otherPage.goto(PLAYER_URL);
+    await otherPage.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), ALL_TYPES_DECK);
+    await page.getByTestId("next-card").click();
+    await otherPage.getByTestId("next-card").click();
+
+    // Given: this tab records a wrong MCQ choice and keeps its session-only detail.
+    await page.getByTestId("mcq-option").filter({ hasText: "no-cache" }).click();
+    await page.getByTestId("mcq-check-answer").click();
+
+    // When: another tab changes the aggregate grade for the same card.
+    await otherPage.evaluate((cardId) => {
+      window.CRAM_PLAYER.recordGrade(cardId, "correct", { choice: "no-store" });
+    }, ALL_TYPES_DECK.cards[1].id);
+
+    // Then: the current tab shows the remote grade without the old selected choice.
+    await expect(page.getByTestId("mcq-feedback")).toHaveAttribute("data-result", "correct");
+    await expect(page.getByTestId("mcq-option").filter({ hasText: "no-cache" }))
+      .not.toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByTestId("mcq-option").filter({ hasText: "no-cache" }))
+      .not.toHaveClass(/mcq__option--incorrect/);
+    await expect(page.getByTestId("mcq-option").filter({ hasText: "no-store" }))
+      .toHaveClass(/mcq__option--correct/);
+  } finally {
+    await otherPage.close();
+  }
+});
+
 test("checks cloze blanks with exact alternatives and restores aggregate feedback", async ({ page }) => {
   await openPlayer(page, CLOZE_DECK);
 
@@ -2318,6 +2364,8 @@ test("checks cloze blanks with exact alternatives and restores aggregate feedbac
   await expect(page.getByTestId("cloze-feedback-summary")).toHaveText("This card was previously marked incorrect.");
   await expect(page.getByTestId("cloze-blank-feedback").nth(0)).toBeHidden();
   await expect(page.getByTestId("cloze-input").nth(0)).not.toHaveAttribute("data-result");
+  await expect(page.getByTestId("cloze-blank-feedback").nth(1)).toBeHidden();
+  await expect(page.getByTestId("cloze-input").nth(1)).not.toHaveAttribute("data-result");
 
   // A fresh attempt accepts the pipe-separated alternative with case/whitespace normalization.
   await openPlayer(page, CLOZE_DECK);
@@ -2328,6 +2376,52 @@ test("checks cloze blanks with exact alternatives and restores aggregate feedbac
   await expect(page.getByTestId("cloze-input").nth(0)).toHaveAttribute("data-result", "correct");
   await expect(page.getByTestId("cloze-input").nth(1)).toHaveAttribute("data-result", "correct");
   expect(await page.evaluate(() => window.CRAM_PLAYER.getGrade("cloze-card"))).toBe("correct");
+});
+
+test("keeps session-only grade details immutable through the public API", async ({ page }) => {
+  await openPlayer(page, CLOZE_DECK);
+
+  // Given: the learner submits a mixed-result cloze answer.
+  await page.getByTestId("cloze-input").nth(0).fill("wrong");
+  await page.getByTestId("cloze-input").nth(1).fill("304");
+  await page.getByTestId("cloze-check-answer").click();
+
+  // When: a caller tries to mutate the returned renderer detail.
+  const detail = await page.evaluate(() => {
+    const gradeDetail = window.CRAM_PLAYER.getGradeDetail("cloze-card");
+    const frozen = {
+      detail: Object.isFrozen(gradeDetail),
+      results: Object.isFrozen(gradeDetail.results),
+      values: Object.isFrozen(gradeDetail.values),
+    };
+    gradeDetail.results[0] = true;
+    gradeDetail.values[0] = "tampered";
+    return { frozen, current: window.CRAM_PLAYER.getGradeDetail("cloze-card") };
+  });
+
+  // Then: the stored detail remains unchanged and still restores the submitted answer.
+  expect(detail.frozen).toEqual({ detail: true, results: true, values: true });
+  expect(detail.current).toEqual({ results: [false, true], values: ["wrong", "304"] });
+  await page.getByTestId("next-card").click();
+  await page.getByTestId("previous-card").click();
+  await expect(page.getByTestId("cloze-input").nth(0)).toHaveValue("wrong");
+  await expect(page.getByTestId("cloze-input").nth(0)).toHaveAttribute("data-result", "incorrect");
+});
+
+test("clears session-only grade details when a deck switch fails", async ({ page }) => {
+  await openPlayer(page, CLOZE_DECK);
+
+  // Given: the current deck has a submitted cloze detail.
+  await page.getByTestId("cloze-input").nth(0).fill("wrong");
+  await page.getByTestId("cloze-input").nth(1).fill("304");
+  await page.getByTestId("cloze-check-answer").click();
+  expect(await page.evaluate(() => window.CRAM_PLAYER.getGradeDetail("cloze-card"))).toBeTruthy();
+
+  // When: the host attempts to switch to an invalid deck.
+  await page.evaluate(() => window.CRAM_PLAYER.setDeck({ title: "", cards: [] }));
+
+  // Then: the failed switch cannot expose the previous deck's submitted detail.
+  expect(await page.evaluate(() => window.CRAM_PLAYER.getGradeDetail("cloze-card"))).toBeUndefined();
 });
 
 test("shows the accepted answer beside a single incorrect cloze blank", async ({ page }) => {
@@ -2352,6 +2446,7 @@ test("shows the accepted answer beside a single incorrect cloze blank", async ({
   await expect(input).toHaveAccessibleDescription(/Paris/);
   await expect(correction).toBeVisible();
   await expect(correction).toHaveText("Paris");
+  await expect(page.getByTestId("cloze-feedback")).toContainText("Blank 1: Paris");
 
   // And: the correction sits right next to the blank instead of only in a card-level summary.
   const inputBox = await input.boundingBox();
