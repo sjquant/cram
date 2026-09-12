@@ -91,7 +91,13 @@ npx skills add sjquant/cram --skill cram
 ## 이런 자료로 공부해보세요
 
 - **새로 읽은 기술 문서:** 읽으면서 이해한 개념을 혼자서도 설명할 수 있는지 확인해보세요.
-  위 예제에서는 HTTP 캐싱을 공부할 수 있어요.
+  [HTTP 캐싱 예제](https://sjquant.github.io/cram/examples/http-caching-essentials.html)([카드 데이터](examples/http-caching-essentials.json))로 먼저 풀어볼 수 있어요.
+- **외국어 공부:** 학습자가 실제로 자주 틀리는 부분을 집중해서 연습해보세요.
+  [한국인이 자주 틀리는 일본어](https://sjquant.github.io/cram/examples/japanese-mistakes-ko.html)([카드 데이터](examples/japanese-mistakes-ko.json))는
+  한국어 습관 때문에 헷갈리는 일본어 표현을 모았어요.
+- **덕질 퀴즈:** 좋아하는 걸 친구들과 같이 풀어보세요.
+  [K-pop Trivia](https://sjquant.github.io/cram/examples/kpop-trivia.html)([카드 데이터](examples/kpop-trivia.json))에서
+  히트곡, 팬덤, 응원법, 밈을 다뤄요. 이 퀴즈는 영어예요.
 - **시험 전 강의 노트:** 정리한 내용을 퀴즈로 만들면 어느 부분을 더 봐야 할지 확인하기 좋아요.
 - **새 팀원을 위한 업무 가이드:** 알아두면 좋은 내용을 퀴즈로 만들어 팀원에게 보내보세요.
 

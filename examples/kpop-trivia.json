@@ -1,0 +1,121 @@
+{
+  "id": "kpop-trivia",
+  "title": "K-pop Trivia",
+  "source": "K-pop history, hit songs, fandom culture, and the memes international fans share",
+  "cards": [
+    {
+      "id": "gangnam-style-billion",
+      "type": "cloze",
+      "prompt": "The first YouTube video to pass 1 billion views, in 2012, was PSY's '{{Gangnam Style|강남스타일|강남 스타일}}'.",
+      "hint": "Think of the horse-riding dance.",
+      "explanation": "In 2014 YouTube said the video had pushed past the maximum of its original 32-bit view counter (2,147,483,647), so the counter was upgraded to 64-bit."
+    },
+    {
+      "id": "seo-taiji-birth-of-kpop",
+      "type": "mcq",
+      "prompt": "Which 1992 debut is often called the birth of modern K-pop?",
+      "answer": "Seo Taiji and Boys – 'Nan Arayo (I Know)'",
+      "distractors": ["H.O.T. – 'Candy'", "PSY – 'Bird'", "BoA – 'ID; Peace B'"],
+      "explanation": "The trio got the lowest score from the judges on a 1992 MBC talent show, then topped the charts for weeks by mixing rap and hip-hop into Korean pop. The distractors are real early hits, but from 1996, 2001, and 2000."
+    },
+    {
+      "id": "dynamite-hot-100",
+      "type": "mcq",
+      "prompt": "Which BTS song, their first sung entirely in English, made them the first Korean act to reach No. 1 on the Billboard Hot 100 (2020)?",
+      "answer": "Dynamite",
+      "distractors": ["Butter", "Permission to Dance", "Boy With Luv"],
+      "explanation": "Butter and Permission to Dance also hit No. 1 in 2021, but Dynamite came first, in August 2020."
+    },
+    {
+      "id": "blackpink-coachella",
+      "type": "mcq",
+      "prompt": "Which group was the first K-pop girl group to perform at Coachella, in 2019?",
+      "answer": "BLACKPINK",
+      "distractors": ["TWICE", "Red Velvet", "Girls' Generation"],
+      "explanation": "BLACKPINK returned in 2023 as the first Asian act to headline the festival."
+    },
+    {
+      "id": "iu-nations-little-sister",
+      "type": "mcq",
+      "prompt": "Which solo singer is nicknamed Korea's 'Nation's Little Sister' (국민 여동생)?",
+      "answer": "IU",
+      "distractors": ["Taeyeon", "Sunmi", "BoA"],
+      "explanation": "The nickname took off with IU's 2010 hit 'Good Day' (좋은 날), whose climax climbs three key steps. Fans still call that the '3-step high note' (3단 고음)."
+    },
+    {
+      "id": "ddu-du-ddu-du",
+      "type": "mcq",
+      "prompt": "Which BLACKPINK song is named after the sound of a gunshot and performed with a finger-gun move?",
+      "answer": "DDU-DU DDU-DU",
+      "distractors": ["Kill This Love", "How You Like That", "BOOMBAYAH"],
+      "explanation": "'Ddu-du ddu-du' is Korean onomatopoeia for gunfire, like 'bang bang' in English. In 2019 its music video became the first by a K-pop group to pass 1 billion YouTube views."
+    },
+    {
+      "id": "twice-tt-pose",
+      "type": "cloze",
+      "prompt": "TWICE's 2016 hit '{{TT}}' is named after the crying emoticon ㅠㅠ, and fans copy it by making a T with their fingers under each eye.",
+      "explanation": "The 'TT pose' spread far beyond the fandom, with celebrities across Korea copying it in photos and on TV."
+    },
+    {
+      "id": "sana-shy-shy-shy",
+      "type": "mcq",
+      "prompt": "In TWICE's 'Cheer Up', Sana's line 'shy shy shy' went viral in 2016 because of how she pronounced it. What did it sound like?",
+      "answer": "'sha sha sha'",
+      "distractors": ["'shai shai shai'", "'sy sy sy'", "'chu chu chu'"],
+      "explanation": "'Sha sha sha' became one of 2016's biggest memes in Korea and turned a single line into Sana's signature."
+    },
+    {
+      "id": "jin-super-tuna",
+      "type": "mcq",
+      "prompt": "BTS's Jin released a joke song about fishing that became a viral dance challenge. What is it called?",
+      "answer": "Super Tuna",
+      "distractors": ["Abyss", "Moon", "Epiphany"],
+      "explanation": "Jin, a real fishing enthusiast who also calls himself 'Worldwide Handsome', released it for free on his birthday in December 2021. The distractors are his serious solo songs."
+    },
+    {
+      "id": "twice-fandom-once",
+      "type": "mcq",
+      "prompt": "What is TWICE's fandom called?",
+      "answer": "ONCE",
+      "distractors": ["BLINK", "MY", "Bunnies"],
+      "explanation": "The idea: if fans love TWICE once, TWICE will love them back twice. The distractors are other fandoms: BLINK (BLACKPINK), MY (aespa), and Bunnies (NewJeans)."
+    },
+    {
+      "id": "i-purple-you",
+      "type": "basic",
+      "prompt": "What does 'I purple you' (보라해, borahae) mean in the BTS fandom?",
+      "answer": "'I will trust and love you for a long time.'",
+      "explanation": "V coined it at a 2016 fan meeting: violet is the last color of the rainbow, so purple means loving someone until the very end."
+    },
+    {
+      "id": "fanchant-intro",
+      "type": "mcq",
+      "prompt": "What do fans usually shout during the intro of a K-pop fanchant (응원법)?",
+      "answer": "The members' names in a fixed order, often ending with the group name",
+      "distractors": ["The song title, repeated until the first verse", "The fandom's name, over and over", "The lyrics of the chorus, sung in advance"],
+      "explanation": "BTS's is famous: 'Kim Namjoon! Kim Seokjin! Min Yoongi! Jung Hoseok! Park Jimin! Kim Taehyung! Jeon Jungkook! BTS!' Agencies often publish an official fanchant guide before each comeback."
+    },
+    {
+      "id": "army-bomb",
+      "type": "mcq",
+      "prompt": "What is BTS's official lightstick called?",
+      "answer": "ARMY Bomb",
+      "distractors": ["Candybong", "Carat Bong", "Heart Stick"],
+      "explanation": "Lightsticks are called '-bong' (봉, stick) in Korean: TWICE's is the Candybong and SEVENTEEN's is the Carat Bong. At concerts they can be controlled centrally, so a whole stadium changes color together."
+    },
+    {
+      "id": "encore-stage",
+      "type": "basic",
+      "prompt": "What happens in an 'encore stage' after a group wins first place on a weekly music show?",
+      "answer": "The group performs the winning song again, live, while the credits roll.",
+      "explanation": "Exhausted and emotional, members often cry, laugh, or ignore the choreography, which is why fans clip encore stages as some of the most chaotic K-pop videos."
+    },
+    {
+      "id": "aegyo",
+      "type": "basic",
+      "prompt": "What is 'aegyo' (애교)?",
+      "answer": "Acting cute on purpose, with a baby voice, pouting, or finger hearts.",
+      "explanation": "Variety shows constantly ask idols to do it, which is how the 2013 'Gwiyomi' song, a counting game with cute gestures, turned into a meme across Asia."
+    }
+  ]
+}

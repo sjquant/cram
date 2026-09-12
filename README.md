@@ -85,7 +85,16 @@ progress stays in your browser; it isn't included when you share the file.
 ## What could you study?
 
 - **Technical documentation:** turn a guide into questions that check whether
-  you can explain its concepts. The demo uses HTTP caching.
+  you can explain its concepts. Try the [HTTP caching demo](https://sjquant.github.io/cram/examples/http-caching-essentials.html)
+  ([source](examples/http-caching-essentials.json)).
+- **Language study:** drill the mistakes learners actually make.
+  [한국인이 자주 틀리는 일본어](https://sjquant.github.io/cram/examples/japanese-mistakes-ko.html)
+  ([source](examples/japanese-mistakes-ko.json)) covers the Japanese traps
+  Korean speakers fall into, written natively in Korean.
+- **Fandom trivia:** quiz your friends on what they love.
+  [K-pop Trivia](https://sjquant.github.io/cram/examples/kpop-trivia.html)
+  ([source](examples/kpop-trivia.json)) covers hit songs, fandoms, fanchants,
+  and memes.
 - **Course notes:** make a quiz from a lecture before your next study session.
 - **Onboarding material:** create a quiz from a team guide and share the HTML
   with new teammates.

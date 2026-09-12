@@ -20,7 +20,7 @@
         "`private`",
         "`max-age=60`"
       ],
-      "explanation": "Use this directive when retaining the response in a cache is not allowed."
+      "explanation": "Use it for responses carrying sensitive data, such as a bank balance or a one-time login token: not even the browser's own private cache may keep a copy. Don't confuse it with `no-cache`, which allows storing but forces revalidation before every reuse."
     },
     {
       "id": "cache-control-no-cache",
@@ -32,28 +32,97 @@
     {
       "id": "etag-validator",
       "type": "cloze",
-      "prompt": "Which response header gives a representation an opaque validator that a client can send in `If-None-Match`? The header is `{{ETag}}`.",
-      "explanation": "A validator lets the client ask whether its stored representation is still current without downloading the full representation again."
+      "prompt": "To let clients revalidate cheaply, a server labels each version of a response with the {{ETag}} response header; the client sends that value back in `If-None-Match`.",
+      "explanation": "A validator lets the client ask whether its stored copy is still current without downloading the full body again. At scale this matters: a site serving millions of unchanged images can answer each check with an empty `304` instead of re-sending the image."
     },
     {
       "id": "if-none-match-not-modified",
-      "type": "basic",
-      "prompt": "For a conditional `GET`, what status can an origin return when `If-None-Match` confirms that a cached representation is still current?",
-      "answer": "`304 Not Modified`, allowing the cache to reuse its stored response body."
+      "type": "mcq",
+      "prompt": "A cache revalidates a stored response with a conditional `GET` carrying `If-None-Match`. If the origin's current `ETag` still matches, what status does the origin return?",
+      "answer": "`304 Not Modified`",
+      "distractors": [
+        "`200 OK` with an empty body",
+        "`204 No Content`",
+        "`412 Precondition Failed`"
+      ],
+      "explanation": "A `304` carries no body, so the cache keeps serving the body it already stored. `412` belongs to the write-side precondition `If-Match` failing, which makes it an easy mix-up."
     },
     {
       "id": "vary-shared-cache",
       "type": "basic",
       "prompt": "What does the HTTP `Vary` response header tell a shared cache?",
       "answer": "Which request-header fields must match before a stored response can be reused for another request.",
-      "hint": "The response may vary based on fields such as `Accept-Language`."
+      "hint": "The response may vary based on fields such as `Accept-Language`.",
+      "explanation": "Get this wrong and a CDN can hand one visitor a page cached for someone else: the wrong language, or another user's personalized content."
     },
     {
       "id": "cache-control-private",
       "type": "basic",
       "prompt": "When should a response be marked `Cache-Control: private`?",
       "answer": "When it may be stored by a private browser cache but must not be stored by a shared cache.",
-      "explanation": "This is useful for user-specific responses that a browser may reuse for that same user."
+      "explanation": "Use it for personalized pages. Without it, a corporate proxy or CDN edge could store one user's page and replay it to the next visitor."
+    },
+    {
+      "id": "stale-while-revalidate",
+      "type": "basic",
+      "prompt": "What does `Cache-Control: max-age=60, stale-while-revalidate=30` let a cache do in the 30 seconds after the response goes stale?",
+      "answer": "Serve the stale response immediately while it revalidates with the origin in the background.",
+      "hint": "The visitor never waits for the revalidation round trip.",
+      "explanation": "This trades a few seconds of possible staleness for zero added latency, which is why it suits content that changes often but not critically, such as feeds or product listings."
+    },
+    {
+      "id": "must-revalidate-during-outage",
+      "type": "mcq",
+      "prompt": "A stored response without `must-revalidate` has just gone stale, and the origin server cannot be reached. What may the cache do?",
+      "answer": "Serve the stale response anyway.",
+      "distractors": [
+        "It must return `504 Gateway Timeout`.",
+        "It must delete the stored response and fail.",
+        "Treat the response as fresh for another full `max-age` period."
+      ],
+      "explanation": "Freshness is a soft limit: when disconnected, a cache may serve a stale response rather than fail. Adding `must-revalidate` makes the `504` option mandatory, trading availability for strict correctness."
+    },
+    {
+      "id": "fingerprinted-assets",
+      "type": "basic",
+      "prompt": "Why do build tools put a content hash in asset filenames such as `app.3f9a1c.js`?",
+      "answer": "So the file can be cached for a very long time, because any change to its content produces a new URL.",
+      "explanation": "Hashed assets are typically served with `Cache-Control: max-age=31536000, immutable`. The HTML page that references them stays short-lived or `no-cache`, so it always points at the newest hashed URLs."
+    },
+    {
+      "id": "s-maxage-shared-only",
+      "type": "mcq",
+      "prompt": "Which `Cache-Control` directive sets a freshness lifetime that applies only to shared caches such as CDNs?",
+      "answer": "`s-maxage`",
+      "distractors": ["`max-age`", "`proxy-revalidate`", "`stale-if-error`"],
+      "explanation": "`Cache-Control: max-age=60, s-maxage=3600` lets browsers recheck every minute while the CDN keeps its copy for an hour. When both are present, shared caches use `s-maxage`."
+    },
+    {
+      "id": "last-modified-validator",
+      "type": "cloze",
+      "prompt": "The date-based validator a server sends is the {{Last-Modified}} response header; the client echoes it back in `If-Modified-Since`.",
+      "explanation": "Dates have one-second precision, so a file changed twice within a second can look unchanged. That's one reason `ETag` is preferred when the server can compute one."
+    },
+    {
+      "id": "age-header",
+      "type": "basic",
+      "prompt": "What does the `Age` response header tell a client?",
+      "answer": "How many seconds the response has spent in caches since the origin generated or last revalidated it.",
+      "explanation": "A CDN response with `max-age=600` and `Age: 590` has only 10 seconds of freshness left, which explains why a 'freshly' fetched response can expire almost immediately."
+    },
+    {
+      "id": "heuristic-freshness",
+      "type": "basic",
+      "prompt": "A response has no `Cache-Control` or `Expires` header but does have `Last-Modified`. May a cache reuse it without revalidating?",
+      "answer": "Yes. The cache may assign a heuristic freshness lifetime, commonly 10% of the time since `Last-Modified`.",
+      "explanation": "A file last modified 10 days ago can therefore be reused for about a day without any caching headers. That's why 'we never set caching headers' doesn't mean 'nothing gets cached'."
+    },
+    {
+      "id": "stale-if-error",
+      "type": "basic",
+      "prompt": "What does `Cache-Control: stale-if-error=86400` let a cache do?",
+      "answer": "Serve a stale response for up to a day when revalidation fails with an error, such as a `5xx` response or an unreachable origin.",
+      "explanation": "It is the opposite trade-off from `must-revalidate`: availability over strict freshness, so a brief origin outage doesn't take the whole site down."
     }
   ]
 }
