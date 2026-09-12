@@ -20,7 +20,7 @@
         "`private`",
         "`max-age=60`"
       ],
-      "explanation": "Use this directive when retaining the response in a cache is not allowed."
+      "explanation": "Use this for responses carrying sensitive data, such as a bank balance or a one-time login token. Even a private browser cache must not write them to disk, where they could be recovered after logout or from a shared machine."
     },
     {
       "id": "cache-control-no-cache",
@@ -33,7 +33,7 @@
       "id": "etag-validator",
       "type": "cloze",
       "prompt": "Which response header gives a representation an opaque validator that a client can send in `If-None-Match`? The header is `{{ETag}}`.",
-      "explanation": "A validator lets the client ask whether its stored representation is still current without downloading the full representation again."
+      "explanation": "A validator lets the client ask whether its stored representation is still current without downloading the full representation again. At scale this one round trip matters a lot: a platform serving millions of unchanged thumbnails can answer with an empty `304` instead of re-sending megabytes of image data each time."
     },
     {
       "id": "if-none-match-not-modified",
@@ -46,14 +46,35 @@
       "type": "basic",
       "prompt": "What does the HTTP `Vary` response header tell a shared cache?",
       "answer": "Which request-header fields must match before a stored response can be reused for another request.",
-      "hint": "The response may vary based on fields such as `Accept-Language`."
+      "hint": "The response may vary based on fields such as `Accept-Language`.",
+      "explanation": "Get this wrong and a CDN can hand one visitor a page cached for someone else — the wrong language, or worse, another user's personalized content. Missing `Vary: Cookie` or `Vary: Accept-Language` is one of the most common real-world CDN misconfiguration bugs."
     },
     {
       "id": "cache-control-private",
       "type": "basic",
       "prompt": "When should a response be marked `Cache-Control: private`?",
       "answer": "When it may be stored by a private browser cache but must not be stored by a shared cache.",
-      "explanation": "This is useful for user-specific responses that a browser may reuse for that same user."
+      "explanation": "Marking a personalized page merely `public` by mistake is a classic way personal data leaks: a corporate proxy or shared CDN edge could cache and replay one user's page to the next visitor."
+    },
+    {
+      "id": "stale-while-revalidate",
+      "type": "basic",
+      "prompt": "What does the `Cache-Control: stale-while-revalidate=30` directive let a cache do once a response has expired?",
+      "answer": "Serve the stale response immediately, while revalidating it with the origin in the background, for up to 30 seconds after it expired.",
+      "hint": "The visitor gets an instant response; the cache quietly repairs itself afterward.",
+      "explanation": "This is part of why some sites feel instantly fast even when their content is a few seconds out of date: nobody has to wait for revalidation, because it happens after the response is already on its way to the browser."
+    },
+    {
+      "id": "must-revalidate-during-outage",
+      "type": "mcq",
+      "prompt": "Without `must-revalidate`, what is a cache normally allowed to do with a response that just became stale if the origin server is unreachable?",
+      "answer": "Serve the stale response anyway, if that seems reasonable.",
+      "distractors": [
+        "Always return a `504` error instead of serving anything.",
+        "Delete the cached response immediately.",
+        "Wait indefinitely for the origin to respond before answering."
+      ],
+      "explanation": "This surprises a lot of developers: `max-age=60` by itself doesn't ban serving a slightly-stale response during an outage — it's a soft limit. Adding `must-revalidate` is what turns 'stale' into a hard failure, trading availability for strict correctness."
     }
   ]
 }

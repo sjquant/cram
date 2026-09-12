@@ -650,7 +650,8 @@
     }
 
     .cloze__input--incorrect {
-      border-bottom-color: var(--ink-soft);
+      border-bottom-color: var(--accent);
+      color: var(--accent);
     }
 
     .cloze__check-button {
@@ -667,18 +668,26 @@
 
     .cloze__feedback--incorrect { color: var(--ink-soft); }
 
-    .cloze__blank-feedback {
-      margin: 0.35rem 0 0;
-      color: var(--ink-soft);
-      font-size: 1rem;
+    .cloze__blank-feedback[hidden] {
+      display: none;
     }
 
-    .cloze__blank-feedback--correct {
-      color: var(--positive);
+    .cloze__blank-feedback {
+      display: inline-block;
+      margin-inline-start: 0.35em;
+      font-family: var(--sans);
+      font-size: 0.8em;
+      line-height: 1.4;
+      vertical-align: middle;
+      white-space: normal;
     }
 
     .cloze__blank-feedback--incorrect {
-      color: var(--ink-soft);
+      padding: 0.05em 0.5em;
+      border: 1px solid var(--accent);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--accent);
     }
 
     .cloze__explanation,
@@ -915,6 +924,10 @@
     .player__score-summary {
       margin: var(--s2) 0 0;
       color: var(--ink-soft);
+    }
+
+    .player__score-recovered {
+      margin-top: var(--s1);
     }
 
     .player__score-meter {
@@ -1283,6 +1296,7 @@
       .player__response-actions > .player__primary-action { align-self: stretch; width: 100%; }
       .player__shortcut { display: none; }
       .cloze__input { margin-inline: 0.15em; }
+      .cloze__blank-feedback { margin-inline-start: 0.15em; }
       .player__settings-group { align-items: flex-start; flex-direction: column; gap: 0.35rem; }
       .player__theme-picker, .player__theme-select { width: 100%; }
       .player__score-screen { max-height: max(18rem, calc(100dvh - 12rem)); }
@@ -1500,6 +1514,7 @@
           <h2 class="player__score-title" id="score-title" tabindex="-1" data-i18n>Session complete</h2>
           <p class="player__score-value" id="score-value" data-testid="score-value">0/0</p>
           <p class="player__score-summary" id="score-summary" data-testid="score-summary" data-i18n>0 correct · Nothing to review</p>
+          <p class="player__score-summary player__score-recovered" id="score-recovered" data-testid="score-recovered" hidden></p>
           <div class="player__score-meter" id="score-meter" data-testid="score-meter" aria-hidden="true">
             <span class="player__score-meter-segment player__score-meter-segment--correct" id="score-correct-segment"></span>
             <span class="player__score-meter-segment player__score-meter-segment--missed" id="score-missed-segment"></span>
@@ -1547,8 +1562,8 @@
 
   <!-- Render this template with render.py; examples/ contains the generated preview.
        Injected JSON escapes every less-than character to keep inline scripts safe. -->
-  <script>window.__LOCALE__ = {"language": "ko", "messages": {"Cram player": "Cram \ud50c\ub808\uc774\uc5b4", "Loading deck\u2026": "\ub371 \ubd88\ub7ec\uc624\ub294 \uc911\u2026", "Open settings": "\uc124\uc815 \uc5f4\uae30", "Close settings": "\uc124\uc815 \ub2eb\uae30", "Settings": "\uc124\uc815", "Theme": "\ud14c\ub9c8", "System": "\uc2dc\uc2a4\ud15c", "Cram mode": "\uc9d1\uc911 \uc554\uae30 \ubaa8\ub4dc", "Requeue missed cards during this session.": "\uc774\ubc88 \ud559\uc2b5 \uc911 \ud2c0\ub9b0 \uce74\ub4dc\ub97c \ub2e4\uc2dc \ucd9c\uc81c\ud569\ub2c8\ub2e4.", "Study order": "\ud559\uc2b5 \uc21c\uc11c", "Original order": "\uc6d0\ubcf8", "Shuffled order": "\ubb34\uc791\uc704", "Shuffle": "\uce74\ub4dc \uc11e\uae30", "Restore original order": "\uc6d0\ub798 \uc21c\uc11c\ub85c", "This session could not be saved. Reloading may lose your place.": "\uc774\ubc88 \ud559\uc2b5\uc744 \uc800\uc7a5\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4. \uc0c8\ub85c\uace0\uce68\ud558\uba74 \ud559\uc2b5 \uc704\uce58\ub97c \uc783\uc744 \uc218 \uc788\uc2b5\ub2c8\ub2e4.", "Deck progress": "\ub371 \uc9c4\ud589 \uc0c1\ud669", "Card 0 of 0": "0 / 0\ubc88\uc9f8 \uce74\ub4dc", "Preparing card": "\uce74\ub4dc \uc900\ube44 \uc911", "Preparing your deck\u2026": "\ub371 \uc900\ube44 \uc911\u2026", "Results": "\uacb0\uacfc", "Session complete": "\ud559\uc2b5 \uc644\ub8cc", "0 correct \u00b7 Nothing to review": "\uc815\ub2f5 0\uac1c \u00b7 \ubcf5\uc2b5\ud560 \uce74\ub4dc \uc5c6\uc74c", "Score breakdown": "\uc810\uc218 \ub0b4\uc5ed", "0 correct": "\uc815\ub2f5 0\uac1c", "Nothing to review": "\ubcf5\uc2b5\ud560 \uce74\ub4dc \uc5c6\uc74c", "Retry missed cards": "\ud2c0\ub9b0 \uce74\ub4dc \ub2e4\uc2dc \ud480\uae30", "Reset progress": "\uc9c4\ud589 \uc0c1\ud669 \ucd08\uae30\ud654", "Review missed cards": "\ud2c0\ub9b0 \uce74\ub4dc \ubcf5\uc2b5", "Perfect score \u2014 nothing to review.": "\ubaa8\ub450 \ub9de\ud614\uc2b5\ub2c8\ub2e4 \u2014 \ubcf5\uc2b5\ud560 \uce74\ub4dc\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.", "Scroll down to see more missed cards": "\uc544\ub798\ub85c \uc2a4\ud06c\ub864\ud574 \ub098\uba38\uc9c0 \ud2c0\ub9b0 \uce74\ub4dc \ubcf4\uae30", "More cards below": "\uc544\ub798\uc5d0 \uce74\ub4dc \ub354 \uc788\uc74c", "Card navigation": "\uce74\ub4dc \ud0d0\uc0c9", "Previous card": "\uc774\uc804 \uce74\ub4dc", "\u2190 Previous": "\u2190 \uc774\uc804", "Next card": "\ub2e4\uc74c \uce74\ub4dc", "Skip \u2192": "\uac74\ub108\ub6f0\uae30 \u2192", "Next \u2192": "\ub2e4\uc74c \u2192", "See results \u2192": "\uacb0\uacfc \ubcf4\uae30 \u2192", "See results": "\uacb0\uacfc \ubcf4\uae30", "Skip to next card": "\ub2e4\uc74c \uce74\ub4dc\ub85c \uac74\ub108\ub6f0\uae30", "Made with Cram": "Cram\uc73c\ub85c \uc81c\uc791", "Use the arrow keys to move through the deck.": "\ubc29\ud5a5\ud0a4\ub85c \uce74\ub4dc\ub97c \uc774\ub3d9\ud558\uc138\uc694.", "Cram mode is unavailable during retry sessions": "\ub2e4\uc2dc \ud480\uae30 \uc911\uc5d0\ub294 \uc9d1\uc911 \uc554\uae30 \ubaa8\ub4dc\ub97c \uc0ac\uc6a9\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4", "Disable Cram mode": "\uc9d1\uc911 \uc554\uae30 \ubaa8\ub4dc \ub044\uae30", "Enable Cram mode": "\uc9d1\uc911 \uc554\uae30 \ubaa8\ub4dc \ucf1c\uae30", "Cram mode is unavailable during retry sessions.": "\ub2e4\uc2dc \ud480\uae30 \uc911\uc5d0\ub294 \uc9d1\uc911 \uc554\uae30 \ubaa8\ub4dc\ub97c \uc0ac\uc6a9\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.", "Cram mode enabled for this session.": "\uc774\ubc88 \ud559\uc2b5\uc5d0\uc11c \uc9d1\uc911 \uc554\uae30 \ubaa8\ub4dc\ub97c \ucf30\uc2b5\ub2c8\ub2e4.", "Cram mode disabled for this session.": "\uc774\ubc88 \ud559\uc2b5\uc5d0\uc11c \uc9d1\uc911 \uc554\uae30 \ubaa8\ub4dc\ub97c \uaed0\uc2b5\ub2c8\ub2e4.", "Cards shuffled for this session.": "\uc774\ubc88 \ud559\uc2b5\uc758 \uce74\ub4dc \uc21c\uc11c\ub97c \uc11e\uc5c8\uc2b5\ub2c8\ub2e4.", "Card order restored for this session.": "\uc774\ubc88 \ud559\uc2b5\uc758 \uce74\ub4dc \uc21c\uc11c\ub97c \uc6d0\ub798\ub300\ub85c \ub418\ub3cc\ub838\uc2b5\ub2c8\ub2e4.", "The page needs a deck with a title and at least one card.": "\uc81c\ubaa9\uacfc \uce74\ub4dc\uac00 \ud558\ub098 \uc774\uc0c1 \uc788\ub294 \ub371\uc774 \ud544\uc694\ud569\ub2c8\ub2e4.", "This card could not be rendered.": "\uce74\ub4dc\ub97c \ud45c\uc2dc\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.", "The card renderer failed.": "\uce74\ub4dc \ud45c\uc2dc \uc911 \uc624\ub958\uac00 \ubc1c\uc0dd\ud588\uc2b5\ub2c8\ub2e4.", "This card has no prompt.": "\uc9c8\ubb38\uc774 \uc5c6\ub294 \uce74\ub4dc\uc785\ub2c8\ub2e4.", "This card has no answer.": "\uc815\ub2f5\uc774 \uc5c6\ub294 \uce74\ub4dc\uc785\ub2c8\ub2e4.", "Show answer": "\uc815\ub2f5 \ubcf4\uae30", "Missed it": "\ubab0\ub790\uc5b4\uc694", "Knew it": "\uc54c\uc558\uc5b4\uc694", "Grade your recall": "\uae30\uc5b5 \uc5ec\ubd80 \ud3c9\uac00", "Optional hint": "\uc120\ud0dd \ud78c\ud2b8", "Answer actions": "\ub2f5\ubcc0 \ub3d9\uc791", "The grade could not be recorded.": "\ud3c9\uac00\ub97c \uae30\ub85d\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.", "Marked as known.": "\uc54c\uace0 \uc788\ub294 \uce74\ub4dc\ub85c \ud45c\uc2dc\ud588\uc2b5\ub2c8\ub2e4.", "Marked as missed.": "\ubaa8\ub974\ub294 \uce74\ub4dc\ub85c \ud45c\uc2dc\ud588\uc2b5\ub2c8\ub2e4.", "Choose an answer": "\uc815\ub2f5 \uc120\ud0dd", "This option has no text.": "\ub0b4\uc6a9\uc774 \uc5c6\ub294 \uc120\ud0dd\uc9c0\uc785\ub2c8\ub2e4.", "Check answer": "\uc815\ub2f5 \ud655\uc778", "Correct.": "\uc815\ub2f5\uc785\ub2c8\ub2e4.", "Incorrect.": "\uc624\ub2f5\uc785\ub2c8\ub2e4.", "Incorrect. The correct answer is: {answer}": "\uc624\ub2f5\uc785\ub2c8\ub2e4. \uc815\ub2f5: {answer}", "Answer selected. Check it when ready.": "\ub2f5\uc744 \uc120\ud0dd\ud588\uc2b5\ub2c8\ub2e4. \uc900\ube44\ub418\uba74 \uc815\ub2f5\uc744 \ud655\uc778\ud558\uc138\uc694.", "Blank {number}": "\ube48\uce78 {number}", "Check answers": "\uc815\ub2f5 \ud655\uc778", "Blank {number}: Correct.": "\ube48\uce78 {number}: \uc815\ub2f5\uc785\ub2c8\ub2e4.", "Blank {number}: Incorrect. Correct answer: {answer}": "\ube48\uce78 {number}: \uc624\ub2f5\uc785\ub2c8\ub2e4. \uc815\ub2f5: {answer}", "This card was previously marked incorrect.": "\uc774\uc804\uc5d0 \ud2c0\ub9b0 \uac83\uc73c\ub85c \uae30\ub85d\ub41c \uce74\ub4dc\uc785\ub2c8\ub2e4.", "Show hint": "\ud78c\ud2b8 \ubcf4\uae30", "The hint could not be recorded.": "\ud78c\ud2b8 \uc0ac\uc6a9\uc744 \uae30\ub85d\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.", "The \u201c{type}\u201d card renderer is not installed yet.": "\u201c{type}\u201d \uce74\ub4dc \ud45c\uc2dc \uae30\ub2a5\uc774 \uc544\uc9c1 \uc124\uce58\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4.", "Unable to load deck": "\ub371\uc744 \ubd88\ub7ec\uc62c \uc218 \uc5c6\uc2b5\ub2c8\ub2e4", "No cards loaded": "\ubd88\ub7ec\uc628 \uce74\ub4dc \uc5c6\uc74c", "Deck error": "\ub371 \uc624\ub958", "Card {position} of {total}": "{total}\uac1c \uc911 {position}\ubc88\uc9f8 \uce74\ub4dc", "Session complete. Score {score}/{total}.": "\ud559\uc2b5 \uc644\ub8cc. \uc810\uc218 {score}/{total}.", "{score} correct \u00b7 {missedCount} to review": "\uc815\ub2f5 {score}\uac1c \u00b7 \ubcf5\uc2b5 {missedCount}\uac1c", "All {total} correct \u00b7 Nothing to review": "{total}\uac1c \ubaa8\ub450 \uc815\ub2f5 \u00b7 \ubcf5\uc2b5\ud560 \uce74\ub4dc \uc5c6\uc74c", "{score} correct": "\uc815\ub2f5 {score}\uac1c", "{missedCount} to review": "\ubcf5\uc2b5 {missedCount}\uac1c", "Retry {count} missed card": {"one": "\ud2c0\ub9b0 \uce74\ub4dc {count}\uac1c \ub2e4\uc2dc \ud480\uae30", "other": "\ud2c0\ub9b0 \uce74\ub4dc {count}\uac1c \ub2e4\uc2dc \ud480\uae30"}, "Retrying {count} missed card.": {"one": "\ud2c0\ub9b0 \uce74\ub4dc {count}\uac1c\ub97c \ub2e4\uc2dc \ud489\ub2c8\ub2e4.", "other": "\ud2c0\ub9b0 \uce74\ub4dc {count}\uac1c\ub97c \ub2e4\uc2dc \ud489\ub2c8\ub2e4."}, "Session complete: score {score} of {total}": "\ud559\uc2b5 \uc644\ub8cc: {total}\uc810 \uc911 {score}\uc810", "Session complete: {score} of {total}": "\ud559\uc2b5 \uc644\ub8cc: {score}/{total}", "Nothing to retry.": "\ub2e4\uc2dc \ud480 \uce74\ub4dc\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.", "Needed a hint": "\ud78c\ud2b8\ub97c \uc0ac\uc6a9\ud588\uc5b4\uc694", "Answer:": "\uc815\ub2f5:", "Explanation:": "\ud574\uc124:", "Hint:": "\ud78c\ud2b8:", "Card {position} of {total}. {content}": "{total}\uac1c \uc911 {position}\ubc88\uc9f8 \uce74\ub4dc. {content}", "Progress could not be saved. Try again.": "\uc9c4\ud589 \uc0c1\ud669\uc744 \uc800\uc7a5\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \ub2e4\uc2dc \uc2dc\ub3c4\ud558\uc138\uc694.", "basic": "\uae30\ubcf8", "mcq": "\uac1d\uad00\uc2dd", "cloze": "\ube48\uce78 \ucc44\uc6b0\uae30", "unknown": "\uc54c \uc218 \uc5c6\uc74c", "Progress reset. Start again.": "\uc9c4\ud589 \uc0c1\ud669\uc744 \ucd08\uae30\ud654\ud588\uc2b5\ub2c8\ub2e4. \ub2e4\uc2dc \uc2dc\uc791\ud558\uc138\uc694.", "Progress reset for this session, but saved progress could not be cleared.": "\uc774\ubc88 \ud559\uc2b5\uc740 \ucd08\uae30\ud654\ud588\uc9c0\ub9cc \uc800\uc7a5\ub41c \uc9c4\ud589 \uc0c1\ud669\uc740 \uc9c0\uc6b0\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.", "Paper": "\ud398\uc774\ud37c", "Focus": "\ud3ec\ucee4\uc2a4", "Sprint": "\uc2a4\ud504\ub9b0\ud2b8", "Appearance": "\ud45c\uc2dc \ubc29\uc2dd", "Light": "\ub77c\uc774\ud2b8", "Dark": "\ub2e4\ud06c", "Single-letter shortcuts": "\ud55c \uae00\uc790 \ub2e8\ucd95\ud0a4", "A reveals answers; H reveals hints.": "A\ub294 \uc815\ub2f5\uc744, H\ub294 \ud78c\ud2b8\ub97c \ubcf4\uc5ec \uc90d\ub2c8\ub2e4."}};</script>
-  <script>window.__DECK__ = {"id": "japanese-reading-ko", "title": "\uac00\ud0c0\uce74\ub098 \uc77d\uae30\uc640 \uc77c\ubcf8\uc5b4 \ubb38\uc7a5 (\ud55c\uad6d\uc5b4\ub85c \ubc30\uc6b0\ub294 \uc77c\ubcf8\uc5b4)", "source": "\uc77c\ubcf8\uc5b4 \ucd08\uae09 \ud559\uc2b5\uc790\ub97c \uc704\ud55c \uac00\ud0c0\uce74\ub098 \uc77d\uae30 \uc5f0\uc2b5\uacfc \uae30\ucd08 \ubb38\uc7a5 \uc815\ub9ac", "cards": [{"id": "katakana-radio-reading", "type": "cloze", "prompt": "\uac00\ud0c0\uce74\ub098 \ub2e8\uc5b4 '\u30e9\u30b8\u30aa'(\ub77c\ub514\uc624)\ub97c \ud788\ub77c\uac00\ub098\ub85c \uc62e\uae30\uba74 {{\u3089\u3058\u304a}}\uc785\ub2c8\ub2e4.", "hint": "\ud55c \uae00\uc790\uc529 \ub300\uc751\ud558\ub294 \ud788\ub77c\uac00\ub098\ub85c \ubc14\uafd4 \ubcf4\uc138\uc694: \u30e9\u2192\u3089, \u30b8\u2192\u3058, \u30aa\u2192\u304a.", "explanation": "\uac00\ud0c0\uce74\ub098\uc640 \ud788\ub77c\uac00\ub098\ub294 \uc18c\ub9ac\uac00 \uac19\uc740 \ub450 \uac00\uc9c0 \ubb38\uc790 \uccb4\uacc4\ub77c\uc11c, \uc678\ub798\uc5b4\ub97c \uac00\ud0c0\uce74\ub098\ub85c \uc4f0\ub354\ub77c\ub3c4 \ud55c \uae00\uc790\uc529 \uadf8\ub300\ub85c \ud788\ub77c\uac00\ub098\ub85c \uce58\ud658\ud560 \uc218 \uc788\uc5b4\uc694. \ub2e4\ub9cc \uc2e4\uc81c\ub85c\ub294 \uc678\ub798\uc5b4\ub97c \ud788\ub77c\uac00\ub098\ub85c \uc801\uc9c0 \uc54a\uace0 \ud56d\uc0c1 \uac00\ud0c0\uce74\ub098\ub85c\ub9cc \ud45c\uae30\ud569\ub2c8\ub2e4."}, {"id": "katakana-camera-reading", "type": "cloze", "prompt": "\uac00\ud0c0\uce74\ub098 \ub2e8\uc5b4 '\u30ab\u30e1\u30e9'(\uce74\uba54\ub77c)\ub97c \ud788\ub77c\uac00\ub098\ub85c \uc62e\uae30\uba74 {{\u304b\u3081\u3089}}\uc785\ub2c8\ub2e4.", "explanation": "\u30ab\u30fb\u30e1\u30fb\u30e9\ub294 \uac01\uac01 \u304b\ud589\uacfc \u3089\ud589\uc758 \uae30\ubcf8 \uae00\uc790\ub77c\uc11c \ud0c1\uc74c\uc774\ub098 \ubc18\ud0c1\uc810 \uc5c6\uc774 \uadf8\ub300\ub85c \ub300\uc751\ub429\ub2c8\ub2e4."}, {"id": "katakana-banana-reading", "type": "cloze", "prompt": "\uac00\ud0c0\uce74\ub098 \ub2e8\uc5b4 '\u30d0\u30ca\u30ca'(\ubc14\ub098\ub098)\ub97c \ud788\ub77c\uac00\ub098\ub85c \uc62e\uae30\uba74 {{\u3070\u306a\u306a}}\uc785\ub2c8\ub2e4.", "explanation": "\u30d0\ub294 \u306f\ud589\uc5d0 \ud0c1\uc810(\u309b)\uc774 \ubd99\uc740 \uae00\uc790\ub85c, \ud788\ub77c\uac00\ub098\uc5d0\uc11c\ub3c4 \ud0c1\uc810\uc744 \uadf8\ub300\ub85c \uc720\uc9c0\ud574 \u3070\uac00 \ub429\ub2c8\ub2e4."}, {"id": "katakana-bread-reading", "type": "mcq", "prompt": "\uac00\ud0c0\uce74\ub098 \ub2e8\uc5b4 '\u30d1\u30f3'(\ube75)\uc744 \ud788\ub77c\uac00\ub098\ub85c \uc633\uac8c \uc62e\uae34 \uac83\uc740?", "answer": "\u3071\u3093", "distractors": ["\u3070\u3093", "\u306f\u3093", "\u3071\u306b"], "explanation": "\u30d1\ub294 \u306f\ud589\uc5d0 \ubc18\ud0c1\uc810(\u309c)\uc774 \ubd99\uc740 \uae00\uc790\ub77c\uc11c \u3071\uac00 \ub418\uace0, \u30f3\uc740 \ubc1b\uce68 \uc5ed\ud560\uc744 \ud558\ub294 \uae00\uc790\ub77c\uc11c \uadf8\ub300\ub85c \u3093\uc774 \ub429\ub2c8\ub2e4. \ud0c1\uc810(\u309b)\uc774 \ubd99\uc740 \u3070\ub098 \ubc18\ud0c1\uc810\uc774 \uc5c6\ub294 \u306f\ub85c \ucc29\uac01\ud558\uae30 \uc26c\uc6b4 \ub300\ud45c\uc801\uc778 \uc608\uc608\uc694."}, {"id": "katakana-salad-reading", "type": "cloze", "prompt": "\uac00\ud0c0\uce74\ub098 \ub2e8\uc5b4 '\u30b5\u30e9\u30c0'(\uc0d0\ub7ec\ub4dc)\ub97c \ud788\ub77c\uac00\ub098\ub85c \uc62e\uae30\uba74 {{\u3055\u3089\u3060}}\uc785\ub2c8\ub2e4.", "explanation": "\u30c0\ub294 \u305f\ud589\uc5d0 \ud0c1\uc810\uc774 \ubd99\uc740 \uae00\uc790\ub85c \u3060\uac00 \ub418\uba70, \u30b5\u30fb\u30e9\ub294 \uac01\uac01 \u3055\ud589\uacfc \u3089\ud589\uc758 \uae30\ubcf8 \uae00\uc790\ub77c\uc11c \uadf8\ub300\ub85c \ub300\uc751\ub429\ub2c8\ub2e4."}, {"id": "sentence-this-is-a-book", "type": "mcq", "prompt": "\ub2e4\uc74c \uc77c\ubcf8\uc5b4 \ubb38\uc7a5\uc758 \ub73b\uc73c\ub85c \uc633\uc740 \uac83\uc740? '\u3053\u308c\u306f\u672c\u3067\u3059\u3002'", "answer": "\uc774\uac83\uc740 \ucc45\uc785\ub2c8\ub2e4.", "distractors": ["\uc774\uac83\uc740 \uc5f0\ud544\uc785\ub2c8\ub2e4.", "\uc774\uac83\uc740 \uac00\ubc29\uc785\ub2c8\ub2e4.", "\uc774\uac83\uc740 \uc758\uc790\uc785\ub2c8\ub2e4."], "hint": "'\u672c(\u307b\u3093)'\uc740 '\ucc45'\uc744 \ub73b\ud574\uc694.", "explanation": "'\u3053\u308c'\ub294 '\uc774\uac83', \uc870\uc0ac '\u306f'\ub294 \ubb38\uc7a5\uc758 \uc8fc\uc81c\ub97c \ub098\ud0c0\ub0b4\uba70, '\u3067\u3059'\ub294 \ubb38\uc7a5\uc744 \uc815\uc911\ud558\uac8c \ub05d\ub9fa\ub294 \uc11c\uc220\ud615 \uc870\ub3d9\uc0ac\uc608\uc694. \uadf8\ub798\uc11c '\u3053\u308c\u306f\u25cb\u25cb\u3067\u3059'\ub294 '\uc774\uac83\uc740 \u25cb\u25cb\uc785\ub2c8\ub2e4'\ub77c\ub294 \uc815\uc911\ud55c \uc18c\uac1c \ud45c\ud604\uc758 \uae30\ubcf8\ud615\uc774 \ub429\ub2c8\ub2e4."}, {"id": "sentence-i-am-a-student", "type": "mcq", "prompt": "\ub2e4\uc74c \uc77c\ubcf8\uc5b4 \ubb38\uc7a5\uc758 \ub73b\uc73c\ub85c \uc633\uc740 \uac83\uc740? '\u79c1\u306f\u5b66\u751f\u3067\u3059\u3002'", "answer": "\uc800\ub294 \ud559\uc0dd\uc785\ub2c8\ub2e4.", "distractors": ["\uc800\ub294 \uc120\uc0dd\ub2d8\uc785\ub2c8\ub2e4.", "\uc800\ub294 \ud68c\uc0ac\uc6d0\uc785\ub2c8\ub2e4.", "\uc800\ub294 \uc758\uc0ac\uc785\ub2c8\ub2e4."], "explanation": "'\u79c1(\u308f\u305f\u3057)'\ub294 '\ub098/\uc800', '\u5b66\u751f(\u304c\u304f\u305b\u3044)'\ub294 '\ud559\uc0dd'\uc774\ub77c\ub294 \ub73b\uc758 \uba85\uc0ac\uc608\uc694. \uba85\uc0ac \ub4a4\uc5d0 \ubc14\ub85c '\u3067\u3059'\ub97c \ubd99\uc774\uba74 '~\uc785\ub2c8\ub2e4'\ub77c\ub294 \uc815\uc911\ud55c \ub2e8\uc815\ubb38\uc774 \ub429\ub2c8\ub2e4."}, {"id": "sentence-today-is-hot", "type": "mcq", "prompt": "\ub2e4\uc74c \uc77c\ubcf8\uc5b4 \ubb38\uc7a5\uc758 \ub73b\uc73c\ub85c \uc633\uc740 \uac83\uc740? '\u4eca\u65e5\u306f\u6691\u3044\u3067\u3059\u3002'", "answer": "\uc624\ub298\uc740 \ub365\uc2b5\ub2c8\ub2e4.", "distractors": ["\uc624\ub298\uc740 \ucda5\uc2b5\ub2c8\ub2e4.", "\uc624\ub298\uc740 \ub9d1\uc2b5\ub2c8\ub2e4.", "\uc624\ub298\uc740 \ud750\ub9bd\ub2c8\ub2e4."], "explanation": "'\u6691\u3044(\u3042\u3064\u3044)'\ub294 \uae30\ubcf8\ud615\uc774 '\u3044'\ub85c \ub05d\ub098\ub294 \u3044\ud615\uc6a9\uc0ac\uc608\uc694. \u3044\ud615\uc6a9\uc0ac\ub294 \uba85\uc0ac\ucc98\ub7fc \uc55e\uc5d0 '\u3060' \uc5c6\uc774\ub3c4 \ubc14\ub85c \ub4a4\uc5d0 '\u3067\u3059'\ub9cc \ubd99\uc5ec \uc815\uc911\uccb4\ub97c \ub9cc\ub4e4 \uc218 \uc788\uc5b4\uc11c, '\u3067\u3059' \uc55e\uc758 \ud615\ud0dc\uac00 \ubc14\ub00c\uc9c0 \uc54a\ub294\ub2e4\ub294 \uc810\uc774 \u306a\ud615\uc6a9\uc0ac\uc640 \ub2e4\ub985\ub2c8\ub2e4."}, {"id": "sentence-i-like-cats", "type": "basic", "prompt": "\ub2e4\uc74c \uc77c\ubcf8\uc5b4 \ubb38\uc7a5\uc758 \ub73b\uc740 \ubb34\uc5c7\uc778\uac00\uc694? '\u732b\u304c\u597d\u304d\u3067\u3059\u3002'", "answer": "\uace0\uc591\uc774\ub97c \uc88b\uc544\ud569\ub2c8\ub2e4.", "hint": "'\u597d\u304d\u3067\u3059(\u3059\u304d\u3067\u3059)'\ub294 '\uc88b\uc544\ud569\ub2c8\ub2e4'\ub77c\ub294 \ub73b\uc774\uc5d0\uc694.", "explanation": "'\u597d\u304d\u3060'\ub294 \ud615\ud0dc\ub294 \ud615\uc6a9\uc0ac(\u306a\ud615\uc6a9\uc0ac)\uc9c0\ub9cc \ub73b\uc740 '\uc88b\uc544\ud558\ub2e4'\uc5d0 \uac00\uae4c\uc6cc\uc11c, \uc88b\uc544\ud558\ub294 \ub300\uc0c1 \ub4a4\uc5d0\ub294 \ubaa9\uc801\uaca9 \uc870\uc0ac '\u3092'\uac00 \uc544\ub2c8\ub77c \uc8fc\uaca9 \uc870\uc0ac '\u304c'\ub97c \uc501\ub2c8\ub2e4. \uadf8\ub798\uc11c '\u732b\u3092\u597d\u304d\u3067\u3059'\uac00 \uc544\ub2c8\ub77c '\u732b\u304c\u597d\u304d\u3067\u3059'\uac00 \uc790\uc5f0\uc2a4\ub7ec\uc6b4 \ubb38\uc7a5\uc774\uc5d0\uc694."}, {"id": "sentence-where-is-the-restroom", "type": "basic", "prompt": "\ub2e4\uc74c \uc77c\ubcf8\uc5b4 \ubb38\uc7a5\uc758 \ub73b\uc740 \ubb34\uc5c7\uc778\uac00\uc694? '\u3059\u307f\u307e\u305b\u3093\u3001\u30c8\u30a4\u30ec\u306f\u3069\u3053\u3067\u3059\u304b\u3002'", "answer": "\uc2e4\ub840\ud569\ub2c8\ub2e4, \ud654\uc7a5\uc2e4\uc740 \uc5b4\ub514\uc785\ub2c8\uae4c?", "explanation": "'~\u306f\u3069\u3053\u3067\u3059\u304b'\ub294 '~\uc740/\ub294 \uc5b4\ub514\uc785\ub2c8\uae4c?'\ub77c\ub294 \ub73b\uc73c\ub85c \uc7a5\uc18c\ub97c \ubb3c\uc744 \ub54c \uac00\uc7a5 \ub9ce\uc774 \uc4f0\ub294 \ud328\ud134\uc774\uc5d0\uc694. \ubb38\uc7a5 \uc55e\uc758 '\u3059\u307f\u307e\u305b\u3093'\uc740 \uc0ac\uacfc\ubcf4\ub2e4 '\uc2e4\ub840\ud569\ub2c8\ub2e4'\ucc98\ub7fc \ub0af\uc120 \uc0ac\ub78c\uc5d0\uac8c \ub9d0\uc744 \uac78 \ub54c \uc4f0\ub294 \uad00\uc6a9 \ud45c\ud604\uc5d0 \ub354 \uac00\uae5d\uc2b5\ub2c8\ub2e4."}]};</script>
+  <script>window.__LOCALE__ = {"language": "ko", "messages": {"Cram player": "Cram \ud50c\ub808\uc774\uc5b4", "Loading deck\u2026": "\ub371 \ubd88\ub7ec\uc624\ub294 \uc911\u2026", "Open settings": "\uc124\uc815 \uc5f4\uae30", "Close settings": "\uc124\uc815 \ub2eb\uae30", "Settings": "\uc124\uc815", "Theme": "\ud14c\ub9c8", "System": "\uc2dc\uc2a4\ud15c", "Cram mode": "\uc9d1\uc911 \uc554\uae30 \ubaa8\ub4dc", "Requeue missed cards during this session.": "\uc774\ubc88 \ud559\uc2b5 \uc911 \ud2c0\ub9b0 \uce74\ub4dc\ub97c \ub2e4\uc2dc \ucd9c\uc81c\ud569\ub2c8\ub2e4.", "Study order": "\ud559\uc2b5 \uc21c\uc11c", "Original order": "\uc6d0\ubcf8", "Shuffled order": "\ubb34\uc791\uc704", "Shuffle": "\uce74\ub4dc \uc11e\uae30", "Restore original order": "\uc6d0\ub798 \uc21c\uc11c\ub85c", "This session could not be saved. Reloading may lose your place.": "\uc774\ubc88 \ud559\uc2b5\uc744 \uc800\uc7a5\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4. \uc0c8\ub85c\uace0\uce68\ud558\uba74 \ud559\uc2b5 \uc704\uce58\ub97c \uc783\uc744 \uc218 \uc788\uc2b5\ub2c8\ub2e4.", "Deck progress": "\ub371 \uc9c4\ud589 \uc0c1\ud669", "Card 0 of 0": "0 / 0\ubc88\uc9f8 \uce74\ub4dc", "Preparing card": "\uce74\ub4dc \uc900\ube44 \uc911", "Preparing your deck\u2026": "\ub371 \uc900\ube44 \uc911\u2026", "Results": "\uacb0\uacfc", "Session complete": "\ud559\uc2b5 \uc644\ub8cc", "0 correct \u00b7 Nothing to review": "\uc815\ub2f5 0\uac1c \u00b7 \ubcf5\uc2b5\ud560 \uce74\ub4dc \uc5c6\uc74c", "Score breakdown": "\uc810\uc218 \ub0b4\uc5ed", "0 correct": "\uc815\ub2f5 0\uac1c", "Nothing to review": "\ubcf5\uc2b5\ud560 \uce74\ub4dc \uc5c6\uc74c", "Retry missed cards": "\ud2c0\ub9b0 \uce74\ub4dc \ub2e4\uc2dc \ud480\uae30", "Reset progress": "\uc9c4\ud589 \uc0c1\ud669 \ucd08\uae30\ud654", "Review missed cards": "\ud2c0\ub9b0 \uce74\ub4dc \ubcf5\uc2b5", "Perfect score \u2014 nothing to review.": "\ubaa8\ub450 \ub9de\ud614\uc2b5\ub2c8\ub2e4 \u2014 \ubcf5\uc2b5\ud560 \uce74\ub4dc\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.", "Scroll down to see more missed cards": "\uc544\ub798\ub85c \uc2a4\ud06c\ub864\ud574 \ub098\uba38\uc9c0 \ud2c0\ub9b0 \uce74\ub4dc \ubcf4\uae30", "More cards below": "\uc544\ub798\uc5d0 \uce74\ub4dc \ub354 \uc788\uc74c", "Card navigation": "\uce74\ub4dc \ud0d0\uc0c9", "Previous card": "\uc774\uc804 \uce74\ub4dc", "\u2190 Previous": "\u2190 \uc774\uc804", "Next card": "\ub2e4\uc74c \uce74\ub4dc", "Skip \u2192": "\uac74\ub108\ub6f0\uae30 \u2192", "Next \u2192": "\ub2e4\uc74c \u2192", "See results \u2192": "\uacb0\uacfc \ubcf4\uae30 \u2192", "See results": "\uacb0\uacfc \ubcf4\uae30", "Skip to next card": "\ub2e4\uc74c \uce74\ub4dc\ub85c \uac74\ub108\ub6f0\uae30", "Made with Cram": "Cram\uc73c\ub85c \uc81c\uc791", "Use the arrow keys to move through the deck.": "\ubc29\ud5a5\ud0a4\ub85c \uce74\ub4dc\ub97c \uc774\ub3d9\ud558\uc138\uc694.", "Cram mode is unavailable during retry sessions": "\ub2e4\uc2dc \ud480\uae30 \uc911\uc5d0\ub294 \uc9d1\uc911 \uc554\uae30 \ubaa8\ub4dc\ub97c \uc0ac\uc6a9\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4", "Disable Cram mode": "\uc9d1\uc911 \uc554\uae30 \ubaa8\ub4dc \ub044\uae30", "Enable Cram mode": "\uc9d1\uc911 \uc554\uae30 \ubaa8\ub4dc \ucf1c\uae30", "Cram mode is unavailable during retry sessions.": "\ub2e4\uc2dc \ud480\uae30 \uc911\uc5d0\ub294 \uc9d1\uc911 \uc554\uae30 \ubaa8\ub4dc\ub97c \uc0ac\uc6a9\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.", "Cram mode enabled for this session.": "\uc774\ubc88 \ud559\uc2b5\uc5d0\uc11c \uc9d1\uc911 \uc554\uae30 \ubaa8\ub4dc\ub97c \ucf30\uc2b5\ub2c8\ub2e4.", "Cram mode disabled for this session.": "\uc774\ubc88 \ud559\uc2b5\uc5d0\uc11c \uc9d1\uc911 \uc554\uae30 \ubaa8\ub4dc\ub97c \uaed0\uc2b5\ub2c8\ub2e4.", "Cards shuffled for this session.": "\uc774\ubc88 \ud559\uc2b5\uc758 \uce74\ub4dc \uc21c\uc11c\ub97c \uc11e\uc5c8\uc2b5\ub2c8\ub2e4.", "Card order restored for this session.": "\uc774\ubc88 \ud559\uc2b5\uc758 \uce74\ub4dc \uc21c\uc11c\ub97c \uc6d0\ub798\ub300\ub85c \ub418\ub3cc\ub838\uc2b5\ub2c8\ub2e4.", "The page needs a deck with a title and at least one card.": "\uc81c\ubaa9\uacfc \uce74\ub4dc\uac00 \ud558\ub098 \uc774\uc0c1 \uc788\ub294 \ub371\uc774 \ud544\uc694\ud569\ub2c8\ub2e4.", "This card could not be rendered.": "\uce74\ub4dc\ub97c \ud45c\uc2dc\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.", "The card renderer failed.": "\uce74\ub4dc \ud45c\uc2dc \uc911 \uc624\ub958\uac00 \ubc1c\uc0dd\ud588\uc2b5\ub2c8\ub2e4.", "This card has no prompt.": "\uc9c8\ubb38\uc774 \uc5c6\ub294 \uce74\ub4dc\uc785\ub2c8\ub2e4.", "This card has no answer.": "\uc815\ub2f5\uc774 \uc5c6\ub294 \uce74\ub4dc\uc785\ub2c8\ub2e4.", "Show answer": "\uc815\ub2f5 \ubcf4\uae30", "Missed it": "\ubab0\ub790\uc5b4\uc694", "Knew it": "\uc54c\uc558\uc5b4\uc694", "Grade your recall": "\uae30\uc5b5 \uc5ec\ubd80 \ud3c9\uac00", "Optional hint": "\uc120\ud0dd \ud78c\ud2b8", "Answer actions": "\ub2f5\ubcc0 \ub3d9\uc791", "The grade could not be recorded.": "\ud3c9\uac00\ub97c \uae30\ub85d\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.", "Marked as known.": "\uc54c\uace0 \uc788\ub294 \uce74\ub4dc\ub85c \ud45c\uc2dc\ud588\uc2b5\ub2c8\ub2e4.", "Marked as missed.": "\ubaa8\ub974\ub294 \uce74\ub4dc\ub85c \ud45c\uc2dc\ud588\uc2b5\ub2c8\ub2e4.", "Choose an answer": "\uc815\ub2f5 \uc120\ud0dd", "This option has no text.": "\ub0b4\uc6a9\uc774 \uc5c6\ub294 \uc120\ud0dd\uc9c0\uc785\ub2c8\ub2e4.", "Check answer": "\uc815\ub2f5 \ud655\uc778", "Correct.": "\uc815\ub2f5\uc785\ub2c8\ub2e4.", "Incorrect.": "\uc624\ub2f5\uc785\ub2c8\ub2e4.", "Incorrect. The correct answer is: {answer}": "\uc624\ub2f5\uc785\ub2c8\ub2e4. \uc815\ub2f5: {answer}", "Answer selected. Check it when ready.": "\ub2f5\uc744 \uc120\ud0dd\ud588\uc2b5\ub2c8\ub2e4. \uc900\ube44\ub418\uba74 \uc815\ub2f5\uc744 \ud655\uc778\ud558\uc138\uc694.", "Blank {number}": "\ube48\uce78 {number}", "Check answers": "\uc815\ub2f5 \ud655\uc778", "This card was previously marked incorrect.": "\uc774\uc804\uc5d0 \ud2c0\ub9b0 \uac83\uc73c\ub85c \uae30\ub85d\ub41c \uce74\ub4dc\uc785\ub2c8\ub2e4.", "Show hint": "\ud78c\ud2b8 \ubcf4\uae30", "The hint could not be recorded.": "\ud78c\ud2b8 \uc0ac\uc6a9\uc744 \uae30\ub85d\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.", "The \u201c{type}\u201d card renderer is not installed yet.": "\u201c{type}\u201d \uce74\ub4dc \ud45c\uc2dc \uae30\ub2a5\uc774 \uc544\uc9c1 \uc124\uce58\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4.", "Unable to load deck": "\ub371\uc744 \ubd88\ub7ec\uc62c \uc218 \uc5c6\uc2b5\ub2c8\ub2e4", "No cards loaded": "\ubd88\ub7ec\uc628 \uce74\ub4dc \uc5c6\uc74c", "Deck error": "\ub371 \uc624\ub958", "Card {position} of {total}": "{total}\uac1c \uc911 {position}\ubc88\uc9f8 \uce74\ub4dc", "Session complete. Score {score}/{total}.": "\ud559\uc2b5 \uc644\ub8cc. \uc810\uc218 {score}/{total}.", "{score} correct \u00b7 {missedCount} to review": "\uc815\ub2f5 {score}\uac1c \u00b7 \ubcf5\uc2b5 {missedCount}\uac1c", "All {total} correct \u00b7 Nothing to review": "{total}\uac1c \ubaa8\ub450 \uc815\ub2f5 \u00b7 \ubcf5\uc2b5\ud560 \uce74\ub4dc \uc5c6\uc74c", "{score} correct": "\uc815\ub2f5 {score}\uac1c", "{missedCount} to review": "\ubcf5\uc2b5 {missedCount}\uac1c", "Retry {count} missed card": {"one": "\ud2c0\ub9b0 \uce74\ub4dc {count}\uac1c \ub2e4\uc2dc \ud480\uae30", "other": "\ud2c0\ub9b0 \uce74\ub4dc {count}\uac1c \ub2e4\uc2dc \ud480\uae30"}, "{count} card recovered": {"one": "\ubcf5\uad6c\ub41c \uce74\ub4dc {count}\uac1c", "other": "\ubcf5\uad6c\ub41c \uce74\ub4dc {count}\uac1c"}, "Retrying {count} missed card.": {"one": "\ud2c0\ub9b0 \uce74\ub4dc {count}\uac1c\ub97c \ub2e4\uc2dc \ud489\ub2c8\ub2e4.", "other": "\ud2c0\ub9b0 \uce74\ub4dc {count}\uac1c\ub97c \ub2e4\uc2dc \ud489\ub2c8\ub2e4."}, "Session complete: score {score} of {total}": "\ud559\uc2b5 \uc644\ub8cc: {total}\uc810 \uc911 {score}\uc810", "Session complete: {score} of {total}": "\ud559\uc2b5 \uc644\ub8cc: {score}/{total}", "Nothing to retry.": "\ub2e4\uc2dc \ud480 \uce74\ub4dc\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.", "Needed a hint": "\ud78c\ud2b8\ub97c \uc0ac\uc6a9\ud588\uc5b4\uc694", "Answer:": "\uc815\ub2f5:", "Explanation:": "\ud574\uc124:", "Hint:": "\ud78c\ud2b8:", "Card {position} of {total}. {content}": "{total}\uac1c \uc911 {position}\ubc88\uc9f8 \uce74\ub4dc. {content}", "Progress could not be saved. Try again.": "\uc9c4\ud589 \uc0c1\ud669\uc744 \uc800\uc7a5\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \ub2e4\uc2dc \uc2dc\ub3c4\ud558\uc138\uc694.", "basic": "\uae30\ubcf8", "mcq": "\uac1d\uad00\uc2dd", "cloze": "\ube48\uce78 \ucc44\uc6b0\uae30", "unknown": "\uc54c \uc218 \uc5c6\uc74c", "Progress reset. Start again.": "\uc9c4\ud589 \uc0c1\ud669\uc744 \ucd08\uae30\ud654\ud588\uc2b5\ub2c8\ub2e4. \ub2e4\uc2dc \uc2dc\uc791\ud558\uc138\uc694.", "Progress reset for this session, but saved progress could not be cleared.": "\uc774\ubc88 \ud559\uc2b5\uc740 \ucd08\uae30\ud654\ud588\uc9c0\ub9cc \uc800\uc7a5\ub41c \uc9c4\ud589 \uc0c1\ud669\uc740 \uc9c0\uc6b0\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.", "Paper": "\ud398\uc774\ud37c", "Focus": "\ud3ec\ucee4\uc2a4", "Sprint": "\uc2a4\ud504\ub9b0\ud2b8", "Appearance": "\ud45c\uc2dc \ubc29\uc2dd", "Light": "\ub77c\uc774\ud2b8", "Dark": "\ub2e4\ud06c", "Single-letter shortcuts": "\ud55c \uae00\uc790 \ub2e8\ucd95\ud0a4", "A reveals answers; H reveals hints.": "A\ub294 \uc815\ub2f5\uc744, H\ub294 \ud78c\ud2b8\ub97c \ubcf4\uc5ec \uc90d\ub2c8\ub2e4."}};</script>
+  <script>window.__DECK__ = {"id": "japanese-reading-ko", "title": "\uac00\ud0c0\uce74\ub098 \uc77d\uae30\uc640 \uc77c\ubcf8\uc5b4 \ubb38\uc7a5 (\ud55c\uad6d\uc5b4\ub85c \ubc30\uc6b0\ub294 \uc77c\ubcf8\uc5b4)", "source": "\uc77c\ubcf8\uc5b4 \ucd08\uae09 \ud559\uc2b5\uc790\ub97c \uc704\ud55c \uac00\ud0c0\uce74\ub098 \uc77d\uae30 \uc5f0\uc2b5\uacfc \uae30\ucd08 \ubb38\uc7a5 \uc815\ub9ac", "cards": [{"id": "katakana-radio-reading", "type": "cloze", "prompt": "\uac00\ud0c0\uce74\ub098 \ub2e8\uc5b4 '\u30e9\u30b8\u30aa'(\ub77c\ub514\uc624)\ub97c \ud788\ub77c\uac00\ub098\ub85c \uc62e\uae30\uba74 {{\u3089\u3058\u304a}}\uc785\ub2c8\ub2e4.", "hint": "\ud55c \uae00\uc790\uc529 \ub300\uc751\ud558\ub294 \ud788\ub77c\uac00\ub098\ub85c \ubc14\uafd4 \ubcf4\uc138\uc694: \u30e9\u2192\u3089, \u30b8\u2192\u3058, \u30aa\u2192\u304a.", "explanation": "\uac00\ud0c0\uce74\ub098\uc640 \ud788\ub77c\uac00\ub098\ub294 \uc18c\ub9ac\uac00 \uac19\uc740 \ub450 \uac00\uc9c0 \ubb38\uc790 \uccb4\uacc4\ub77c\uc11c, \uc678\ub798\uc5b4\ub97c \uac00\ud0c0\uce74\ub098\ub85c \uc4f0\ub354\ub77c\ub3c4 \ud55c \uae00\uc790\uc529 \uadf8\ub300\ub85c \ud788\ub77c\uac00\ub098\ub85c \uce58\ud658\ud560 \uc218 \uc788\uc5b4\uc694. \ub2e4\ub9cc \uc2e4\uc81c\ub85c\ub294 \uc678\ub798\uc5b4\ub97c \ud788\ub77c\uac00\ub098\ub85c \uc801\uc9c0 \uc54a\uace0 \ud56d\uc0c1 \uac00\ud0c0\uce74\ub098\ub85c\ub9cc \ud45c\uae30\ud569\ub2c8\ub2e4."}, {"id": "katakana-camera-reading", "type": "cloze", "prompt": "\uac00\ud0c0\uce74\ub098 \ub2e8\uc5b4 '\u30ab\u30e1\u30e9'(\uce74\uba54\ub77c)\ub97c \ud788\ub77c\uac00\ub098\ub85c \uc62e\uae30\uba74 {{\u304b\u3081\u3089}}\uc785\ub2c8\ub2e4.", "explanation": "\u30ab\u30fb\u30e1\u30fb\u30e9\ub294 \uac01\uac01 \u304b\ud589\uacfc \u3089\ud589\uc758 \uae30\ubcf8 \uae00\uc790\ub77c\uc11c \ud0c1\uc74c\uc774\ub098 \ubc18\ud0c1\uc810 \uc5c6\uc774 \uadf8\ub300\ub85c \ub300\uc751\ub429\ub2c8\ub2e4."}, {"id": "katakana-banana-reading", "type": "cloze", "prompt": "\uac00\ud0c0\uce74\ub098 \ub2e8\uc5b4 '\u30d0\u30ca\u30ca'(\ubc14\ub098\ub098)\ub97c \ud788\ub77c\uac00\ub098\ub85c \uc62e\uae30\uba74 {{\u3070\u306a\u306a}}\uc785\ub2c8\ub2e4.", "explanation": "\u30d0\ub294 \u306f\ud589\uc5d0 \ud0c1\uc810(\u309b)\uc774 \ubd99\uc740 \uae00\uc790\ub85c, \ud788\ub77c\uac00\ub098\uc5d0\uc11c\ub3c4 \ud0c1\uc810\uc744 \uadf8\ub300\ub85c \uc720\uc9c0\ud574 \u3070\uac00 \ub429\ub2c8\ub2e4."}, {"id": "katakana-bread-reading", "type": "mcq", "prompt": "\uac00\ud0c0\uce74\ub098 \ub2e8\uc5b4 '\u30d1\u30f3'(\ube75)\uc744 \ud788\ub77c\uac00\ub098\ub85c \uc633\uac8c \uc62e\uae34 \uac83\uc740?", "answer": "\u3071\u3093", "distractors": ["\u3070\u3093", "\u306f\u3093", "\u3071\u306b"], "explanation": "\u30d1\ub294 \u306f\ud589\uc5d0 \ubc18\ud0c1\uc810(\u309c)\uc774 \ubd99\uc740 \uae00\uc790\ub77c\uc11c \u3071\uac00 \ub418\uace0, \u30f3\uc740 \ubc1b\uce68 \uc5ed\ud560\uc744 \ud558\ub294 \uae00\uc790\ub77c\uc11c \uadf8\ub300\ub85c \u3093\uc774 \ub429\ub2c8\ub2e4. \ud0c1\uc810(\u309b)\uc774 \ubd99\uc740 \u3070\ub098 \ubc18\ud0c1\uc810\uc774 \uc5c6\ub294 \u306f\ub85c \ucc29\uac01\ud558\uae30 \uc26c\uc6b4 \ub300\ud45c\uc801\uc778 \uc608\uc608\uc694."}, {"id": "katakana-salad-reading", "type": "cloze", "prompt": "\uac00\ud0c0\uce74\ub098 \ub2e8\uc5b4 '\u30b5\u30e9\u30c0'(\uc0d0\ub7ec\ub4dc)\ub97c \ud788\ub77c\uac00\ub098\ub85c \uc62e\uae30\uba74 {{\u3055\u3089\u3060}}\uc785\ub2c8\ub2e4.", "explanation": "\u30c0\ub294 \u305f\ud589\uc5d0 \ud0c1\uc810\uc774 \ubd99\uc740 \uae00\uc790\ub85c \u3060\uac00 \ub418\uba70, \u30b5\u30fb\u30e9\ub294 \uac01\uac01 \u3055\ud589\uacfc \u3089\ud589\uc758 \uae30\ubcf8 \uae00\uc790\ub77c\uc11c \uadf8\ub300\ub85c \ub300\uc751\ub429\ub2c8\ub2e4."}, {"id": "sentence-this-is-a-book", "type": "mcq", "prompt": "\ub2e4\uc74c \uc77c\ubcf8\uc5b4 \ubb38\uc7a5\uc758 \ub73b\uc73c\ub85c \uc633\uc740 \uac83\uc740? '\u3053\u308c\u306f\u672c\u3067\u3059\u3002'", "answer": "\uc774\uac83\uc740 \ucc45\uc785\ub2c8\ub2e4.", "distractors": ["\uc774\uac83\uc740 \uc5f0\ud544\uc785\ub2c8\ub2e4.", "\uc774\uac83\uc740 \uac00\ubc29\uc785\ub2c8\ub2e4.", "\uc774\uac83\uc740 \uc758\uc790\uc785\ub2c8\ub2e4."], "hint": "'\u672c(\u307b\u3093)'\uc740 '\ucc45'\uc744 \ub73b\ud574\uc694.", "explanation": "'\u3053\u308c'\ub294 '\uc774\uac83', \uc870\uc0ac '\u306f'\ub294 \ubb38\uc7a5\uc758 \uc8fc\uc81c\ub97c \ub098\ud0c0\ub0b4\uba70, '\u3067\u3059'\ub294 \ubb38\uc7a5\uc744 \uc815\uc911\ud558\uac8c \ub05d\ub9fa\ub294 \uc11c\uc220\ud615 \uc870\ub3d9\uc0ac\uc608\uc694. \uadf8\ub798\uc11c '\u3053\u308c\u306f\u25cb\u25cb\u3067\u3059'\ub294 '\uc774\uac83\uc740 \u25cb\u25cb\uc785\ub2c8\ub2e4'\ub77c\ub294 \uc815\uc911\ud55c \uc18c\uac1c \ud45c\ud604\uc758 \uae30\ubcf8\ud615\uc774 \ub429\ub2c8\ub2e4."}, {"id": "sentence-i-am-a-student", "type": "mcq", "prompt": "\ub2e4\uc74c \uc77c\ubcf8\uc5b4 \ubb38\uc7a5\uc758 \ub73b\uc73c\ub85c \uc633\uc740 \uac83\uc740? '\u79c1\u306f\u5b66\u751f\u3067\u3059\u3002'", "answer": "\uc800\ub294 \ud559\uc0dd\uc785\ub2c8\ub2e4.", "distractors": ["\uc800\ub294 \uc120\uc0dd\ub2d8\uc785\ub2c8\ub2e4.", "\uc800\ub294 \ud68c\uc0ac\uc6d0\uc785\ub2c8\ub2e4.", "\uc800\ub294 \uc758\uc0ac\uc785\ub2c8\ub2e4."], "explanation": "'\u79c1(\u308f\u305f\u3057)'\ub294 '\ub098/\uc800', '\u5b66\u751f(\u304c\u304f\u305b\u3044)'\ub294 '\ud559\uc0dd'\uc774\ub77c\ub294 \ub73b\uc758 \uba85\uc0ac\uc608\uc694. \uba85\uc0ac \ub4a4\uc5d0 \ubc14\ub85c '\u3067\u3059'\ub97c \ubd99\uc774\uba74 '~\uc785\ub2c8\ub2e4'\ub77c\ub294 \uc815\uc911\ud55c \ub2e8\uc815\ubb38\uc774 \ub429\ub2c8\ub2e4."}, {"id": "sentence-today-is-hot", "type": "mcq", "prompt": "\ub2e4\uc74c \uc77c\ubcf8\uc5b4 \ubb38\uc7a5\uc758 \ub73b\uc73c\ub85c \uc633\uc740 \uac83\uc740? '\u4eca\u65e5\u306f\u6691\u3044\u3067\u3059\u3002'", "answer": "\uc624\ub298\uc740 \ub365\uc2b5\ub2c8\ub2e4.", "distractors": ["\uc624\ub298\uc740 \ucda5\uc2b5\ub2c8\ub2e4.", "\uc624\ub298\uc740 \ub9d1\uc2b5\ub2c8\ub2e4.", "\uc624\ub298\uc740 \ud750\ub9bd\ub2c8\ub2e4."], "explanation": "'\u6691\u3044(\u3042\u3064\u3044)'\ub294 \uae30\ubcf8\ud615\uc774 '\u3044'\ub85c \ub05d\ub098\ub294 \u3044\ud615\uc6a9\uc0ac\uc608\uc694. \u3044\ud615\uc6a9\uc0ac\ub294 \uba85\uc0ac\ucc98\ub7fc \uc55e\uc5d0 '\u3060' \uc5c6\uc774\ub3c4 \ubc14\ub85c \ub4a4\uc5d0 '\u3067\u3059'\ub9cc \ubd99\uc5ec \uc815\uc911\uccb4\ub97c \ub9cc\ub4e4 \uc218 \uc788\uc5b4\uc11c, '\u3067\u3059' \uc55e\uc758 \ud615\ud0dc\uac00 \ubc14\ub00c\uc9c0 \uc54a\ub294\ub2e4\ub294 \uc810\uc774 \u306a\ud615\uc6a9\uc0ac\uc640 \ub2e4\ub985\ub2c8\ub2e4."}, {"id": "sentence-i-like-cats", "type": "basic", "prompt": "\ub2e4\uc74c \uc77c\ubcf8\uc5b4 \ubb38\uc7a5\uc758 \ub73b\uc740 \ubb34\uc5c7\uc778\uac00\uc694? '\u732b\u304c\u597d\u304d\u3067\u3059\u3002'", "answer": "\uace0\uc591\uc774\ub97c \uc88b\uc544\ud569\ub2c8\ub2e4.", "hint": "'\u597d\u304d\u3067\u3059(\u3059\u304d\u3067\u3059)'\ub294 '\uc88b\uc544\ud569\ub2c8\ub2e4'\ub77c\ub294 \ub73b\uc774\uc5d0\uc694.", "explanation": "'\u597d\u304d\u3060'\ub294 \ud615\ud0dc\ub294 \ud615\uc6a9\uc0ac(\u306a\ud615\uc6a9\uc0ac)\uc9c0\ub9cc \ub73b\uc740 '\uc88b\uc544\ud558\ub2e4'\uc5d0 \uac00\uae4c\uc6cc\uc11c, \uc88b\uc544\ud558\ub294 \ub300\uc0c1 \ub4a4\uc5d0\ub294 \ubaa9\uc801\uaca9 \uc870\uc0ac '\u3092'\uac00 \uc544\ub2c8\ub77c \uc8fc\uaca9 \uc870\uc0ac '\u304c'\ub97c \uc501\ub2c8\ub2e4. \uadf8\ub798\uc11c '\u732b\u3092\u597d\u304d\u3067\u3059'\uac00 \uc544\ub2c8\ub77c '\u732b\u304c\u597d\u304d\u3067\u3059'\uac00 \uc790\uc5f0\uc2a4\ub7ec\uc6b4 \ubb38\uc7a5\uc774\uc5d0\uc694."}, {"id": "sentence-where-is-the-restroom", "type": "basic", "prompt": "\ub2e4\uc74c \uc77c\ubcf8\uc5b4 \ubb38\uc7a5\uc758 \ub73b\uc740 \ubb34\uc5c7\uc778\uac00\uc694? '\u3059\u307f\u307e\u305b\u3093\u3001\u30c8\u30a4\u30ec\u306f\u3069\u3053\u3067\u3059\u304b\u3002'", "answer": "\uc2e4\ub840\ud569\ub2c8\ub2e4, \ud654\uc7a5\uc2e4\uc740 \uc5b4\ub514\uc785\ub2c8\uae4c?", "explanation": "'~\u306f\u3069\u3053\u3067\u3059\u304b'\ub294 '~\uc740/\ub294 \uc5b4\ub514\uc785\ub2c8\uae4c?'\ub77c\ub294 \ub73b\uc73c\ub85c \uc7a5\uc18c\ub97c \ubb3c\uc744 \ub54c \uac00\uc7a5 \ub9ce\uc774 \uc4f0\ub294 \ud328\ud134\uc774\uc5d0\uc694. \ubb38\uc7a5 \uc55e\uc758 '\u3059\u307f\u307e\u305b\u3093'\uc740 \uc0ac\uacfc\ubcf4\ub2e4 '\uc2e4\ub840\ud569\ub2c8\ub2e4'\ucc98\ub7fc \ub0af\uc120 \uc0ac\ub78c\uc5d0\uac8c \ub9d0\uc744 \uac78 \ub54c \uc4f0\ub294 \uad00\uc6a9 \ud45c\ud604\uc5d0 \ub354 \uac00\uae5d\uc2b5\ub2c8\ub2e4."}, {"id": "katakana-long-vowel-no-hiragana-rule", "type": "mcq", "prompt": "'\u30b3\u30fc\u30d2\u30fc'(\ucee4\ud53c)\ucc98\ub7fc \uc7a5\uc74c \uae30\ud638 '\u30fc'\uac00 \ub4e4\uc5b4\uac04 \uac00\ud0c0\uce74\ub098 \uc678\ub798\uc5b4\ub97c, \uc55e\uc120 \uce74\ub4dc\ub4e4\ucc98\ub7fc \ud55c \uae00\uc790\uc529 \ub300\uc751\uc2dc\ucf1c \ud788\ub77c\uac00\ub098\ub85c \ud45c\uae30\ud558\ub294 \uacf5\uc2dd \uaddc\uce59\uc774 \uc788\uc744\uae4c\uc694?", "answer": "\uc5c6\ub2e4. \uc678\ub798\uc5b4\ub294 \uc560\ucd08\uc5d0 \uac00\ud0c0\uce74\ub098\ub85c\ub9cc \ud45c\uae30\ud558\ub294 \uac83\uc774 \uaddc\uce59\uc774\ub77c\uc11c, '\u30fc'\ub97c \ud788\ub77c\uac00\ub098\ub85c \ubc14\uafb8\ub294 \uc0c1\ud669 \uc790\uccb4\uac00 \uc2e4\uc81c\ub85c\ub294 \uc77c\uc5b4\ub098\uc9c0 \uc54a\ub294\ub2e4.", "distractors": ["\uc788\ub2e4. \uc7a5\uc74c \uae30\ud638\ub294 \ud56d\uc0c1 \ud788\ub77c\uac00\ub098 '\u3044'\ub85c \ubc14\uafd4 \uc801\ub294\ub2e4.", "\uc788\ub2e4. \uc7a5\uc74c \uae30\ud638\ub294 \ud56d\uc0c1 \ubc14\ub85c \uc55e \uae00\uc790\uc640 \uac19\uc740 \ubaa8\uc74c\uc744 \ud55c \ubc88 \ub354 \uc801\ub294\ub2e4.", "\uc788\ub2e4. \uc7a5\uc74c \uae30\ud638\ub294 \ud788\ub77c\uac00\ub098\uc5d0\uc11c \ubc1b\uce68 \uc5ed\ud560\uc744 \ud558\ub294 '\u3093'\uc73c\ub85c \ud45c\uae30\ud55c\ub2e4."], "explanation": "\ud788\ub77c\uac00\ub098\uc5d0\uc11c \uc7a5\ubaa8\uc74c\uc740 \ubcf8\ub798 \uac19\uc740 \ubaa8\uc74c\uc744 \uacb9\uccd0 \uc4f0\ub294 \ubc29\uc2dd(\uc608: \u304a\u304b\u3042\u3055\u3093)\uc774 \uae30\ubcf8\uc774\uc9c0\ub9cc, \uc678\ub798\uc5b4\ub294 \ud56d\uc0c1 \uac00\ud0c0\uce74\ub098\ub85c\ub9cc \uc801\uae30 \ub54c\ubb38\uc5d0 \uc774 \uaddc\uce59\uc774 \uc801\uc6a9\ub420 \uc790\ub9ac\uac00 \uc5c6\uc5b4\uc694. \uc55e\uc758 \uce74\ub4dc\ub4e4\uc5d0\uc11c \uc5f0\uc2b5\ud55c '\ud55c \uae00\uc790\uc529 \ub300\uc751'\uc740 \uc5b4\ub514\uae4c\uc9c0\ub098 \uc18c\ub9ac\ub97c \uc77d\uc5b4\ub0b4\ub294 \uc5f0\uc2b5\uc774\uc9c0, \uc2e4\uc81c \ub9de\ucda4\ubc95 \uaddc\uce59\uc740 \uc544\ub2c8\ub77c\ub294 \uc810\uc774 \uc774 \uce74\ub4dc\uc758 \ud575\uc2ec\uc774\uc5d0\uc694."}]};</script>
   <script>
     (() => {
       "use strict";
@@ -1568,6 +1583,7 @@
         scoreTitle: document.getElementById("score-title"),
         scoreValue: document.getElementById("score-value"),
         scoreSummary: document.getElementById("score-summary"),
+        scoreRecovered: document.getElementById("score-recovered"),
         scoreCorrectSegment: document.getElementById("score-correct-segment"),
         scoreMissedSegment: document.getElementById("score-missed-segment"),
         scoreCorrectLabel: document.getElementById("score-correct-label"),
@@ -1615,6 +1631,10 @@
         index: 0,
         cleanup: () => {},
         grades: Object.create(null),
+        // In-memory only (never saved or synced): lets a renderer redraw the exact
+        // submitted answer when a learner navigates back within this session, without
+        // growing what gets persisted to storage. A reload always starts this empty.
+        gradeDetails: Object.create(null),
         hintsUsed: Object.create(null),
         drillStreaks: Object.create(null),
         drilledCards: Object.create(null),
@@ -1745,7 +1765,11 @@
           : sourceCards.slice();
         state.index = 0;
         state.freshRound = true;
-        state.grades = Object.create(null);
+        // Only the cards in this round restart fresh. Clearing grades outside sourceCards
+        // (reachable during retry, since shuffle isn't disabled there) would erase points
+        // already earned this session and let a retry lower the cumulative score.
+        for (const card of sourceCards) delete state.grades[card.id];
+        state.gradeDetails = Object.create(null);
         state.hintsUsed = Object.create(null);
         resetDrillState();
         setViewState("ready");
@@ -1847,6 +1871,7 @@
         state.index = 0;
         state.persistenceWarning = "";
         state.grades = progressStore.load(deck);
+        state.gradeDetails = Object.create(null);
         state.hintsUsed = Object.create(null);
         resetDrillState();
         seedPersistedAttemptGrades();
@@ -1863,6 +1888,7 @@
         if (!state.deck) return;
         const cleared = progressStore.reset(state.deck);
         state.grades = Object.create(null);
+        state.gradeDetails = Object.create(null);
         state.hintsUsed = Object.create(null);
         state.persistenceWarning = "";
         state.sessionCards = state.deck.cards.slice();
@@ -2228,7 +2254,7 @@
           if (!selected) return;
           const grade = selected.choice === answer ? MCQ_GRADES.CORRECT : MCQ_GRADES.INCORRECT;
           try {
-            player.recordGrade(card.id, grade);
+            player.recordGrade(card.id, grade, { choice: selected.choice });
           } catch (error) {
             setStatus(error instanceof Error ? error.message : t("The grade could not be recorded."), true);
             return;
@@ -2245,7 +2271,10 @@
 
         const existingGrade = player.getGrade(card.id);
         if (existingGrade === MCQ_GRADES.CORRECT || existingGrade === MCQ_GRADES.INCORRECT) {
-          applyAnsweredUI(existingGrade);
+          const existingDetail = player.getGradeDetail(card.id);
+          const restoredSelection = existingDetail
+            && optionButtons.find(({ choice }) => choice === existingDetail.choice);
+          applyAnsweredUI(existingGrade, restoredSelection ? restoredSelection.button : null);
         }
 
         return fragment;
@@ -2276,8 +2305,13 @@
           input.setAttribute("aria-label", t("Blank {number}", { number: blanks.length + 1 }));
           input.autocomplete = "off";
           input.spellcheck = false;
-          prompt.append(input);
-          blanks.push({ answers, input });
+          const correction = createElement("span", "cloze__blank-feedback");
+          correction.dataset.testid = "cloze-blank-feedback";
+          correction.dataset.blankIndex = String(blanks.length);
+          correction.id = `blank-feedback-${blanks.length}`;
+          correction.hidden = true;
+          prompt.append(input, correction);
+          blanks.push({ answers, input, correction });
           cursor = blankPattern.lastIndex;
         }
         prompt.append(document.createTextNode(promptText.slice(cursor)));
@@ -2297,13 +2331,8 @@
         feedbackSummary.dataset.testid = "cloze-feedback-summary";
         feedbackSummary.hidden = true;
         feedback.append(feedbackSummary);
-        const feedbackItems = blanks.map((_, index) => {
-          const item = createElement("p", "cloze__blank-feedback");
-          item.dataset.testid = "cloze-blank-feedback";
-          item.dataset.blankIndex = String(index);
-          feedback.append(item);
-          return item;
-        });
+        const feedbackAnnouncement = createElement("div", "player__visually-hidden");
+        feedback.append(feedbackAnnouncement);
 
         const explanationText = typeof card.explanation === "string" ? card.explanation : "";
         const explanation = explanationText
@@ -2331,8 +2360,9 @@
           const grade = results.every(Boolean)
             ? CLOZE_GRADES.CORRECT
             : CLOZE_GRADES.INCORRECT;
+          const values = blanks.map((blank) => blank.input.value);
           try {
-            player.recordGrade(card.id, grade);
+            player.recordGrade(card.id, grade, { results, values });
           } catch (error) {
             setStatus(error instanceof Error ? error.message : t("The grade could not be recorded."), true);
             return;
@@ -2356,8 +2386,14 @@
           feedback.classList.toggle("cloze__feedback--correct", isCorrect);
           feedback.classList.toggle("cloze__feedback--incorrect", !isCorrect);
           feedback.dataset.result = grade;
+          feedbackSummary.hidden = false;
+          feedbackSummary.textContent = isCorrect
+            ? t("Correct.")
+            : results
+              ? t("Incorrect.")
+              : t("This card was previously marked incorrect.");
           if (results) {
-            feedbackSummary.hidden = true;
+            feedbackAnnouncement.replaceChildren();
             blanks.forEach((blank, index) => {
               const blankCorrect = results[index];
               blank.input.disabled = true;
@@ -2367,37 +2403,36 @@
                 ? CLOZE_GRADES.CORRECT
                 : CLOZE_GRADES.INCORRECT;
               blank.input.setAttribute("aria-invalid", String(!blankCorrect));
-              feedbackItems[index].id = `blank-feedback-${index}`;
-              blank.input.setAttribute("aria-describedby", feedbackItems[index].id);
-              feedbackItems[index].hidden = false;
-              feedbackItems[index].classList.toggle("cloze__blank-feedback--correct", blankCorrect);
-              feedbackItems[index].classList.toggle("cloze__blank-feedback--incorrect", !blankCorrect);
-              feedbackItems[index].dataset.result = blankCorrect
+              blank.input.setAttribute("aria-describedby", blank.correction.id);
+              blank.correction.hidden = false;
+              blank.correction.classList.toggle("cloze__blank-feedback--incorrect", !blankCorrect);
+              blank.correction.classList.toggle("player__visually-hidden", blankCorrect);
+              blank.correction.dataset.result = blankCorrect
                 ? CLOZE_GRADES.CORRECT
                 : CLOZE_GRADES.INCORRECT;
-              feedbackItems[index].textContent = blankCorrect
-                ? t("Blank {number}: Correct.", { number: index + 1 })
-                : t("Blank {number}: Incorrect. Correct answer: {answer}", { number: index + 1, answer: blank.answers.join(" / ") });
+              const blankResult = blankCorrect
+                ? t("Correct.")
+                : blank.answers.join(" / ");
+              blank.correction.textContent = blankResult;
+              const blankLabel = t("Blank {number}", { number: index + 1 });
+              feedbackAnnouncement.append(
+                createElement("span", "", `${blankLabel}: ${blankResult}`),
+                document.createTextNode(" ")
+              );
             });
           } else {
-            feedbackSummary.hidden = false;
-            feedbackSummary.textContent = isCorrect
-              ? t("Correct.")
-              : t("This card was previously marked incorrect.");
-            blanks.forEach((blank, index) => {
+            blanks.forEach((blank) => {
               blank.input.disabled = true;
               blank.input.classList.remove("cloze__input--correct", "cloze__input--incorrect");
               blank.input.removeAttribute("data-result");
               blank.input.removeAttribute("aria-invalid");
               blank.input.removeAttribute("aria-describedby");
-              feedbackItems[index].hidden = true;
-              feedbackItems[index].classList.remove(
-                "cloze__blank-feedback--correct",
-                "cloze__blank-feedback--incorrect"
-              );
-              feedbackItems[index].removeAttribute("data-result");
-              feedbackItems[index].textContent = "";
+              blank.correction.hidden = true;
+              blank.correction.classList.remove("cloze__blank-feedback--incorrect", "player__visually-hidden");
+              blank.correction.removeAttribute("data-result");
+              blank.correction.textContent = "";
             });
+            feedbackAnnouncement.replaceChildren();
           }
           feedback.hidden = false;
           checkAnswer.hidden = true;
@@ -2413,7 +2448,15 @@
 
         const existingGrade = player.getGrade(card.id);
         if (existingGrade === CLOZE_GRADES.CORRECT || existingGrade === CLOZE_GRADES.INCORRECT) {
-          applyAnsweredUI(existingGrade);
+          const existingDetail = player.getGradeDetail(card.id);
+          if (existingDetail && Array.isArray(existingDetail.results) && Array.isArray(existingDetail.values)) {
+            blanks.forEach((blank, index) => {
+              blank.input.value = existingDetail.values[index] ?? "";
+            });
+            applyAnsweredUI(existingGrade, existingDetail.results);
+          } else {
+            applyAnsweredUI(existingGrade);
+          }
         }
 
         return fragment;
@@ -2516,7 +2559,7 @@
       // cards are ever reordered. Each renderer defines and interprets its own grade
       // vocabulary; persistence restores only grades that belong to the current deck
       // and pass the registered renderer validator.
-      function recordGrade(cardId, grade) {
+      function recordGrade(cardId, grade, detail) {
         if (typeof cardId !== "string" || !cardId) {
           throw new TypeError("A grade needs a card id.");
         }
@@ -2530,7 +2573,11 @@
             throw new Error(`The grade is not valid for the ${card.type || "unknown"} card.`);
           }
         }
+        const gradeDetail = snapshotGradeDetail(detail);
         state.grades[cardId] = grade;
+        // Session-only, never persisted: lets a renderer redraw its exact submitted
+        // answer if the learner navigates back before reloading. See getRendererGradeDetail.
+        state.gradeDetails[cardId] = gradeDetail;
         const currentCard = state.sessionCards[state.index];
         if (currentCard && currentCard.id === cardId) {
           state.freshAttempts.delete(state.index);
@@ -2553,8 +2600,23 @@
         return true;
       }
 
+      function snapshotGradeDetail(detail, seen = new WeakMap()) {
+        if (!detail || typeof detail !== "object") return detail;
+        if (seen.has(detail)) return seen.get(detail);
+        const snapshot = Array.isArray(detail) ? [] : Object.create(null);
+        seen.set(detail, snapshot);
+        for (const [key, value] of Object.entries(detail)) {
+          snapshot[key] = snapshotGradeDetail(value, seen);
+        }
+        return Object.freeze(snapshot);
+      }
+
       function getGrade(cardId) {
         return state.grades[cardId];
+      }
+
+      function getGradeDetail(cardId) {
+        return state.gradeDetails[cardId];
       }
 
       function recordHintUsed(cardId) {
@@ -2588,12 +2650,19 @@
         return isPositiveGrade(card, grade) ? grade : undefined;
       }
 
+      // Mirrors getRendererGrade's masking so a fresh duplicate or masked retry
+      // attempt never sees a sibling attempt's submitted detail.
+      function getRendererGradeDetail(cardId) {
+        return getRendererGrade(cardId) ? getGradeDetail(cardId) : undefined;
+      }
+
       // Renderers can grade their own card, track hint use, and restore those values,
       // but they cannot replace the active deck, mutate the registry, or inspect shell
       // state.
       const rendererPlayer = Object.freeze({
         recordGrade,
         getGrade: getRendererGrade,
+        getGradeDetail: getRendererGradeDetail,
         recordHintUsed,
         getHintUsed
       });
@@ -2607,6 +2676,7 @@
         state.isRetry = false;
         state.cramMode = false;
         state.shuffleMode = false;
+        state.gradeDetails = Object.create(null);
         updateCramModeToggle();
         updateShuffleToggle();
         resetDrillState();
@@ -2688,9 +2758,13 @@
       }
 
       function renderScoreScreen() {
-        const { grades, scoreCards } = state;
-        const total = scoreCards.length;
-        const score = scoreCards.filter((card) => isPositiveGrade(card, grades[card.id])).length;
+        const { grades, scoreCards, deck } = state;
+        // scoreCards is the current retry round's scope (it shrinks with each retry so
+        // "still missed" and shuffle-during-retry keep working); the score itself is
+        // always reported against the full original deck so retry can raise it.
+        const fullSessionCards = deck.cards;
+        const total = fullSessionCards.length;
+        const score = fullSessionCards.filter((card) => isPositiveGrade(card, grades[card.id])).length;
         const missedCards = getMissedCards(scoreCards, grades);
 
         refs.scoreValue.textContent = `${score}/${total}`;
@@ -2698,6 +2772,11 @@
         refs.scoreSummary.textContent = missedCount
           ? t("{score} correct · {missedCount} to review", { score, missedCount })
           : t("All {total} correct · Nothing to review", { total });
+        const recoveredCount = state.isRetry ? scoreCards.length - missedCount : 0;
+        refs.scoreRecovered.hidden = recoveredCount === 0;
+        if (recoveredCount > 0) {
+          refs.scoreRecovered.textContent = t("{count} card recovered", { count: recoveredCount });
+        }
         const correctShare = total ? (score / total) * 100 : 0;
         const missedShare = total ? (missedCount / total) * 100 : 0;
         refs.scoreCorrectSegment.style.flexBasis = `${correctShare}%`;
@@ -3101,6 +3180,7 @@
         setDeck,
         recordGrade,
         getGrade,
+        getGradeDetail,
         recordHintUsed,
         getHintUsed,
         getState: () => ({
@@ -3189,9 +3269,13 @@
         if (state.freshRound) return;
         const currentCard = state.sessionCards[state.index];
         const previousGrade = currentCard && state.grades[currentCard.id];
+        const previousGrades = state.grades;
         const grades = progressStore.sync(state.deck, state.grades, event);
         if (!grades) return;
         state.grades = grades;
+        for (const cardId of Object.keys(state.gradeDetails)) {
+          if (previousGrades[cardId] !== grades[cardId]) delete state.gradeDetails[cardId];
+        }
         if (refs.player.dataset.state === "results") {
           renderScoreScreen();
         } else if (currentCard && previousGrade !== state.grades[currentCard.id]) {

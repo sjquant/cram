@@ -650,7 +650,8 @@
     }
 
     .cloze__input--incorrect {
-      border-bottom-color: var(--ink-soft);
+      border-bottom-color: var(--accent);
+      color: var(--accent);
     }
 
     .cloze__check-button {
@@ -667,18 +668,26 @@
 
     .cloze__feedback--incorrect { color: var(--ink-soft); }
 
-    .cloze__blank-feedback {
-      margin: 0.35rem 0 0;
-      color: var(--ink-soft);
-      font-size: 1rem;
+    .cloze__blank-feedback[hidden] {
+      display: none;
     }
 
-    .cloze__blank-feedback--correct {
-      color: var(--positive);
+    .cloze__blank-feedback {
+      display: inline-block;
+      margin-inline-start: 0.35em;
+      font-family: var(--sans);
+      font-size: 0.8em;
+      line-height: 1.4;
+      vertical-align: middle;
+      white-space: normal;
     }
 
     .cloze__blank-feedback--incorrect {
-      color: var(--ink-soft);
+      padding: 0.05em 0.5em;
+      border: 1px solid var(--accent);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--accent);
     }
 
     .cloze__explanation,
@@ -915,6 +924,10 @@
     .player__score-summary {
       margin: var(--s2) 0 0;
       color: var(--ink-soft);
+    }
+
+    .player__score-recovered {
+      margin-top: var(--s1);
     }
 
     .player__score-meter {
@@ -1283,6 +1296,7 @@
       .player__response-actions > .player__primary-action { align-self: stretch; width: 100%; }
       .player__shortcut { display: none; }
       .cloze__input { margin-inline: 0.15em; }
+      .cloze__blank-feedback { margin-inline-start: 0.15em; }
       .player__settings-group { align-items: flex-start; flex-direction: column; gap: 0.35rem; }
       .player__theme-picker, .player__theme-select { width: 100%; }
       .player__score-screen { max-height: max(18rem, calc(100dvh - 12rem)); }
@@ -1500,6 +1514,7 @@
           <h2 class="player__score-title" id="score-title" tabindex="-1" data-i18n>Session complete</h2>
           <p class="player__score-value" id="score-value" data-testid="score-value">0/0</p>
           <p class="player__score-summary" id="score-summary" data-testid="score-summary" data-i18n>0 correct · Nothing to review</p>
+          <p class="player__score-summary player__score-recovered" id="score-recovered" data-testid="score-recovered" hidden></p>
           <div class="player__score-meter" id="score-meter" data-testid="score-meter" aria-hidden="true">
             <span class="player__score-meter-segment player__score-meter-segment--correct" id="score-correct-segment"></span>
             <span class="player__score-meter-segment player__score-meter-segment--missed" id="score-missed-segment"></span>
@@ -1547,7 +1562,7 @@
 
   <!-- Render this template with render.py; examples/ contains the generated preview.
        Injected JSON escapes every less-than character to keep inline scripts safe. -->
-  <script>window.__LOCALE__ = {"language": "en", "messages": {"Cram player": "Cram player", "Loading deck\u2026": "Loading deck\u2026", "Open settings": "Open settings", "Close settings": "Close settings", "Settings": "Settings", "Theme": "Theme", "System": "System", "Cram mode": "Cram mode", "Requeue missed cards during this session.": "Requeue missed cards during this session.", "Study order": "Study order", "Original order": "Original", "Shuffled order": "Shuffled", "Shuffle": "Shuffle", "Restore original order": "Restore original order", "This session could not be saved. Reloading may lose your place.": "This session could not be saved. Reloading may lose your place.", "Deck progress": "Deck progress", "Card 0 of 0": "Card 0 of 0", "Preparing card": "Preparing card", "Preparing your deck\u2026": "Preparing your deck\u2026", "Results": "Results", "Session complete": "Session complete", "0 correct \u00b7 Nothing to review": "0 correct \u00b7 Nothing to review", "Score breakdown": "Score breakdown", "0 correct": "0 correct", "Nothing to review": "Nothing to review", "Retry missed cards": "Retry missed cards", "Reset progress": "Reset progress", "Review missed cards": "Review missed cards", "Perfect score \u2014 nothing to review.": "Perfect score \u2014 nothing to review.", "Scroll down to see more missed cards": "Scroll down to see more missed cards", "More cards below": "More cards below", "Card navigation": "Card navigation", "Previous card": "Previous card", "\u2190 Previous": "\u2190 Previous", "Next card": "Next card", "Skip \u2192": "Skip \u2192", "Next \u2192": "Next \u2192", "See results \u2192": "See results \u2192", "See results": "See results", "Skip to next card": "Skip to next card", "Made with Cram": "Made with Cram", "Use the arrow keys to move through the deck.": "Use the arrow keys to move through the deck.", "Cram mode is unavailable during retry sessions": "Cram mode is unavailable during retry sessions", "Disable Cram mode": "Disable Cram mode", "Enable Cram mode": "Enable Cram mode", "Cram mode is unavailable during retry sessions.": "Cram mode is unavailable during retry sessions.", "Cram mode enabled for this session.": "Cram mode enabled for this session.", "Cram mode disabled for this session.": "Cram mode disabled for this session.", "Cards shuffled for this session.": "Cards shuffled for this session.", "Card order restored for this session.": "Card order restored for this session.", "The page needs a deck with a title and at least one card.": "The page needs a deck with a title and at least one card.", "This card could not be rendered.": "This card could not be rendered.", "The card renderer failed.": "The card renderer failed.", "This card has no prompt.": "This card has no prompt.", "This card has no answer.": "This card has no answer.", "Show answer": "Show answer", "Missed it": "Missed it", "Knew it": "Knew it", "Grade your recall": "Grade your recall", "Optional hint": "Optional hint", "Answer actions": "Answer actions", "The grade could not be recorded.": "The grade could not be recorded.", "Marked as known.": "Marked as known.", "Marked as missed.": "Marked as missed.", "Choose an answer": "Choose an answer", "This option has no text.": "This option has no text.", "Check answer": "Check answer", "Correct.": "Correct.", "Incorrect.": "Incorrect.", "Incorrect. The correct answer is: {answer}": "Incorrect. The correct answer is: {answer}", "Answer selected. Check it when ready.": "Answer selected. Check it when ready.", "Blank {number}": "Blank {number}", "Check answers": "Check answers", "Blank {number}: Correct.": "Blank {number}: Correct.", "Blank {number}: Incorrect. Correct answer: {answer}": "Blank {number}: Incorrect. Correct answer: {answer}", "This card was previously marked incorrect.": "This card was previously marked incorrect.", "Show hint": "Show hint", "The hint could not be recorded.": "The hint could not be recorded.", "The \u201c{type}\u201d card renderer is not installed yet.": "The \u201c{type}\u201d card renderer is not installed yet.", "Unable to load deck": "Unable to load deck", "No cards loaded": "No cards loaded", "Deck error": "Deck error", "Card {position} of {total}": "Card {position} of {total}", "Session complete. Score {score}/{total}.": "Session complete. Score {score}/{total}.", "{score} correct \u00b7 {missedCount} to review": "{score} correct \u00b7 {missedCount} to review", "All {total} correct \u00b7 Nothing to review": "All {total} correct \u00b7 Nothing to review", "{score} correct": "{score} correct", "{missedCount} to review": "{missedCount} to review", "Retry {count} missed card": {"one": "Retry {count} missed card", "other": "Retry {count} missed cards"}, "Retrying {count} missed card.": {"one": "Retrying {count} missed card.", "other": "Retrying {count} missed cards."}, "Session complete: score {score} of {total}": "Session complete: score {score} of {total}", "Session complete: {score} of {total}": "Session complete: {score} of {total}", "Nothing to retry.": "Nothing to retry.", "Needed a hint": "Needed a hint", "Answer:": "Answer:", "Explanation:": "Explanation:", "Hint:": "Hint:", "Card {position} of {total}. {content}": "Card {position} of {total}. {content}", "Progress could not be saved. Try again.": "Progress could not be saved. Try again.", "basic": "basic", "mcq": "mcq", "cloze": "cloze", "unknown": "unknown", "Progress reset. Start again.": "Progress reset. Start again.", "Progress reset for this session, but saved progress could not be cleared.": "Progress reset for this session, but saved progress could not be cleared.", "Paper": "Paper", "Focus": "Focus", "Sprint": "Sprint", "Appearance": "Appearance", "Light": "Light", "Dark": "Dark", "Single-letter shortcuts": "Single-letter shortcuts", "A reveals answers; H reveals hints.": "A reveals answers; H reveals hints."}};</script>
+  <script>window.__LOCALE__ = {"language": "en", "messages": {"Cram player": "Cram player", "Loading deck\u2026": "Loading deck\u2026", "Open settings": "Open settings", "Close settings": "Close settings", "Settings": "Settings", "Theme": "Theme", "System": "System", "Cram mode": "Cram mode", "Requeue missed cards during this session.": "Requeue missed cards during this session.", "Study order": "Study order", "Original order": "Original", "Shuffled order": "Shuffled", "Shuffle": "Shuffle", "Restore original order": "Restore original order", "This session could not be saved. Reloading may lose your place.": "This session could not be saved. Reloading may lose your place.", "Deck progress": "Deck progress", "Card 0 of 0": "Card 0 of 0", "Preparing card": "Preparing card", "Preparing your deck\u2026": "Preparing your deck\u2026", "Results": "Results", "Session complete": "Session complete", "0 correct \u00b7 Nothing to review": "0 correct \u00b7 Nothing to review", "Score breakdown": "Score breakdown", "0 correct": "0 correct", "Nothing to review": "Nothing to review", "Retry missed cards": "Retry missed cards", "Reset progress": "Reset progress", "Review missed cards": "Review missed cards", "Perfect score \u2014 nothing to review.": "Perfect score \u2014 nothing to review.", "Scroll down to see more missed cards": "Scroll down to see more missed cards", "More cards below": "More cards below", "Card navigation": "Card navigation", "Previous card": "Previous card", "\u2190 Previous": "\u2190 Previous", "Next card": "Next card", "Skip \u2192": "Skip \u2192", "Next \u2192": "Next \u2192", "See results \u2192": "See results \u2192", "See results": "See results", "Skip to next card": "Skip to next card", "Made with Cram": "Made with Cram", "Use the arrow keys to move through the deck.": "Use the arrow keys to move through the deck.", "Cram mode is unavailable during retry sessions": "Cram mode is unavailable during retry sessions", "Disable Cram mode": "Disable Cram mode", "Enable Cram mode": "Enable Cram mode", "Cram mode is unavailable during retry sessions.": "Cram mode is unavailable during retry sessions.", "Cram mode enabled for this session.": "Cram mode enabled for this session.", "Cram mode disabled for this session.": "Cram mode disabled for this session.", "Cards shuffled for this session.": "Cards shuffled for this session.", "Card order restored for this session.": "Card order restored for this session.", "The page needs a deck with a title and at least one card.": "The page needs a deck with a title and at least one card.", "This card could not be rendered.": "This card could not be rendered.", "The card renderer failed.": "The card renderer failed.", "This card has no prompt.": "This card has no prompt.", "This card has no answer.": "This card has no answer.", "Show answer": "Show answer", "Missed it": "Missed it", "Knew it": "Knew it", "Grade your recall": "Grade your recall", "Optional hint": "Optional hint", "Answer actions": "Answer actions", "The grade could not be recorded.": "The grade could not be recorded.", "Marked as known.": "Marked as known.", "Marked as missed.": "Marked as missed.", "Choose an answer": "Choose an answer", "This option has no text.": "This option has no text.", "Check answer": "Check answer", "Correct.": "Correct.", "Incorrect.": "Incorrect.", "Incorrect. The correct answer is: {answer}": "Incorrect. The correct answer is: {answer}", "Answer selected. Check it when ready.": "Answer selected. Check it when ready.", "Blank {number}": "Blank {number}", "Check answers": "Check answers", "This card was previously marked incorrect.": "This card was previously marked incorrect.", "Show hint": "Show hint", "The hint could not be recorded.": "The hint could not be recorded.", "The \u201c{type}\u201d card renderer is not installed yet.": "The \u201c{type}\u201d card renderer is not installed yet.", "Unable to load deck": "Unable to load deck", "No cards loaded": "No cards loaded", "Deck error": "Deck error", "Card {position} of {total}": "Card {position} of {total}", "Session complete. Score {score}/{total}.": "Session complete. Score {score}/{total}.", "{score} correct \u00b7 {missedCount} to review": "{score} correct \u00b7 {missedCount} to review", "All {total} correct \u00b7 Nothing to review": "All {total} correct \u00b7 Nothing to review", "{score} correct": "{score} correct", "{missedCount} to review": "{missedCount} to review", "Retry {count} missed card": {"one": "Retry {count} missed card", "other": "Retry {count} missed cards"}, "{count} card recovered": {"one": "{count} card recovered", "other": "{count} cards recovered"}, "Retrying {count} missed card.": {"one": "Retrying {count} missed card.", "other": "Retrying {count} missed cards."}, "Session complete: score {score} of {total}": "Session complete: score {score} of {total}", "Session complete: {score} of {total}": "Session complete: {score} of {total}", "Nothing to retry.": "Nothing to retry.", "Needed a hint": "Needed a hint", "Answer:": "Answer:", "Explanation:": "Explanation:", "Hint:": "Hint:", "Card {position} of {total}. {content}": "Card {position} of {total}. {content}", "Progress could not be saved. Try again.": "Progress could not be saved. Try again.", "basic": "basic", "mcq": "mcq", "cloze": "cloze", "unknown": "unknown", "Progress reset. Start again.": "Progress reset. Start again.", "Progress reset for this session, but saved progress could not be cleared.": "Progress reset for this session, but saved progress could not be cleared.", "Paper": "Paper", "Focus": "Focus", "Sprint": "Sprint", "Appearance": "Appearance", "Light": "Light", "Dark": "Dark", "Single-letter shortcuts": "Single-letter shortcuts", "A reveals answers; H reveals hints.": "A reveals answers; H reveals hints."}};</script>
   <script>window.__DECK__ = {"id": "driving-test-prep", "title": "Driving Test Prep: Road Signs & Rules", "source": "Common written driving-test topics: road signs, right-of-way, and basic traffic rules (right-hand-traffic countries such as the U.S.)", "cards": [{"id": "yield-sign-shape", "type": "mcq", "prompt": "In a right-hand-traffic country, a downward-pointing triangular sign with a red border and white background means the driver must:", "answer": "Yield (give way to other traffic)", "distractors": ["Stop completely before proceeding", "Not enter the road at all", "Slow to the posted speed limit"], "explanation": "Yield signs are triangular and stop signs are octagonal, so drivers can tell them apart by shape alone, even from an angle or when a sign face is obscured. A yield only requires stopping if traffic is actually present; a stop sign requires a full stop every time."}, {"id": "four-way-stop-right-of-way", "type": "mcq", "prompt": "In a right-hand-traffic country, at an all-way stop where two vehicles arrive at exactly the same time, which one has the right of way?", "answer": "The vehicle on the right", "distractors": ["The vehicle on the left", "The larger vehicle", "The vehicle that honks first"], "explanation": "This 'right rule' only breaks a tie. When vehicles do not arrive simultaneously, the vehicle that stopped first goes first regardless of position; the right-of-vehicle rule applies only when arrival order is otherwise ambiguous."}, {"id": "solid-yellow-line-meaning", "type": "basic", "prompt": "On a two-way road, what does a solid yellow line on your side of the center line mean?", "answer": "Passing (overtaking) is not allowed from your side of the road.", "explanation": "The rule is about sight distance and oncoming risk, not the line itself: a solid line marks a stretch where a driver cannot reliably see far enough ahead to pass safely, such as a curve or hill crest. A broken yellow line on your side means passing is allowed when the way ahead is clear."}, {"id": "prohibition-sign-cloze", "type": "cloze", "prompt": "On most road signs, a red circle with a diagonal line through a symbol means that action is {{prohibited}}.", "explanation": "This red-circle-and-slash convention comes from the Vienna Convention on Road Signs and Signals, which is why it looks similar across many countries even when the language on other signs differs."}, {"id": "warning-sign-color", "type": "mcq", "prompt": "In the U.S., what color are warning signs for general hazards such as sharp curves or falling rocks?", "answer": "Yellow", "distractors": ["Orange", "Red", "Blue"], "explanation": "Orange is reserved for temporary construction and work-zone signs, so a driver can immediately tell a permanent road hazard (yellow) from a temporary one (orange) without reading the sign's text."}, {"id": "school-bus-stop-arm", "type": "basic", "prompt": "On a two-lane road, what must a driver do when approaching a school bus that has flashing red lights and an extended stop arm?", "answer": "Stop completely and wait until the lights stop flashing and the stop arm is withdrawn, regardless of direction of travel.", "explanation": "This rule applies to traffic in both directions on an undivided road because children may cross from either side unpredictably; it is one of the few stop requirements that ignores which lane you are in."}, {"id": "dashed-white-line-meaning", "type": "mcq", "prompt": "Between two lanes moving in the same direction, what does a dashed (broken) white line indicate?", "answer": "Lane changes are permitted when it is safe to do so.", "distractors": ["Lane changes are prohibited.", "The lane ends ahead.", "Only buses may use this lane."], "explanation": "A solid white line between same-direction lanes carries the opposite meaning: it discourages or restricts lane changes, often near exits or lane drops, so the dashed line is the more common default between ordinary through lanes."}, {"id": "speed-limit-sign-cloze", "type": "cloze", "prompt": "A speed limit sign showing a number inside a white rectangle with a red border indicates the {{maximum}} speed allowed under normal conditions.", "explanation": "A separate black-on-white 'minimum speed' sign, without a red border, sets a floor rather than a ceiling; the two sign types are easy to confuse if a driver only looks at the number and not the border and wording."}, {"id": "stop-sign-shape", "type": "mcq", "prompt": "In the U.S., what shape is a stop sign, chosen so it can still be recognized even when its colors have faded?", "answer": "Octagon (eight-sided)", "distractors": ["Triangle", "Circle", "Diamond"], "explanation": "The unique octagon shape lets drivers recognize a stop sign by its outline alone, even from behind, at night with weak headlight illumination, or when the red paint has faded to nearly white."}, {"id": "flashing-red-light-rule", "type": "mcq", "prompt": "What must a driver do at an intersection controlled by a flashing red traffic light?", "answer": "Come to a complete stop, then proceed when it is safe, exactly as at a stop sign.", "distractors": ["Slow down but continue through without stopping.", "Treat it the same as a flashing yellow light and proceed with caution.", "Stop only if cross-traffic is visible."], "explanation": "A flashing red light is legally equivalent to a stop sign, requiring a full stop every time. A flashing yellow light is a different, weaker instruction: it means slow down and proceed with caution, without a mandatory stop."}]};</script>
   <script>
     (() => {
@@ -1568,6 +1583,7 @@
         scoreTitle: document.getElementById("score-title"),
         scoreValue: document.getElementById("score-value"),
         scoreSummary: document.getElementById("score-summary"),
+        scoreRecovered: document.getElementById("score-recovered"),
         scoreCorrectSegment: document.getElementById("score-correct-segment"),
         scoreMissedSegment: document.getElementById("score-missed-segment"),
         scoreCorrectLabel: document.getElementById("score-correct-label"),
@@ -1615,6 +1631,10 @@
         index: 0,
         cleanup: () => {},
         grades: Object.create(null),
+        // In-memory only (never saved or synced): lets a renderer redraw the exact
+        // submitted answer when a learner navigates back within this session, without
+        // growing what gets persisted to storage. A reload always starts this empty.
+        gradeDetails: Object.create(null),
         hintsUsed: Object.create(null),
         drillStreaks: Object.create(null),
         drilledCards: Object.create(null),
@@ -1745,7 +1765,11 @@
           : sourceCards.slice();
         state.index = 0;
         state.freshRound = true;
-        state.grades = Object.create(null);
+        // Only the cards in this round restart fresh. Clearing grades outside sourceCards
+        // (reachable during retry, since shuffle isn't disabled there) would erase points
+        // already earned this session and let a retry lower the cumulative score.
+        for (const card of sourceCards) delete state.grades[card.id];
+        state.gradeDetails = Object.create(null);
         state.hintsUsed = Object.create(null);
         resetDrillState();
         setViewState("ready");
@@ -1847,6 +1871,7 @@
         state.index = 0;
         state.persistenceWarning = "";
         state.grades = progressStore.load(deck);
+        state.gradeDetails = Object.create(null);
         state.hintsUsed = Object.create(null);
         resetDrillState();
         seedPersistedAttemptGrades();
@@ -1863,6 +1888,7 @@
         if (!state.deck) return;
         const cleared = progressStore.reset(state.deck);
         state.grades = Object.create(null);
+        state.gradeDetails = Object.create(null);
         state.hintsUsed = Object.create(null);
         state.persistenceWarning = "";
         state.sessionCards = state.deck.cards.slice();
@@ -2228,7 +2254,7 @@
           if (!selected) return;
           const grade = selected.choice === answer ? MCQ_GRADES.CORRECT : MCQ_GRADES.INCORRECT;
           try {
-            player.recordGrade(card.id, grade);
+            player.recordGrade(card.id, grade, { choice: selected.choice });
           } catch (error) {
             setStatus(error instanceof Error ? error.message : t("The grade could not be recorded."), true);
             return;
@@ -2245,7 +2271,10 @@
 
         const existingGrade = player.getGrade(card.id);
         if (existingGrade === MCQ_GRADES.CORRECT || existingGrade === MCQ_GRADES.INCORRECT) {
-          applyAnsweredUI(existingGrade);
+          const existingDetail = player.getGradeDetail(card.id);
+          const restoredSelection = existingDetail
+            && optionButtons.find(({ choice }) => choice === existingDetail.choice);
+          applyAnsweredUI(existingGrade, restoredSelection ? restoredSelection.button : null);
         }
 
         return fragment;
@@ -2276,8 +2305,13 @@
           input.setAttribute("aria-label", t("Blank {number}", { number: blanks.length + 1 }));
           input.autocomplete = "off";
           input.spellcheck = false;
-          prompt.append(input);
-          blanks.push({ answers, input });
+          const correction = createElement("span", "cloze__blank-feedback");
+          correction.dataset.testid = "cloze-blank-feedback";
+          correction.dataset.blankIndex = String(blanks.length);
+          correction.id = `blank-feedback-${blanks.length}`;
+          correction.hidden = true;
+          prompt.append(input, correction);
+          blanks.push({ answers, input, correction });
           cursor = blankPattern.lastIndex;
         }
         prompt.append(document.createTextNode(promptText.slice(cursor)));
@@ -2297,13 +2331,8 @@
         feedbackSummary.dataset.testid = "cloze-feedback-summary";
         feedbackSummary.hidden = true;
         feedback.append(feedbackSummary);
-        const feedbackItems = blanks.map((_, index) => {
-          const item = createElement("p", "cloze__blank-feedback");
-          item.dataset.testid = "cloze-blank-feedback";
-          item.dataset.blankIndex = String(index);
-          feedback.append(item);
-          return item;
-        });
+        const feedbackAnnouncement = createElement("div", "player__visually-hidden");
+        feedback.append(feedbackAnnouncement);
 
         const explanationText = typeof card.explanation === "string" ? card.explanation : "";
         const explanation = explanationText
@@ -2331,8 +2360,9 @@
           const grade = results.every(Boolean)
             ? CLOZE_GRADES.CORRECT
             : CLOZE_GRADES.INCORRECT;
+          const values = blanks.map((blank) => blank.input.value);
           try {
-            player.recordGrade(card.id, grade);
+            player.recordGrade(card.id, grade, { results, values });
           } catch (error) {
             setStatus(error instanceof Error ? error.message : t("The grade could not be recorded."), true);
             return;
@@ -2356,8 +2386,14 @@
           feedback.classList.toggle("cloze__feedback--correct", isCorrect);
           feedback.classList.toggle("cloze__feedback--incorrect", !isCorrect);
           feedback.dataset.result = grade;
+          feedbackSummary.hidden = false;
+          feedbackSummary.textContent = isCorrect
+            ? t("Correct.")
+            : results
+              ? t("Incorrect.")
+              : t("This card was previously marked incorrect.");
           if (results) {
-            feedbackSummary.hidden = true;
+            feedbackAnnouncement.replaceChildren();
             blanks.forEach((blank, index) => {
               const blankCorrect = results[index];
               blank.input.disabled = true;
@@ -2367,37 +2403,36 @@
                 ? CLOZE_GRADES.CORRECT
                 : CLOZE_GRADES.INCORRECT;
               blank.input.setAttribute("aria-invalid", String(!blankCorrect));
-              feedbackItems[index].id = `blank-feedback-${index}`;
-              blank.input.setAttribute("aria-describedby", feedbackItems[index].id);
-              feedbackItems[index].hidden = false;
-              feedbackItems[index].classList.toggle("cloze__blank-feedback--correct", blankCorrect);
-              feedbackItems[index].classList.toggle("cloze__blank-feedback--incorrect", !blankCorrect);
-              feedbackItems[index].dataset.result = blankCorrect
+              blank.input.setAttribute("aria-describedby", blank.correction.id);
+              blank.correction.hidden = false;
+              blank.correction.classList.toggle("cloze__blank-feedback--incorrect", !blankCorrect);
+              blank.correction.classList.toggle("player__visually-hidden", blankCorrect);
+              blank.correction.dataset.result = blankCorrect
                 ? CLOZE_GRADES.CORRECT
                 : CLOZE_GRADES.INCORRECT;
-              feedbackItems[index].textContent = blankCorrect
-                ? t("Blank {number}: Correct.", { number: index + 1 })
-                : t("Blank {number}: Incorrect. Correct answer: {answer}", { number: index + 1, answer: blank.answers.join(" / ") });
+              const blankResult = blankCorrect
+                ? t("Correct.")
+                : blank.answers.join(" / ");
+              blank.correction.textContent = blankResult;
+              const blankLabel = t("Blank {number}", { number: index + 1 });
+              feedbackAnnouncement.append(
+                createElement("span", "", `${blankLabel}: ${blankResult}`),
+                document.createTextNode(" ")
+              );
             });
           } else {
-            feedbackSummary.hidden = false;
-            feedbackSummary.textContent = isCorrect
-              ? t("Correct.")
-              : t("This card was previously marked incorrect.");
-            blanks.forEach((blank, index) => {
+            blanks.forEach((blank) => {
               blank.input.disabled = true;
               blank.input.classList.remove("cloze__input--correct", "cloze__input--incorrect");
               blank.input.removeAttribute("data-result");
               blank.input.removeAttribute("aria-invalid");
               blank.input.removeAttribute("aria-describedby");
-              feedbackItems[index].hidden = true;
-              feedbackItems[index].classList.remove(
-                "cloze__blank-feedback--correct",
-                "cloze__blank-feedback--incorrect"
-              );
-              feedbackItems[index].removeAttribute("data-result");
-              feedbackItems[index].textContent = "";
+              blank.correction.hidden = true;
+              blank.correction.classList.remove("cloze__blank-feedback--incorrect", "player__visually-hidden");
+              blank.correction.removeAttribute("data-result");
+              blank.correction.textContent = "";
             });
+            feedbackAnnouncement.replaceChildren();
           }
           feedback.hidden = false;
           checkAnswer.hidden = true;
@@ -2413,7 +2448,15 @@
 
         const existingGrade = player.getGrade(card.id);
         if (existingGrade === CLOZE_GRADES.CORRECT || existingGrade === CLOZE_GRADES.INCORRECT) {
-          applyAnsweredUI(existingGrade);
+          const existingDetail = player.getGradeDetail(card.id);
+          if (existingDetail && Array.isArray(existingDetail.results) && Array.isArray(existingDetail.values)) {
+            blanks.forEach((blank, index) => {
+              blank.input.value = existingDetail.values[index] ?? "";
+            });
+            applyAnsweredUI(existingGrade, existingDetail.results);
+          } else {
+            applyAnsweredUI(existingGrade);
+          }
         }
 
         return fragment;
@@ -2516,7 +2559,7 @@
       // cards are ever reordered. Each renderer defines and interprets its own grade
       // vocabulary; persistence restores only grades that belong to the current deck
       // and pass the registered renderer validator.
-      function recordGrade(cardId, grade) {
+      function recordGrade(cardId, grade, detail) {
         if (typeof cardId !== "string" || !cardId) {
           throw new TypeError("A grade needs a card id.");
         }
@@ -2530,7 +2573,11 @@
             throw new Error(`The grade is not valid for the ${card.type || "unknown"} card.`);
           }
         }
+        const gradeDetail = snapshotGradeDetail(detail);
         state.grades[cardId] = grade;
+        // Session-only, never persisted: lets a renderer redraw its exact submitted
+        // answer if the learner navigates back before reloading. See getRendererGradeDetail.
+        state.gradeDetails[cardId] = gradeDetail;
         const currentCard = state.sessionCards[state.index];
         if (currentCard && currentCard.id === cardId) {
           state.freshAttempts.delete(state.index);
@@ -2553,8 +2600,23 @@
         return true;
       }
 
+      function snapshotGradeDetail(detail, seen = new WeakMap()) {
+        if (!detail || typeof detail !== "object") return detail;
+        if (seen.has(detail)) return seen.get(detail);
+        const snapshot = Array.isArray(detail) ? [] : Object.create(null);
+        seen.set(detail, snapshot);
+        for (const [key, value] of Object.entries(detail)) {
+          snapshot[key] = snapshotGradeDetail(value, seen);
+        }
+        return Object.freeze(snapshot);
+      }
+
       function getGrade(cardId) {
         return state.grades[cardId];
+      }
+
+      function getGradeDetail(cardId) {
+        return state.gradeDetails[cardId];
       }
 
       function recordHintUsed(cardId) {
@@ -2588,12 +2650,19 @@
         return isPositiveGrade(card, grade) ? grade : undefined;
       }
 
+      // Mirrors getRendererGrade's masking so a fresh duplicate or masked retry
+      // attempt never sees a sibling attempt's submitted detail.
+      function getRendererGradeDetail(cardId) {
+        return getRendererGrade(cardId) ? getGradeDetail(cardId) : undefined;
+      }
+
       // Renderers can grade their own card, track hint use, and restore those values,
       // but they cannot replace the active deck, mutate the registry, or inspect shell
       // state.
       const rendererPlayer = Object.freeze({
         recordGrade,
         getGrade: getRendererGrade,
+        getGradeDetail: getRendererGradeDetail,
         recordHintUsed,
         getHintUsed
       });
@@ -2607,6 +2676,7 @@
         state.isRetry = false;
         state.cramMode = false;
         state.shuffleMode = false;
+        state.gradeDetails = Object.create(null);
         updateCramModeToggle();
         updateShuffleToggle();
         resetDrillState();
@@ -2688,9 +2758,13 @@
       }
 
       function renderScoreScreen() {
-        const { grades, scoreCards } = state;
-        const total = scoreCards.length;
-        const score = scoreCards.filter((card) => isPositiveGrade(card, grades[card.id])).length;
+        const { grades, scoreCards, deck } = state;
+        // scoreCards is the current retry round's scope (it shrinks with each retry so
+        // "still missed" and shuffle-during-retry keep working); the score itself is
+        // always reported against the full original deck so retry can raise it.
+        const fullSessionCards = deck.cards;
+        const total = fullSessionCards.length;
+        const score = fullSessionCards.filter((card) => isPositiveGrade(card, grades[card.id])).length;
         const missedCards = getMissedCards(scoreCards, grades);
 
         refs.scoreValue.textContent = `${score}/${total}`;
@@ -2698,6 +2772,11 @@
         refs.scoreSummary.textContent = missedCount
           ? t("{score} correct · {missedCount} to review", { score, missedCount })
           : t("All {total} correct · Nothing to review", { total });
+        const recoveredCount = state.isRetry ? scoreCards.length - missedCount : 0;
+        refs.scoreRecovered.hidden = recoveredCount === 0;
+        if (recoveredCount > 0) {
+          refs.scoreRecovered.textContent = t("{count} card recovered", { count: recoveredCount });
+        }
         const correctShare = total ? (score / total) * 100 : 0;
         const missedShare = total ? (missedCount / total) * 100 : 0;
         refs.scoreCorrectSegment.style.flexBasis = `${correctShare}%`;
@@ -3101,6 +3180,7 @@
         setDeck,
         recordGrade,
         getGrade,
+        getGradeDetail,
         recordHintUsed,
         getHintUsed,
         getState: () => ({
@@ -3189,9 +3269,13 @@
         if (state.freshRound) return;
         const currentCard = state.sessionCards[state.index];
         const previousGrade = currentCard && state.grades[currentCard.id];
+        const previousGrades = state.grades;
         const grades = progressStore.sync(state.deck, state.grades, event);
         if (!grades) return;
         state.grades = grades;
+        for (const cardId of Object.keys(state.gradeDetails)) {
+          if (previousGrades[cardId] !== grades[cardId]) delete state.gradeDetails[cardId];
+        }
         if (refs.player.dataset.state === "results") {
           renderScoreScreen();
         } else if (currentCard && previousGrade !== state.grades[currentCard.id]) {
