@@ -72,8 +72,6 @@
   "Answer selected. Check it when ready.": "Réponse sélectionnée. Vérifiez-la quand vous êtes prêt.",
   "Blank {number}": "Trou {number}",
   "Check answers": "Vérifier les réponses",
-  "Blank {number}: Correct.": "Trou {number} : Correct.",
-  "Blank {number}: Incorrect. Correct answer: {answer}": "Trou {number} : Incorrect. Bonne réponse : {answer}",
   "This card was previously marked incorrect.": "Cette carte a été marquée incorrecte précédemment.",
   "Show hint": "Afficher l’indice",
   "The hint could not be recorded.": "Impossible d’enregistrer l’utilisation de l’indice.",

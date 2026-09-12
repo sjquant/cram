@@ -72,8 +72,6 @@
   "Answer selected. Check it when ready.": "Respuesta seleccionada. Compruébala cuando quieras.",
   "Blank {number}": "Espacio {number}",
   "Check answers": "Comprobar respuestas",
-  "Blank {number}: Correct.": "Espacio {number}: Correcto.",
-  "Blank {number}: Incorrect. Correct answer: {answer}": "Espacio {number}: Incorrecto. Respuesta correcta: {answer}",
   "This card was previously marked incorrect.": "Esta tarjeta se marcó antes como incorrecta.",
   "Show hint": "Mostrar pista",
   "The hint could not be recorded.": "No se pudo registrar la pista.",

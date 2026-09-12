@@ -650,7 +650,8 @@
     }
 
     .cloze__input--incorrect {
-      border-bottom-color: var(--ink-soft);
+      border-bottom-color: var(--accent);
+      color: var(--accent);
     }
 
     .cloze__check-button {
@@ -674,11 +675,6 @@
     .cloze__blank-feedback {
       display: inline-block;
       margin-inline-start: 0.35em;
-      padding: 0.05em 0.5em;
-      border: 1px solid var(--rule-strong);
-      border-radius: 999px;
-      background: var(--surface);
-      color: var(--ink-soft);
       font-family: var(--sans);
       font-size: 0.8em;
       line-height: 1.4;
@@ -686,14 +682,12 @@
       white-space: normal;
     }
 
-    .cloze__blank-feedback--correct {
-      border-color: var(--positive);
-      color: var(--positive);
-    }
-
     .cloze__blank-feedback--incorrect {
-      border-color: var(--rule-strong);
-      color: var(--ink-soft);
+      padding: 0.05em 0.5em;
+      border: 1px solid var(--accent);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--accent);
     }
 
     .cloze__explanation,
@@ -2397,14 +2391,14 @@
               blank.input.setAttribute("aria-invalid", String(!blankCorrect));
               blank.input.setAttribute("aria-describedby", blank.correction.id);
               blank.correction.hidden = false;
-              blank.correction.classList.toggle("cloze__blank-feedback--correct", blankCorrect);
               blank.correction.classList.toggle("cloze__blank-feedback--incorrect", !blankCorrect);
+              blank.correction.classList.toggle("player__visually-hidden", blankCorrect);
               blank.correction.dataset.result = blankCorrect
                 ? CLOZE_GRADES.CORRECT
                 : CLOZE_GRADES.INCORRECT;
               blank.correction.textContent = blankCorrect
-                ? t("Blank {number}: Correct.", { number: index + 1 })
-                : t("Blank {number}: Incorrect. Correct answer: {answer}", { number: index + 1, answer: blank.answers.join(" / ") });
+                ? t("Correct.")
+                : blank.answers.join(" / ");
             });
           } else {
             blanks.forEach((blank) => {
@@ -2414,10 +2408,7 @@
               blank.input.removeAttribute("aria-invalid");
               blank.input.removeAttribute("aria-describedby");
               blank.correction.hidden = true;
-              blank.correction.classList.remove(
-                "cloze__blank-feedback--correct",
-                "cloze__blank-feedback--incorrect"
-              );
+              blank.correction.classList.remove("cloze__blank-feedback--incorrect", "player__visually-hidden");
               blank.correction.removeAttribute("data-result");
               blank.correction.textContent = "";
             });

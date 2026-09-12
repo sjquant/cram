@@ -1289,7 +1289,7 @@ for (const width of [390, 1280]) {
     const feedback = await page.getByTestId("cloze-feedback").boundingBox();
     expect(feedback.y - (sentence.y + sentence.height)).toBeLessThan(40);
     await expect(page.getByTestId("cloze-input")).toHaveAttribute("aria-invalid", "true");
-    await expect(page.getByTestId("cloze-input")).toHaveAccessibleDescription(/Correct answer:/);
+    await expect(page.getByTestId("cloze-input")).toHaveAccessibleDescription(/If-None-Match/);
     await expect(page.getByTestId("cloze-feedback")).toBeFocused();
     await expect(page.getByTestId("cloze-feedback")).toBeInViewport({ ratio: 1 });
     await expect(page.getByTestId("show-hint")).toBeHidden();
@@ -2264,9 +2264,7 @@ test("checks cloze blanks with exact alternatives and restores aggregate feedbac
   await expect(page.getByTestId("cloze-input").nth(0)).toHaveAttribute("data-result", "correct");
   await expect(page.getByTestId("cloze-input").nth(1)).toHaveAttribute("data-result", "incorrect");
   await expect(page.getByTestId("cloze-feedback")).toHaveAttribute("data-result", "incorrect");
-  await expect(page.getByTestId("cloze-blank-feedback").nth(1)).toContainText(
-    "Correct answer: 304 / 304 Not Modified"
-  );
+  await expect(page.getByTestId("cloze-blank-feedback").nth(1)).toHaveText("304 / 304 Not Modified");
   expect(await page.evaluate(() => window.CRAM_PLAYER.getGrade("cloze-card"))).toBe("incorrect");
 
   // Returning to the card shows only the aggregate result because the shell stores one grade.
@@ -2301,13 +2299,14 @@ test("shows the accepted answer beside a single incorrect cloze blank", async ({
   await input.fill("London");
   await page.getByTestId("cloze-check-answer").click();
 
-  // Then: the learner's text stays in the disabled input, marked invalid, beside its own accepted answer.
+  // Then: the learner's text stays in the disabled input, marked invalid and colored, beside its own accepted answer.
   await expect(input).toHaveValue("London");
   await expect(input).toBeDisabled();
+  await expect(input).toHaveClass(/cloze__input--incorrect/);
   await expect(input).toHaveAttribute("aria-invalid", "true");
-  await expect(input).toHaveAccessibleDescription(/Correct answer: Paris/);
+  await expect(input).toHaveAccessibleDescription(/Paris/);
   await expect(correction).toBeVisible();
-  await expect(correction).toContainText("Correct answer: Paris");
+  await expect(correction).toHaveText("Paris");
 
   // And: the correction sits right next to the blank instead of only in a card-level summary.
   const inputBox = await input.boundingBox();
@@ -2335,22 +2334,22 @@ test("matches each blank's own correction to its position across multiple blanks
   await inputs.nth(2).fill("still fresh");
   await page.getByTestId("cloze-check-answer").click();
 
-  // Then: each blank carries its own result, distinguishable at a glance.
+  // Then: correct blanks need no visible badge, since green is already unambiguous.
   await expect(inputs.nth(0)).toHaveClass(/cloze__input--correct/);
-  await expect(inputs.nth(1)).toHaveClass(/cloze__input--incorrect/);
   await expect(inputs.nth(2)).toHaveClass(/cloze__input--correct/);
-  await expect(corrections.nth(1)).toHaveClass(/cloze__blank-feedback--incorrect/);
+  await expect(corrections.nth(0)).toHaveClass(/player__visually-hidden/);
+  await expect(corrections.nth(2)).toHaveClass(/player__visually-hidden/);
 
-  // And: only the incorrect blank's own accepted answer appears, beside that blank.
-  await expect(corrections.nth(1)).toContainText("Correct answer: 304 / 304 Not Modified");
-  await expect(corrections.nth(0)).not.toContainText("304");
-  await expect(corrections.nth(2)).not.toContainText("304");
+  // And: only the incorrect blank turns red and shows its own accepted answer, beside that blank.
+  await expect(inputs.nth(1)).toHaveClass(/cloze__input--incorrect/);
+  await expect(corrections.nth(1)).toHaveClass(/cloze__blank-feedback--incorrect/);
+  await expect(corrections.nth(1)).toHaveText("304 / 304 Not Modified");
   const wrongInputBox = await inputs.nth(1).boundingBox();
   const wrongCorrectionBox = await corrections.nth(1).boundingBox();
   expect(Math.abs(wrongCorrectionBox.y - wrongInputBox.y)).toBeLessThan(60);
 
   // And: the incorrect input's accessible description names its own accepted answer, not another blank's.
-  await expect(inputs.nth(1)).toHaveAccessibleDescription(/Correct answer: 304/);
+  await expect(inputs.nth(1)).toHaveAccessibleDescription(/304/);
 });
 
 async function openPlayer(page, deck) {
