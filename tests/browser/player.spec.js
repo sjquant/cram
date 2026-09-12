@@ -1023,6 +1023,99 @@ test.describe("basic cards", () => {
     });
   });
 
+  test("resets the current deck from Settings after a warning, keeping other decks and preferences", async ({ page }) => {
+    await openPlayer(page, BASIC_DECK);
+
+    // Given: another deck has progress, a theme is chosen, and this deck is partway through.
+    await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), OTHER_DECK);
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+    await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), BASIC_DECK);
+    await page.getByTestId("settings-toggle").click();
+    await page.getByTestId("theme-select").selectOption("focus");
+    await page.getByTestId("deck-title").click();
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+    await page.getByTestId("next-card").click();
+    await expect(page.getByTestId("card-position")).toHaveText(`2/${BASIC_DECK.cards.length}`);
+
+    // When: the learner asks to reset progress from Settings.
+    await page.getByTestId("settings-toggle").click();
+    await page.getByTestId("settings-reset-progress").click();
+
+    // Then: a warning takes focus to Cancel, and nothing is deleted yet.
+    await expect(page.getByTestId("reset-warning")).toHaveText(/This can’t be undone\./);
+    await expect(page.getByTestId("cancel-reset")).toBeFocused();
+    expect(await page.evaluate((deckId) => JSON.parse(localStorage.getItem(`fc:${deckId}:v1`)), BASIC_DECK.id)).toEqual({
+      [BASIC_DECK.cards[0].id]: "known",
+    });
+
+    // When: the learner confirms the reset.
+    await page.getByTestId("confirm-reset").click();
+
+    // Then: Settings closes and the deck restarts at its first card without grades.
+    await expect(page.getByTestId("settings-panel")).toBeHidden();
+    await expect(page.getByTestId("card-position")).toHaveText(`1/${BASIC_DECK.cards.length}`);
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getState().grades)).toEqual({});
+
+    // When: the page reloads and the deck is reopened.
+    await page.reload();
+    await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), BASIC_DECK);
+
+    // Then: it still starts fresh, while the other deck's progress and the theme remain.
+    await expect(page.getByTestId("card-position")).toHaveText(`1/${BASIC_DECK.cards.length}`);
+    await expect(page.getByTestId("card-answer")).toBeHidden();
+    expect(await page.evaluate(() => window.CRAM_PLAYER.getState().grades)).toEqual({});
+    expect(await page.evaluate((deckId) => JSON.parse(localStorage.getItem(`fc:${deckId}:v1`)), OTHER_DECK.id)).toEqual({
+      [OTHER_DECK.cards[0].id]: "known",
+    });
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "focus");
+  });
+
+  test("keeps all progress when the Settings reset warning is cancelled or dismissed", async ({ page }) => {
+    await openPlayer(page, BASIC_DECK);
+
+    // Given: the learner has graded the first card and moved to the second.
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("settings-toggle").click();
+
+    // When: the learner cancels the warning.
+    await page.getByTestId("settings-reset-progress").click();
+    await page.getByTestId("cancel-reset").click();
+
+    // Then: the warning closes inside the still-open panel and focus returns to the reset action.
+    await expect(page.getByTestId("reset-warning")).toBeHidden();
+    await expect(page.getByTestId("settings-panel")).toBeVisible();
+    await expect(page.getByTestId("settings-reset-progress")).toBeFocused();
+
+    // When: the learner reopens the warning and presses Escape.
+    await page.getByTestId("settings-reset-progress").click();
+    await page.keyboard.press("Escape");
+
+    // Then: Escape dismisses only the warning.
+    await expect(page.getByTestId("reset-warning")).toBeHidden();
+    await expect(page.getByTestId("settings-panel")).toBeVisible();
+    await expect(page.getByTestId("settings-reset-progress")).toBeFocused();
+
+    // When: the learner reopens the warning and closes Settings by clicking outside.
+    await page.getByTestId("settings-reset-progress").click();
+    await page.getByTestId("deck-title").click();
+    await page.getByTestId("settings-toggle").click();
+
+    // Then: reopened Settings shows no pending warning.
+    await expect(page.getByTestId("reset-warning")).toBeHidden();
+    await expect(page.getByTestId("settings-reset-progress")).toBeVisible();
+
+    // And: the grade and position survive a reload.
+    await page.reload();
+    await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), BASIC_DECK);
+    await expect(page.getByTestId("card-position")).toHaveText(`2/${BASIC_DECK.cards.length}`);
+    await page.getByTestId("previous-card").click();
+    await expect(page.getByTestId("grade-known")).toHaveAttribute("aria-pressed", "true");
+  });
+
   test("retries only missed cards and persists a corrected grade", async ({ page }) => {
     await openPlayer(page, RETRY_DECK);
 

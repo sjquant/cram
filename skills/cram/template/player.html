@@ -19,6 +19,7 @@
       --rule: #ddd5c4;
       --rule-strong: #c4bAa4;
       --accent: #b5342b;
+      --danger: #b5342b;
       --positive: #356b4a;
       --serif: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino,
         Georgia, AppleMyungjo, "Nanum Myeongjo", Batang, "Hiragino Mincho ProN",
@@ -58,6 +59,7 @@
         --rule: light-dark(#ddd5c4, #302b23);
         --rule-strong: light-dark(#c4bAa4, #473f33);
         --accent: light-dark(#b5342b, #e0645a);
+        --danger: light-dark(#b5342b, #e0645a);
         --positive: light-dark(#356b4a, #8fc9a1);
         --surface: light-dark(#ffffff, #252525);
         --canvas: light-dark(#e9e5dc, #080808);
@@ -193,7 +195,8 @@
       position: absolute;
       top: -0.4rem;
       right: -0.5rem;
-      z-index: 3;
+      /* The settings popover must stay above the fixed navigation and attribution. */
+      z-index: 12;
     }
 
     .player__settings-toggle {
@@ -372,6 +375,18 @@
     .player__order-shuffle:hover:not(:disabled) { color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, var(--surface)); }
     .player__order-settings .player__order-restore { margin-top: 0.15rem; font-size: 0.8rem; }
     .player__order-settings button[hidden] { display: none; }
+
+    .player__reset-settings { border-top: 1px solid var(--rule); margin-top: 0.75rem; padding-top: 0.75rem; }
+    .player__reset-settings button { width: 100%; min-height: 2.75rem; border-radius: var(--control-radius); }
+    .player__reset-settings [hidden] { display: none; }
+    .player__reset-request { border: 1px solid color-mix(in srgb, var(--danger) 45%, var(--surface)); color: var(--danger); }
+    .player__reset-request:hover:not(:disabled) { color: var(--danger); background: color-mix(in srgb, var(--danger) 9%, var(--surface)); }
+    .player__reset-warning { display: grid; gap: 0.65rem; padding: 0.75rem; border: 1px solid var(--danger); border-radius: var(--control-radius); background: color-mix(in srgb, var(--danger) 7%, var(--surface)); }
+    .player__reset-warning p { margin: 0; font-size: 0.85rem; line-height: 1.4; }
+    .player__reset-actions { display: flex; gap: 0.5rem; }
+    .player__reset-confirm { color: var(--paper); background: var(--danger); font-weight: 650; }
+    .player__reset-confirm:hover:not(:disabled) { color: var(--paper); background: color-mix(in srgb, var(--danger) 85%, var(--ink)); }
+    .player__reset-cancel { border: 1px solid var(--rule-strong); color: var(--ink); background: var(--surface); }
 
     .player__theme-select:hover {
       border-color: var(--accent);
@@ -1478,6 +1493,16 @@
               <span data-i18n>Restore original order</span>
             </button>
           </div>
+          <div class="player__reset-settings">
+            <button type="button" class="player__reset-request" id="settings-reset-progress" data-action="request-reset" data-testid="settings-reset-progress" data-i18n>Reset progress</button>
+            <div class="player__reset-warning" id="reset-warning" data-testid="reset-warning" hidden>
+              <p id="reset-warning-text" data-i18n>This deletes your answers and your place in this deck. Settings are kept. This can’t be undone.</p>
+              <div class="player__reset-actions">
+                <button type="button" class="player__reset-confirm" data-action="confirm-reset" data-testid="confirm-reset" data-i18n>Reset</button>
+                <button type="button" class="player__reset-cancel" id="cancel-reset" data-action="cancel-reset" data-testid="cancel-reset" aria-describedby="reset-warning-text" data-i18n>Cancel</button>
+              </div>
+            </div>
+          </div>
         </section>
       </div>
     </header>
@@ -1603,6 +1628,9 @@
         cramModeToggle: document.getElementById("cram-mode-toggle"),
         orderStatus: document.getElementById("order-status"),
         restoreOrder: document.getElementById("restore-order"),
+        resetRequest: document.getElementById("settings-reset-progress"),
+        resetWarning: document.getElementById("reset-warning"),
+        cancelReset: document.getElementById("cancel-reset"),
         shortcutsToggle: document.getElementById("shortcuts-toggle"),
         status: document.getElementById("player-status"),
         announcer: document.getElementById("card-announcer")
@@ -1710,11 +1738,35 @@
       }
 
       function setSettingsVisibility(isOpen) {
+        // Opening or closing always dismisses a pending reset warning.
+        setResetWarningVisibility(false);
         refs.settingsPanel.hidden = !isOpen;
         refs.settingsToggle.setAttribute("aria-expanded", String(isOpen));
         const label = isOpen ? t("Close settings") : t("Open settings");
         refs.settingsToggle.setAttribute("aria-label", label);
         refs.settingsToggle.title = label;
+      }
+
+      // Nothing is deleted until the learner confirms; window.confirm is avoided
+      // because it cannot follow the theme and sandboxed frames make it return false.
+      function requestSettingsReset() {
+        setResetWarningVisibility(true);
+        refs.cancelReset.focus();
+      }
+
+      function cancelSettingsReset() {
+        setResetWarningVisibility(false);
+        refs.resetRequest.focus();
+      }
+
+      function confirmSettingsReset() {
+        closeSettings();
+        resetProgress();
+      }
+
+      function setResetWarningVisibility(isVisible) {
+        refs.resetWarning.hidden = !isVisible;
+        refs.resetRequest.hidden = isVisible;
       }
 
       function updateCramModeToggle() {
@@ -3238,6 +3290,9 @@
         if (button.dataset.action === "toggle-settings") toggleSettings();
         if (button.dataset.action === "shuffle") setShuffleMode(true);
         if (button.dataset.action === "restore-order") setShuffleMode(false);
+        if (button.dataset.action === "request-reset") requestSettingsReset();
+        if (button.dataset.action === "cancel-reset") cancelSettingsReset();
+        if (button.dataset.action === "confirm-reset") confirmSettingsReset();
       });
 
       refs.themeSelect.addEventListener("change", () => {
@@ -3286,6 +3341,10 @@
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape" && !refs.settingsPanel.hidden) {
           event.preventDefault();
+          if (!refs.resetWarning.hidden) {
+            cancelSettingsReset();
+            return;
+          }
           closeSettings();
           refs.settingsToggle.focus();
           return;
