@@ -72,8 +72,6 @@
   "Answer selected. Check it when ready.": "答えを選択しました。準備ができたら確認してください。",
   "Blank {number}": "空欄{number}",
   "Check answers": "答えを確認",
-  "Blank {number}: Correct.": "空欄{number}: 正解です。",
-  "Blank {number}: Incorrect. Correct answer: {answer}": "空欄{number}: 不正解です。正解: {answer}",
   "This card was previously marked incorrect.": "このカードは以前、不正解と記録されました。",
   "Show hint": "ヒントを見る",
   "The hint could not be recorded.": "ヒントの使用を記録できませんでした。",

@@ -72,8 +72,6 @@
   "Answer selected. Check it when ready.": "已选择答案，准备好后请检查。",
   "Blank {number}": "第{number}个空",
   "Check answers": "检查答案",
-  "Blank {number}: Correct.": "第{number}个空：正确。",
-  "Blank {number}: Incorrect. Correct answer: {answer}": "第{number}个空：错误。正确答案：{answer}",
   "This card was previously marked incorrect.": "此卡片之前被标记为错误。",
   "Show hint": "显示提示",
   "The hint could not be recorded.": "无法记录提示使用情况。",

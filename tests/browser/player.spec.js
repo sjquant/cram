@@ -809,6 +809,56 @@ test.describe("basic cards", () => {
     await expect(page.getByTestId("cloze-feedback-summary")).toBeVisible();
   });
 
+  test("restores the selected MCQ option and cloze submission within the same session, but forgets them after reload", async ({ page }) => {
+    await openPlayer(page, ALL_TYPES_DECK);
+
+    // Given: the learner answers the MCQ and cloze cards incorrectly.
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("mcq-option").filter({ hasText: "no-cache" }).click();
+    await page.getByTestId("mcq-check-answer").click();
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("cloze-input").nth(0).fill("wrong");
+    await page.getByTestId("cloze-input").nth(1).fill("304");
+    await page.getByTestId("cloze-check-answer").click();
+
+    // When: the learner navigates back to the MCQ card without reloading.
+    await page.getByTestId("previous-card").click();
+    await page.getByTestId("previous-card").click();
+
+    // Then: the previously selected wrong option is still highlighted, exactly like a fresh check.
+    await expect(page.getByTestId("mcq-option").filter({ hasText: "no-cache" })).toHaveClass(/mcq__option--incorrect/);
+    await expect(page.getByTestId("mcq-option").filter({ hasText: "no-store" })).toHaveClass(/mcq__option--correct/);
+
+    // Then: the cloze submission is also restored before a reload.
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("next-card").click();
+    await expect(page.getByTestId("cloze-input").nth(0)).toHaveValue("wrong");
+    await expect(page.getByTestId("cloze-input").nth(0)).toHaveAttribute("data-result", "incorrect");
+    await expect(page.getByTestId("cloze-input").nth(1)).toHaveValue("304");
+    await expect(page.getByTestId("cloze-input").nth(1)).toHaveAttribute("data-result", "correct");
+
+    // When: the page reloads.
+    await page.reload();
+    await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), ALL_TYPES_DECK);
+
+    // Then: the cloze grade remains, but its submitted values are forgotten after reload.
+    await expect(page.getByTestId("cloze-feedback")).toHaveAttribute("data-result", "incorrect");
+    await expect(page.getByTestId("cloze-input").nth(0)).toHaveValue("");
+    await expect(page.getByTestId("cloze-input").nth(0)).not.toHaveAttribute("data-result");
+    await expect(page.getByTestId("cloze-input").nth(1)).toHaveValue("");
+    await expect(page.getByTestId("cloze-input").nth(1)).not.toHaveAttribute("data-result");
+
+    // When: the learner navigates back to the MCQ after reloading.
+    await page.getByTestId("previous-card").click();
+    await page.getByTestId("previous-card").click();
+
+    // Then: the grade is still correct, but the option choice is forgotten since its detail is session-only.
+    await expect(page.getByTestId("mcq-feedback")).toHaveAttribute("data-result", "incorrect");
+    await expect(page.getByTestId("mcq-option").filter({ hasText: "no-cache" })).not.toHaveClass(/mcq__option--incorrect/);
+    await expect(page.getByTestId("mcq-option").filter({ hasText: "no-store" })).toHaveClass(/mcq__option--correct/);
+  });
+
   test("reports when saved progress is unavailable", async ({ page }) => {
     await openPlayer(page, BASIC_DECK);
 
@@ -1289,7 +1339,7 @@ for (const width of [390, 1280]) {
     const feedback = await page.getByTestId("cloze-feedback").boundingBox();
     expect(feedback.y - (sentence.y + sentence.height)).toBeLessThan(40);
     await expect(page.getByTestId("cloze-input")).toHaveAttribute("aria-invalid", "true");
-    await expect(page.getByTestId("cloze-input")).toHaveAccessibleDescription(/Correct answer:/);
+    await expect(page.getByTestId("cloze-input")).toHaveAccessibleDescription(/If-None-Match/);
     await expect(page.getByTestId("cloze-feedback")).toBeFocused();
     await expect(page.getByTestId("cloze-feedback")).toBeInViewport({ ratio: 1 });
     await expect(page.getByTestId("show-hint")).toBeHidden();
@@ -2247,6 +2297,37 @@ test("updates an open player when another tab changes the same deck", async ({ p
   }
 });
 
+test("discards stale session-only answer details after a remote grade change", async ({ page, context }) => {
+  await openPlayer(page, ALL_TYPES_DECK);
+  const otherPage = await context.newPage();
+  try {
+    await otherPage.goto(PLAYER_URL);
+    await otherPage.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), ALL_TYPES_DECK);
+    await page.getByTestId("next-card").click();
+    await otherPage.getByTestId("next-card").click();
+
+    // Given: this tab records a wrong MCQ choice and keeps its session-only detail.
+    await page.getByTestId("mcq-option").filter({ hasText: "no-cache" }).click();
+    await page.getByTestId("mcq-check-answer").click();
+
+    // When: another tab changes the aggregate grade for the same card.
+    await otherPage.evaluate((cardId) => {
+      window.CRAM_PLAYER.recordGrade(cardId, "correct", { choice: "no-store" });
+    }, ALL_TYPES_DECK.cards[1].id);
+
+    // Then: the current tab shows the remote grade without the old selected choice.
+    await expect(page.getByTestId("mcq-feedback")).toHaveAttribute("data-result", "correct");
+    await expect(page.getByTestId("mcq-option").filter({ hasText: "no-cache" }))
+      .not.toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByTestId("mcq-option").filter({ hasText: "no-cache" }))
+      .not.toHaveClass(/mcq__option--incorrect/);
+    await expect(page.getByTestId("mcq-option").filter({ hasText: "no-store" }))
+      .toHaveClass(/mcq__option--correct/);
+  } finally {
+    await otherPage.close();
+  }
+});
+
 test("checks cloze blanks with exact alternatives and restores aggregate feedback", async ({ page }) => {
   await openPlayer(page, CLOZE_DECK);
 
@@ -2264,17 +2345,27 @@ test("checks cloze blanks with exact alternatives and restores aggregate feedbac
   await expect(page.getByTestId("cloze-input").nth(0)).toHaveAttribute("data-result", "correct");
   await expect(page.getByTestId("cloze-input").nth(1)).toHaveAttribute("data-result", "incorrect");
   await expect(page.getByTestId("cloze-feedback")).toHaveAttribute("data-result", "incorrect");
-  await expect(page.getByTestId("cloze-blank-feedback").nth(1)).toContainText(
-    "Correct answer: 304 / 304 Not Modified"
-  );
+  await expect(page.getByTestId("cloze-blank-feedback").nth(1)).toHaveText("304 / 304 Not Modified");
   expect(await page.evaluate(() => window.CRAM_PLAYER.getGrade("cloze-card"))).toBe("incorrect");
 
-  // Returning to the card shows only the aggregate result because the shell stores one grade.
+  // Returning to the card within the same session restores the submitted answer and its per-blank result.
   await page.getByTestId("next-card").click();
   await page.getByTestId("previous-card").click();
-  await expect(page.getByTestId("cloze-feedback-summary")).toBeVisible();
+  await expect(page.getByTestId("cloze-feedback-summary")).toHaveText("Incorrect.");
+  await expect(page.getByTestId("cloze-input").nth(0)).toHaveValue("  if-none-match ");
+  await expect(page.getByTestId("cloze-input").nth(0)).toHaveAttribute("data-result", "correct");
+  await expect(page.getByTestId("cloze-input").nth(1)).toHaveValue("304 Not Modifie");
+  await expect(page.getByTestId("cloze-input").nth(1)).toHaveAttribute("data-result", "incorrect");
+  await expect(page.getByTestId("cloze-blank-feedback").nth(1)).toHaveText("304 / 304 Not Modified");
+
+  // But reloading the page only restores the aggregate grade, since the detail is session-only.
+  await page.reload();
+  await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), CLOZE_DECK);
+  await expect(page.getByTestId("cloze-feedback-summary")).toHaveText("This card was previously marked incorrect.");
   await expect(page.getByTestId("cloze-blank-feedback").nth(0)).toBeHidden();
   await expect(page.getByTestId("cloze-input").nth(0)).not.toHaveAttribute("data-result");
+  await expect(page.getByTestId("cloze-blank-feedback").nth(1)).toBeHidden();
+  await expect(page.getByTestId("cloze-input").nth(1)).not.toHaveAttribute("data-result");
 
   // A fresh attempt accepts the pipe-separated alternative with case/whitespace normalization.
   await openPlayer(page, CLOZE_DECK);
@@ -2285,6 +2376,120 @@ test("checks cloze blanks with exact alternatives and restores aggregate feedbac
   await expect(page.getByTestId("cloze-input").nth(0)).toHaveAttribute("data-result", "correct");
   await expect(page.getByTestId("cloze-input").nth(1)).toHaveAttribute("data-result", "correct");
   expect(await page.evaluate(() => window.CRAM_PLAYER.getGrade("cloze-card"))).toBe("correct");
+});
+
+test("keeps session-only grade details immutable through the public API", async ({ page }) => {
+  await openPlayer(page, CLOZE_DECK);
+
+  // Given: the learner submits a mixed-result cloze answer.
+  await page.getByTestId("cloze-input").nth(0).fill("wrong");
+  await page.getByTestId("cloze-input").nth(1).fill("304");
+  await page.getByTestId("cloze-check-answer").click();
+
+  // When: a caller tries to mutate the returned renderer detail.
+  const detail = await page.evaluate(() => {
+    const gradeDetail = window.CRAM_PLAYER.getGradeDetail("cloze-card");
+    const frozen = {
+      detail: Object.isFrozen(gradeDetail),
+      results: Object.isFrozen(gradeDetail.results),
+      values: Object.isFrozen(gradeDetail.values),
+    };
+    gradeDetail.results[0] = true;
+    gradeDetail.values[0] = "tampered";
+    return { frozen, current: window.CRAM_PLAYER.getGradeDetail("cloze-card") };
+  });
+
+  // Then: the stored detail remains unchanged and still restores the submitted answer.
+  expect(detail.frozen).toEqual({ detail: true, results: true, values: true });
+  expect(detail.current).toEqual({ results: [false, true], values: ["wrong", "304"] });
+  await page.getByTestId("next-card").click();
+  await page.getByTestId("previous-card").click();
+  await expect(page.getByTestId("cloze-input").nth(0)).toHaveValue("wrong");
+  await expect(page.getByTestId("cloze-input").nth(0)).toHaveAttribute("data-result", "incorrect");
+});
+
+test("clears session-only grade details when a deck switch fails", async ({ page }) => {
+  await openPlayer(page, CLOZE_DECK);
+
+  // Given: the current deck has a submitted cloze detail.
+  await page.getByTestId("cloze-input").nth(0).fill("wrong");
+  await page.getByTestId("cloze-input").nth(1).fill("304");
+  await page.getByTestId("cloze-check-answer").click();
+  expect(await page.evaluate(() => window.CRAM_PLAYER.getGradeDetail("cloze-card"))).toBeTruthy();
+
+  // When: the host attempts to switch to an invalid deck.
+  await page.evaluate(() => window.CRAM_PLAYER.setDeck({ title: "", cards: [] }));
+
+  // Then: the failed switch cannot expose the previous deck's submitted detail.
+  expect(await page.evaluate(() => window.CRAM_PLAYER.getGradeDetail("cloze-card"))).toBeUndefined();
+});
+
+test("shows the accepted answer beside a single incorrect cloze blank", async ({ page }) => {
+  // Given: a cloze card with a single blank.
+  await openPlayer(page, {
+    id: "single-blank-browser-check",
+    title: "Single blank browser check",
+    cards: [{ id: "single-blank-card", type: "cloze", prompt: "The capital of France is {{Paris}}." }],
+  });
+  const input = page.getByTestId("cloze-input");
+  const correction = page.getByTestId("cloze-blank-feedback");
+
+  // When: the learner submits an incorrect answer.
+  await input.fill("London");
+  await page.getByTestId("cloze-check-answer").click();
+
+  // Then: the learner's text stays in the disabled input, marked invalid and colored, beside its own accepted answer.
+  await expect(input).toHaveValue("London");
+  await expect(input).toBeDisabled();
+  await expect(input).toHaveClass(/cloze__input--incorrect/);
+  await expect(input).toHaveAttribute("aria-invalid", "true");
+  await expect(input).toHaveAccessibleDescription(/Paris/);
+  await expect(correction).toBeVisible();
+  await expect(correction).toHaveText("Paris");
+  await expect(page.getByTestId("cloze-feedback")).toContainText("Blank 1: Paris");
+
+  // And: the correction sits right next to the blank instead of only in a card-level summary.
+  const inputBox = await input.boundingBox();
+  const correctionBox = await correction.boundingBox();
+  expect(Math.abs(correctionBox.y - inputBox.y)).toBeLessThan(60);
+});
+
+test("matches each blank's own correction to its position across multiple blanks", async ({ page }) => {
+  // Given: a cloze card with three blanks.
+  await openPlayer(page, {
+    id: "multi-blank-browser-check",
+    title: "Multi blank browser check",
+    cards: [{
+      id: "multi-blank-card",
+      type: "cloze",
+      prompt: "Send {{If-None-Match}} and accept {{304|304 Not Modified}} to confirm the response is {{fresh|still fresh}}.",
+    }],
+  });
+  const inputs = page.getByTestId("cloze-input");
+  const corrections = page.getByTestId("cloze-blank-feedback");
+
+  // When: the first and third blanks are answered correctly and the second is wrong.
+  await inputs.nth(0).fill("If-None-Match");
+  await inputs.nth(1).fill("wrong");
+  await inputs.nth(2).fill("still fresh");
+  await page.getByTestId("cloze-check-answer").click();
+
+  // Then: correct blanks need no visible badge, since green is already unambiguous.
+  await expect(inputs.nth(0)).toHaveClass(/cloze__input--correct/);
+  await expect(inputs.nth(2)).toHaveClass(/cloze__input--correct/);
+  await expect(corrections.nth(0)).toHaveClass(/player__visually-hidden/);
+  await expect(corrections.nth(2)).toHaveClass(/player__visually-hidden/);
+
+  // And: only the incorrect blank turns red and shows its own accepted answer, beside that blank.
+  await expect(inputs.nth(1)).toHaveClass(/cloze__input--incorrect/);
+  await expect(corrections.nth(1)).toHaveClass(/cloze__blank-feedback--incorrect/);
+  await expect(corrections.nth(1)).toHaveText("304 / 304 Not Modified");
+  const wrongInputBox = await inputs.nth(1).boundingBox();
+  const wrongCorrectionBox = await corrections.nth(1).boundingBox();
+  expect(Math.abs(wrongCorrectionBox.y - wrongInputBox.y)).toBeLessThan(60);
+
+  // And: the incorrect input's accessible description names its own accepted answer, not another blank's.
+  await expect(inputs.nth(1)).toHaveAccessibleDescription(/304/);
 });
 
 async function openPlayer(page, deck) {

@@ -72,8 +72,6 @@
   "Answer selected. Check it when ready.": "답을 선택했습니다. 준비되면 정답을 확인하세요.",
   "Blank {number}": "빈칸 {number}",
   "Check answers": "정답 확인",
-  "Blank {number}: Correct.": "빈칸 {number}: 정답입니다.",
-  "Blank {number}: Incorrect. Correct answer: {answer}": "빈칸 {number}: 오답입니다. 정답: {answer}",
   "This card was previously marked incorrect.": "이전에 틀린 것으로 기록된 카드입니다.",
   "Show hint": "힌트 보기",
   "The hint could not be recorded.": "힌트 사용을 기록할 수 없습니다.",
