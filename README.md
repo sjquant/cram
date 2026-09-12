@@ -2,6 +2,8 @@
 
 # Cram
 
+English | [한국어](README.ko.md)
+
 **Turn anything into a quiz.**
 
 Reading something isn't the same as knowing it. Cram turns your notes,
