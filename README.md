@@ -2,71 +2,130 @@
 
 # Cram
 
-**Turn any document into a self-graded flashcard quiz — no server, no accounts, just one HTML file.**
+English | [한국어](README.ko.md)
 
-Cram turns pasted, attached, local, or web material into a validated deck and
-a self-contained, offline flashcard quiz in a single HTML file you can open in
-any browser.
+**Turn anything into a quiz.**
 
-![Cram demo: run the cram skill, generate validated questions, and study the deck](docs/demo.gif)
+Reading something isn't the same as knowing it. Cram turns your notes,
+documents, and web material into flashcards so you can test your understanding
+without writing questions yourself.
 
-The generated player supports:
+Create a quiz with your AI agent, review what you missed, and keep it as a
+single HTML file you can study offline or share.
 
-- basic, multiple-choice (MCQ), and cloze cards;
-- self-grading with a score and review screen;
-- retrying only the cards you missed;
-- shuffling or restoring card order from Settings;
-- optional hints and explanations; and
-- session order, position, results, and Cram-mode repeat attempts saved in the
-  browser, so you can continue after a reload.
+**[Try the live demo →](https://sjquant.github.io/cram/examples/http-caching-essentials.html)**
+— no install, nothing to clone. **[Make your own quiz ↓](#make-your-first-quiz)**
 
-In Settings → Study order, **Shuffle** starts a new round with hidden
-answers while keeping recorded grades in learning history. **Restore original
-order** returns to the source order. Retry rounds keep their missed-card scope.
-Saved sessions belong to the same deck in the same browser; changing the deck's
-card content starts a new session.
+![Cram walkthrough: request flashcards, then reveal answers and review a quiz](docs/demo.gif)
 
-Controls support keyboard navigation, reduced-motion preferences, and
-high-contrast mode. Settings lets you turn off the A/H single-letter
-shortcuts; the choice is remembered when browser storage is available.
+Explore the demo's [deck source](examples/http-caching-essentials.json) or
+open its [HTML file](examples/http-caching-essentials.html) from a local clone.
 
-## Try the demo
+## Why Cram?
 
-**[Open the live demo →](https://sjquant.github.io/cram/examples/http-caching-essentials.html)**
-— no install, nothing to clone, it just runs in your browser.
+1. **Spend your time studying, not making flashcards.** Give your AI agent
+   material you want to learn. The Cram skill guides it through creating
+   questions and rendering a quiz you can use right away.
+2. **Focus your next round on what you missed.** Test yourself, reveal answers,
+   and grade your recall. Retry just the missed cards, and come back later
+   with your place and results saved in your browser when storage is available.
+3. **Keep the quiz. Share it. Study offline.** Each quiz is one HTML file with
+   the cards and player included. Open it or send it to someone else—playing
+   it needs only a browser, with no account, app installation, or server.
 
-The repository also includes the deck that generated it: browse the [deck
-source](examples/http-caching-essentials.json), or open the [rendered HTML
-file](examples/http-caching-essentials.html) directly from a local clone.
+## Make your first quiz
 
-## Install in Claude Code
+You'll need a supported AI agent and system `python3` to create a quiz.
+The renderer requires no additional Python packages.
 
-Add the Cram marketplace, then install its `cram` plugin:
+### 1. Install the skill
+
+In **Claude Code**, add this repository as a community plugin source, then
+install Cram:
 
 ```text
 /plugin marketplace add sjquant/cram
 /plugin install cram@cram
 ```
 
-The first command registers the GitHub marketplace (`sjquant/cram`). The
-second follows Claude Code's `plugin-name@marketplace-name` convention; both
-names are `cram` here. After installation, invoke the skill as `/cram:cram` or
-ask Claude Code to make flashcards or an interactive quiz from your material.
+This installs directly from `sjquant/cram`, not an official plugin catalog.
 
-For the complete extraction, deck-format, and rendering workflow, see the
-[skill guide](skills/cram/SKILL.md).
-
-## Use with other AI tools
-
-The skill payload follows the portable [Agent Plugins](https://agent-plugins.org/)
-format and lives in `skills/cram/`. The [`npx skills`](https://github.com/vercel-labs/skills)
-installer can place it in any supported agent's skill directory (using a
-symlink by default, or copies when requested):
+For **other AI agents**, run this in your terminal and select your agent:
 
 ```sh
 npx skills add sjquant/cram --skill cram
 ```
 
+This installation route uses Node.js/npm to run `npx`.
+[More installation options ↓](#more-installation-options)
+
+### 2. Give your agent something to study
+
+Save your notes as `notes.md` in your working directory, then ask Claude Code:
+
+```text
+/cram:cram Read ./notes.md and create 10 flashcards to test the key concepts.
+Save the quiz as study.html.
+```
+
+In another agent, ask: “Use the cram skill to read ./notes.md and create
+10 flashcards to test the key concepts. Save the quiz as study.html.”
+You can also paste material, attach a document, or provide a web URL your
+agent can access.
+
+### 3. Open the quiz
+
+Open the generated `study.html` in your browser. Work through the cards,
+reveal the answers, and grade yourself. At the end, review your results
+or retry only the cards you missed.
+
+You can reopen the file offline or send it to someone else. Your study
+progress stays in your browser; it isn't included when you share the file.
+
+## What could you study?
+
+- **Technical documentation:** turn a guide into questions that check whether
+  you can explain its concepts. The demo uses HTTP caching.
+- **Course notes:** make a quiz from a lecture before your next study session.
+- **Onboarding material:** create a quiz from a team guide and share the HTML
+  with new teammates.
+
+## Study your way
+
+Practice with basic question-and-answer cards, multiple-choice questions,
+and fill-in-the-blank cards. Decks can include hints and explanations.
+The player supports keyboard navigation, reduced-motion preferences,
+and high-contrast mode.
+
+<details>
+<summary>Study order, saved progress, and keyboard settings</summary>
+
+In Settings → Study order, **Shuffle** starts a new round with hidden
+answers while keeping recorded grades in learning history. **Restore original
+order** returns to the source order. Retry rounds keep their missed-card scope.
+
+Session order, position, results, and Cram-mode repeat attempts are saved in
+the browser when storage is available. Saved sessions belong to the same deck
+in the same browser; changing the deck's card content starts a new session.
+
+Settings lets you turn off the A/H single-letter shortcuts; the choice is
+remembered when browser storage is available.
+
+</details>
+
+### Player language
+
+Study with controls in English, Korean, Japanese, Simplified Chinese,
+Spanish, or French. Ask your agent for the player language you want.
+Card language is separate: ask for translated cards if you want those changed too.
+
+## More installation options
+
+<details>
+<summary>Choose agents with the skills installer</summary>
+
+The [`npx skills`](https://github.com/vercel-labs/skills) installer places the
+skill in a supported agent's skill directory.
 To target agents explicitly, repeat `--agent`, for example:
 
 ```sh
@@ -79,47 +138,21 @@ npx skills add sjquant/cram --skill cram \
   --agent antigravity-cli
 ```
 
-This repository also includes native marketplace metadata where the format is
-documented: Claude Code (`.claude-plugin/`), Codex (`.codex-plugin/` and
-`.agents/plugins/`), Cursor (`.cursor-plugin/`), and GitHub Copilot
-(`.github/plugin/`). Codex and Copilot can be installed from their respective
-marketplace catalogs:
+</details>
 
-```text
-codex plugin marketplace add sjquant/cram
-codex plugin add cram@cram
+The portable skill lives in `skills/cram/`. For the extraction, deck-format,
+and rendering workflow, see the [skill guide](skills/cram/SKILL.md).
 
-copilot plugin marketplace add sjquant/cram
-copilot plugin install cram@cram
-```
+## Requirements and scope
 
-Kiro Powers and Cursor's public marketplace require their own import or
-review/publish flow; Antigravity and Grok can use the portable skill, and Grok
-also reads Claude-compatible plugin marketplaces.
-
-## Player language
-
-Study with controls in English, Korean, Japanese, Simplified Chinese,
-Spanish, or French. For example, choose Korean with:
-
-```sh
-python3 skills/cram/scripts/render.py deck.json -o quiz.html --language ko
-```
-
-Your cards keep their original language, and the quiz still works offline.
-[Contribute a translation →](docs/translations.md)
-
-## Requirements
-
-For skill users, system `python3` is enough—there is nothing to install with
-`pip`, and no Node.js, Playwright, Chromium, server, or network connection is
-needed to play a rendered deck. The output is a single HTML file containing
-the player and deck data.
-
-The optional Playwright browser suite is for repository contributors and CI
-only. It requires the JavaScript development dependencies and Chromium
-described in [`tests/README.md`](tests/README.md); skill users never need
-those dependencies.
+- **Creating a quiz:** requires an AI agent that can read your source material
+  and run the Python renderer. Source access, account requirements, costs,
+  and data handling depend on the agent and model you use.
+- **Playing a quiz:** requires only a browser. The generated HTML includes
+  the player and deck data, with no server or network connection needed.
+- **Validation:** Cram checks the deck's structure before rendering. This does
+  not fact-check AI-generated questions or answers; review them against your
+  source material.
 
 ## License
 
