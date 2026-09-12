@@ -91,6 +91,10 @@
     "one": "Retry {count} missed card",
     "other": "Retry {count} missed cards"
   },
+  "{count} card recovered": {
+    "one": "{count} card recovered",
+    "other": "{count} cards recovered"
+  },
   "Retrying {count} missed card.": {
     "one": "Retrying {count} missed card.",
     "other": "Retrying {count} missed cards."

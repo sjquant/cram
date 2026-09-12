@@ -91,6 +91,10 @@
     "one": "Reintentar {count} tarjeta fallada",
     "other": "Reintentar {count} tarjetas falladas"
   },
+  "{count} card recovered": {
+    "one": "{count} tarjeta recuperada",
+    "other": "{count} tarjetas recuperadas"
+  },
   "Retrying {count} missed card.": {
     "one": "Reintentando {count} tarjeta fallada.",
     "other": "Reintentando {count} tarjetas falladas."

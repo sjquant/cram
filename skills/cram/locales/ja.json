@@ -91,6 +91,10 @@
     "one": "間違えた{count}枚を再挑戦",
     "other": "間違えた{count}枚を再挑戦"
   },
+  "{count} card recovered": {
+    "one": "復活したカード{count}枚",
+    "other": "復活したカード{count}枚"
+  },
   "Retrying {count} missed card.": {
     "one": "間違えた{count}枚を再挑戦します。",
     "other": "間違えた{count}枚を再挑戦します。"
