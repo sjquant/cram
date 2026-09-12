@@ -40,12 +40,15 @@ The renderer requires no additional Python packages.
 
 ### 1. Install the skill
 
-In **Claude Code**, run:
+In **Claude Code**, add this repository as a community plugin source, then
+install Cram:
 
 ```text
 /plugin marketplace add sjquant/cram
 /plugin install cram@cram
 ```
+
+This installs directly from `sjquant/cram`, not an official plugin catalog.
 
 For **other AI agents**, run this in your terminal and select your agent:
 
@@ -133,25 +136,6 @@ npx skills add sjquant/cram --skill cram \
   --agent grok \
   --agent kiro-cli \
   --agent antigravity-cli
-```
-
-</details>
-
-<details>
-<summary>Codex and GitHub Copilot marketplace commands</summary>
-
-For Codex:
-
-```text
-codex plugin marketplace add sjquant/cram
-codex plugin add cram@cram
-```
-
-For GitHub Copilot:
-
-```text
-copilot plugin marketplace add sjquant/cram
-copilot plugin install cram@cram
 ```
 
 </details>

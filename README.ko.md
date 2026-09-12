@@ -46,11 +46,14 @@ Python 패키지를 따로 설치할 필요는 없어요.
 ### 1. 스킬 설치하기
 
 **Claude Code**를 쓴다면 아래 두 줄을 차례로 입력하세요.
+우리 GitHub 저장소를 플러그인 설치 경로로 추가한 뒤 Cram을 설치하는 방법이에요.
 
 ```text
 /plugin marketplace add sjquant/cram
 /plugin install cram@cram
 ```
+
+공식 마켓플레이스에 등록된 플러그인이 아니라, `sjquant/cram`에서 직접 설치해요.
 
 **다른 AI 에이전트**를 쓴다면 터미널에서 아래 명령을 실행하고, 사용하는 에이전트를 고르세요.
 
@@ -138,25 +141,6 @@ npx skills add sjquant/cram --skill cram \
   --agent grok \
   --agent kiro-cli \
   --agent antigravity-cli
-```
-
-</details>
-
-<details>
-<summary>Codex와 GitHub Copilot 마켓플레이스 명령</summary>
-
-Codex:
-
-```text
-codex plugin marketplace add sjquant/cram
-codex plugin add cram@cram
-```
-
-GitHub Copilot:
-
-```text
-copilot plugin marketplace add sjquant/cram
-copilot plugin install cram@cram
 ```
 
 </details>
