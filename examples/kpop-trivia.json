@@ -6,7 +6,7 @@
     {
       "id": "gangnam-style-billion",
       "type": "cloze",
-      "prompt": "The first YouTube video to pass 1 billion views, in 2012, was PSY's '{{Gangnam Style}}'.",
+      "prompt": "The first YouTube video to pass 1 billion views, in 2012, was PSY's '{{Gangnam Style|강남스타일|강남 스타일}}'.",
       "hint": "Think of the horse-riding dance.",
       "explanation": "In 2014 YouTube said the video had pushed past the maximum of its original 32-bit view counter (2,147,483,647), so the counter was upgraded to 64-bit."
     },
