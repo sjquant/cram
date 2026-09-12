@@ -1,5 +1,5 @@
 {
-  "Cram player": "Cram プレーヤー",
+  "Flashcards: {count}. Test your knowledge and review what you missed with Cram.": "全{count}問のクイズで理解度をチェック。間違えた問題はCramで復習できます。",
   "Loading deck…": "デッキを読み込み中…",
   "Open settings": "設定を開く",
   "Close settings": "設定を閉じる",

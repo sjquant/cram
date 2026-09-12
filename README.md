@@ -82,6 +82,8 @@ or retry only the cards you missed.
 You can reopen the file offline or send it to someone else. Your study
 progress stays in your browser; it isn't included when you share the file.
 
+Want to send a link instead? [Share your quiz with free hosting →](docs/sharing.md)
+
 ## What could you study?
 
 - **Technical documentation:** turn a guide into questions that check whether

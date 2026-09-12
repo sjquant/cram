@@ -15,6 +15,7 @@ import os
 import re
 import sys
 import tempfile
+from html import escape
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Sequence
@@ -68,6 +69,7 @@ def render_deck(deck: dict, language: str = "en") -> str:
     template = TEMPLATE_PATH.read_text(encoding="utf-8")
     messages = _load_messages(language, template)
     injections = {
+        "__CRAM_METADATA__": _render_metadata(deck, messages),
         "__CRAM_LANGUAGE__": language,
         "__CRAM_LOCALE__": _escape_for_inline_script(json.dumps({"language": language, "messages": messages})),
         "__CRAM_DECK__": _escape_for_inline_script(json.dumps(deck)),
@@ -77,6 +79,32 @@ def render_deck(deck: dict, language: str = "en") -> str:
             raise RuntimeError(f"{TEMPLATE_PATH}: expected exactly one {marker} injection marker")
     # One pass keeps marker-like text inside deck/translation content untouched.
     return re.sub("|".join(injections), lambda match: injections[match[0]], template)
+
+
+def _render_metadata(deck: dict, messages: dict) -> str:
+    """Expose deck information to crawlers without JavaScript or external resources."""
+
+    title = " ".join(deck["title"].split())
+    description = messages["Flashcards: {count}. Test your knowledge and review what you missed with Cram."].format(
+        count=len(deck["cards"])
+    )
+    tags = [
+        ("name", "description", description),
+        ("property", "og:title", title),
+        ("property", "og:description", description),
+        ("property", "og:type", "website"),
+        ("property", "og:site_name", "Cram"),
+        ("name", "twitter:card", "summary"),
+        ("name", "twitter:title", title),
+        ("name", "twitter:description", description),
+    ]
+    # The eventual public URL and image are unknown for portable offline files.
+    # Do not invent og:url, canonical URLs, or unsupported data-URI images.
+    return "\n  ".join([
+        f"<title>{escape(title)} — Cram</title>",
+        *(f'<meta {attribute}="{key}" content="{escape(value, quote=True)}">'
+          for attribute, key, value in tags),
+    ])
 
 
 def _load_messages(language: str, template: str) -> dict:
