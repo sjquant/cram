@@ -91,6 +91,10 @@
     "one": "Reprendre {count} carte ratée",
     "other": "Reprendre {count} cartes ratées"
   },
+  "{count} card recovered": {
+    "one": "{count} carte récupérée",
+    "other": "{count} cartes récupérées"
+  },
   "Retrying {count} missed card.": {
     "one": "Reprise de {count} carte ratée.",
     "other": "Reprise de {count} cartes ratées."

@@ -91,6 +91,10 @@
     "one": "重试{count}张错题卡片",
     "other": "重试{count}张错题卡片"
   },
+  "{count} card recovered": {
+    "one": "已恢复{count}张卡片",
+    "other": "已恢复{count}张卡片"
+  },
   "Retrying {count} missed card.": {
     "one": "正在重试{count}张错题卡片。",
     "other": "正在重试{count}张错题卡片。"

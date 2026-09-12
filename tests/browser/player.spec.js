@@ -51,6 +51,16 @@ const RETRY_DECK = {
     },
   ],
 };
+const CUMULATIVE_RETRY_DECK = {
+  id: "cumulative-retry-browser-check",
+  title: "Cumulative retry browser check",
+  cards: Array.from({ length: 10 }, (_, index) => ({
+    id: `cumulative-card-${index + 1}`,
+    type: "basic",
+    prompt: `Card ${index + 1}`,
+    answer: `Answer ${index + 1}`,
+  })),
+};
 const RETRY_TYPES_DECK = {
   id: "retry-types-browser-check",
   title: "Retry card types browser check",
@@ -572,7 +582,14 @@ test.describe("basic cards", () => {
     }
     expect(retryPrompts).not.toContain(first);
     expect(new Set(retryPrompts).size).toBe(4);
-    await expect(page.getByTestId("score-value")).toHaveText("0/4");
+    // Shuffling restarts only the retried round with fresh grades; the card graded
+    // known before retry keeps its point in the full five-card cumulative score.
+    await expect(page.getByTestId("score-value")).toHaveText("1/5");
+
+    // And: reloading after the shuffled retry does not lose that preserved point.
+    await page.reload();
+    await page.evaluate(deck => window.CRAM_PLAYER.setDeck(deck), BASIC_DECK);
+    await expect(page.getByTestId("score-value")).toHaveText("1/5");
   });
 
   test("resumes fresh drill attempts and the mastery streak after reload", async ({ page }) => {
@@ -989,17 +1006,20 @@ test.describe("basic cards", () => {
     await page.getByTestId("grade-known").click();
     await page.getByTestId("next-card").click();
 
-    // Then: the retry score is scoped to one card and the original deck progress is updated.
-    await expect(page.getByTestId("score-value")).toHaveText("1/1");
+    // Then: the score is cumulative against the original two-card session, with a recovery note.
+    await expect(page.getByTestId("score-value")).toHaveText("2/2");
+    await expect(page.getByTestId("score-summary")).toHaveText("All 2 correct · Nothing to review");
+    await expect(page.getByTestId("score-recovered")).toHaveText("1 card recovered");
     await expect(page.getByTestId("no-missed-cards")).toBeVisible();
     await expect(page.getByTestId("retry-missed")).toBeDisabled();
     await expect(page.getByTestId("retry-missed")).toBeHidden();
     await expect(page.getByTestId("review-scroll-cue")).toBeHidden();
 
-    // And: reopening resumes retry results, with corrected grades retained in history.
+    // And: reopening resumes retry results, with the cumulative score and corrected grades retained.
     await page.reload();
     await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), RETRY_DECK);
-    await expect(page.getByTestId("score-value")).toHaveText("1/1");
+    await expect(page.getByTestId("score-value")).toHaveText("2/2");
+    await expect(page.getByTestId("score-recovered")).toHaveText("1 card recovered");
     expect(await page.evaluate(id => JSON.parse(localStorage.getItem(`fc:${id}:v1`)), RETRY_DECK.id))
       .toEqual(Object.fromEntries(RETRY_DECK.cards.map(card => [card.id, "known"])));
   });
@@ -1045,6 +1065,62 @@ test.describe("basic cards", () => {
     await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), RETRY_TYPES_DECK);
     await expect(page.getByTestId("score-screen")).toBeVisible();
     await expect(page.getByTestId("score-value")).toHaveText("2/2");
+  });
+
+  test("scores retry results against the full original session and narrows a second retry to what's still missed", async ({ page }) => {
+    await openPlayer(page, CUMULATIVE_RETRY_DECK);
+
+    // Given: a ten-card session where three cards are missed.
+    await page.evaluate((deck) => {
+      deck.cards.forEach((card, index) => {
+        window.CRAM_PLAYER.recordGrade(card.id, index < 3 ? "missed" : "known");
+      });
+    }, CUMULATIVE_RETRY_DECK);
+    for (let index = 0; index < CUMULATIVE_RETRY_DECK.cards.length; index += 1) {
+      await page.getByTestId("next-card").click();
+    }
+    await expect(page.getByTestId("score-value")).toHaveText("7/10");
+    await expect(page.getByTestId("retry-missed")).toHaveText("Retry 3 missed cards");
+
+    // When: the learner retries the missed cards and corrects two of the three.
+    await page.getByTestId("retry-missed").click();
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-missed").click();
+    await page.getByTestId("next-card").click();
+
+    // Then: results score against the original ten-card total, with a recovery note.
+    await expect(page.getByTestId("score-value")).toHaveText("9/10");
+    await expect(page.getByTestId("score-summary")).toHaveText("9 correct · 1 to review");
+    await expect(page.getByTestId("score-recovered")).toHaveText("2 cards recovered");
+    await expect(page.getByTestId("retry-missed")).toHaveText("Retry 1 missed card");
+
+    // And: reloading the results screen keeps the cumulative score.
+    await page.reload();
+    await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), CUMULATIVE_RETRY_DECK);
+    await expect(page.getByTestId("score-value")).toHaveText("9/10");
+    await expect(page.getByTestId("score-recovered")).toHaveText("2 cards recovered");
+
+    // When: a second retry starts, scoped only to the card that is still missed.
+    await page.getByTestId("retry-missed").click();
+    await expect(page.getByTestId("progress-label")).toHaveText("Card 1 of 1");
+
+    // And: the page reloads mid-retry, before that last card is answered.
+    await page.reload();
+    await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), CUMULATIVE_RETRY_DECK);
+    await expect(page.getByTestId("progress-label")).toHaveText("Card 1 of 1");
+
+    // Then: correcting the last card raises the cumulative score to a perfect result.
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+    await page.getByTestId("next-card").click();
+    await expect(page.getByTestId("score-value")).toHaveText("10/10");
+    await expect(page.getByTestId("no-missed-cards")).toBeVisible();
   });
 
   test("disables retry when the completed session has no missed cards", async ({ page }) => {

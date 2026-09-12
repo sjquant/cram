@@ -91,6 +91,10 @@
     "one": "틀린 카드 {count}개 다시 풀기",
     "other": "틀린 카드 {count}개 다시 풀기"
   },
+  "{count} card recovered": {
+    "one": "복구된 카드 {count}개",
+    "other": "복구된 카드 {count}개"
+  },
   "Retrying {count} missed card.": {
     "one": "틀린 카드 {count}개를 다시 풉니다.",
     "other": "틀린 카드 {count}개를 다시 풉니다."
