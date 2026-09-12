@@ -1,0 +1,80 @@
+{
+  "id": "kpop-korean",
+  "title": "K-pop Korean",
+  "source": "Korean words and customs K-pop fans run into most often",
+  "cards": [
+    {
+      "id": "maknae",
+      "type": "cloze",
+      "prompt": "The youngest member of a K-pop group is called the {{maknae|막내}}.",
+      "explanation": "막내 means the youngest in any family or group, not just in K-pop. A youngest member who excels at singing, dancing, and everything else gets the nickname 'golden maknae'."
+    },
+    {
+      "id": "sunbae-hubae",
+      "type": "mcq",
+      "prompt": "A rookie idol calls an idol who debuted earlier 선배 (sunbae). What does the senior idol call the rookie?",
+      "answer": "후배 (hubae)",
+      "distractors": ["동생 (dongsaeng)", "막내 (maknae)", "친구 (chingu)"],
+      "explanation": "선배 and 후배 depend on who started first in the same school, company, or industry, not on age: an older idol who debuted later is still the 후배. 동생 is tempting, but it means a younger sibling or younger friend, so it is about age."
+    },
+    {
+      "id": "hyung-vs-oppa",
+      "type": "mcq",
+      "prompt": "A male fan wants to call an older male idol 'big brother' the way Korean speakers do. Which word does he use?",
+      "answer": "형 (hyung)",
+      "distractors": ["오빠 (oppa)", "누나 (noona)", "언니 (unnie)"],
+      "explanation": "In Korean, the word for an older sibling depends on the speaker's gender. Women call an older man 오빠 and an older woman 언니; men call an older man 형 and an older woman 누나. 오빠 from a male fan sounds wrong."
+    },
+    {
+      "id": "comeback",
+      "type": "basic",
+      "prompt": "In K-pop, what does it mean when a group has a 'comeback' (컴백)?",
+      "answer": "They release and promote new music, even if they never went away.",
+      "explanation": "Unlike the English sense of returning after a long absence, a K-pop comeback is simply each new release era. That's why a group can have several comebacks in one year."
+    },
+    {
+      "id": "all-kill",
+      "type": "mcq",
+      "prompt": "When a song 'all-kills' (올킬) in Korea, what has it done?",
+      "answer": "Reached No. 1 on all the major Korean music streaming charts at once",
+      "distractors": ["Won first place on every weekly TV music show", "Sold out every date of a world tour", "Topped the Billboard Hot 100 in its first week"],
+      "explanation": "Korea has several competing streaming services, such as Melon, Genie, and Bugs, each with its own chart, so topping all of them at the same time is a big deal. A 'perfect all-kill' is a stricter version that also requires the top spot on daily and weekly charts."
+    },
+    {
+      "id": "hwaiting",
+      "type": "basic",
+      "prompt": "What do Korean fans mean when they shout '화이팅!' (hwaiting) at an idol?",
+      "answer": "'You can do it!': they are cheering the idol on.",
+      "explanation": "It comes from the English word 'fighting', but Koreans use it before exams, games, and performances to mean 'go for it'. The standard spelling is 파이팅, though 화이팅 is everywhere."
+    },
+    {
+      "id": "eungwonbeop",
+      "type": "mcq",
+      "prompt": "What is a 응원법 (eungwonbeop) at a K-pop concert?",
+      "answer": "An official fan chant: member names and lines fans shout at set points in a song",
+      "distractors": ["The lightstick color assigned to a fandom", "A dance routine fans copy from the choreography", "The rules for lining up at a fan meeting"],
+      "explanation": "Agencies often publish a fanchant guide before a comeback so fans can practice. 응원 means 'cheering' and 법 means 'method', so the word literally means 'how to cheer'."
+    },
+    {
+      "id": "daebak",
+      "type": "cloze",
+      "prompt": "When something is amazing, Korean speakers exclaim '{{daebak|대박}}!'",
+      "explanation": "대박 literally means a huge hit or jackpot. It also works for bad surprises, as in '대박, 늦었다' ('wow, I'm so late')."
+    },
+    {
+      "id": "saranghaeyo-polite",
+      "type": "mcq",
+      "prompt": "Which is the polite way to say 'I love you' in Korean?",
+      "answer": "사랑해요 (saranghaeyo)",
+      "distractors": ["사랑해 (saranghae)", "사랑하다 (saranghada)", "사랑 (sarang)"],
+      "explanation": "Adding -요 makes a sentence polite. 사랑해 is 반말 (banmal), casual speech for close friends or people younger than you, and 사랑하다 is the dictionary form. When an idol and fans agree to use 반말 with each other, it signals closeness."
+    },
+    {
+      "id": "eumbang",
+      "type": "basic",
+      "prompt": "What is a 음방 (eumbang)?",
+      "answer": "A weekly TV music show, such as Music Bank or Inkigayo, where groups perform and compete for a first-place trophy.",
+      "explanation": "음방 is short for 음악 방송, 'music broadcast'. Korean often shortens compound words by keeping the first syllable of each part; 생일 파티 (birthday party) becomes 생파 the same way."
+    }
+  ]
+}

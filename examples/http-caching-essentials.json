@@ -20,7 +20,7 @@
         "`private`",
         "`max-age=60`"
       ],
-      "explanation": "Use this for responses carrying sensitive data, such as a bank balance or a one-time login token. Even a private browser cache must not write them to disk, where they could be recovered after logout or from a shared machine."
+      "explanation": "Use it for responses carrying sensitive data, such as a bank balance or a one-time login token: not even the browser's own private cache may keep a copy. Don't confuse it with `no-cache`, which allows storing but forces revalidation before every reuse."
     },
     {
       "id": "cache-control-no-cache",
@@ -32,14 +32,20 @@
     {
       "id": "etag-validator",
       "type": "cloze",
-      "prompt": "Which response header gives a representation an opaque validator that a client can send in `If-None-Match`? The header is `{{ETag}}`.",
-      "explanation": "A validator lets the client ask whether its stored representation is still current without downloading the full representation again. At scale this one round trip matters a lot: a platform serving millions of unchanged thumbnails can answer with an empty `304` instead of re-sending megabytes of image data each time."
+      "prompt": "To let clients revalidate cheaply, a server labels each version of a response with the {{ETag}} response header; the client sends that value back in `If-None-Match`.",
+      "explanation": "A validator lets the client ask whether its stored copy is still current without downloading the full body again. At scale this matters: a site serving millions of unchanged images can answer each check with an empty `304` instead of re-sending the image."
     },
     {
       "id": "if-none-match-not-modified",
-      "type": "basic",
-      "prompt": "For a conditional `GET`, what status can an origin return when `If-None-Match` confirms that a cached representation is still current?",
-      "answer": "`304 Not Modified`, allowing the cache to reuse its stored response body."
+      "type": "mcq",
+      "prompt": "A cache revalidates a stored response with a conditional `GET` carrying `If-None-Match`. If the origin's current `ETag` still matches, what status does the origin return?",
+      "answer": "`304 Not Modified`",
+      "distractors": [
+        "`200 OK` with an empty body",
+        "`204 No Content`",
+        "`412 Precondition Failed`"
+      ],
+      "explanation": "A `304` carries no body, so the cache keeps serving the body it already stored. `412` belongs to the write-side precondition `If-Match` failing, which makes it an easy mix-up."
     },
     {
       "id": "vary-shared-cache",
@@ -47,34 +53,41 @@
       "prompt": "What does the HTTP `Vary` response header tell a shared cache?",
       "answer": "Which request-header fields must match before a stored response can be reused for another request.",
       "hint": "The response may vary based on fields such as `Accept-Language`.",
-      "explanation": "Get this wrong and a CDN can hand one visitor a page cached for someone else — the wrong language, or worse, another user's personalized content. Missing `Vary: Cookie` or `Vary: Accept-Language` is one of the most common real-world CDN misconfiguration bugs."
+      "explanation": "Get this wrong and a CDN can hand one visitor a page cached for someone else: the wrong language, or another user's personalized content."
     },
     {
       "id": "cache-control-private",
       "type": "basic",
       "prompt": "When should a response be marked `Cache-Control: private`?",
       "answer": "When it may be stored by a private browser cache but must not be stored by a shared cache.",
-      "explanation": "Marking a personalized page merely `public` by mistake is a classic way personal data leaks: a corporate proxy or shared CDN edge could cache and replay one user's page to the next visitor."
+      "explanation": "Use it for personalized pages. Without it, a corporate proxy or CDN edge could store one user's page and replay it to the next visitor."
     },
     {
       "id": "stale-while-revalidate",
       "type": "basic",
-      "prompt": "What does the `Cache-Control: stale-while-revalidate=30` directive let a cache do once a response has expired?",
-      "answer": "Serve the stale response immediately, while revalidating it with the origin in the background, for up to 30 seconds after it expired.",
-      "hint": "The visitor gets an instant response; the cache quietly repairs itself afterward.",
-      "explanation": "This is part of why some sites feel instantly fast even when their content is a few seconds out of date: nobody has to wait for revalidation, because it happens after the response is already on its way to the browser."
+      "prompt": "What does `Cache-Control: max-age=60, stale-while-revalidate=30` let a cache do in the 30 seconds after the response goes stale?",
+      "answer": "Serve the stale response immediately while it revalidates with the origin in the background.",
+      "hint": "The visitor never waits for the revalidation round trip.",
+      "explanation": "This trades a few seconds of possible staleness for zero added latency, which is why it suits content that changes often but not critically, such as feeds or product listings."
     },
     {
       "id": "must-revalidate-during-outage",
       "type": "mcq",
-      "prompt": "Without `must-revalidate`, what is a cache normally allowed to do with a response that just became stale if the origin server is unreachable?",
-      "answer": "Serve the stale response anyway, if that seems reasonable.",
+      "prompt": "A stored response without `must-revalidate` has just gone stale, and the origin server cannot be reached. What may the cache do?",
+      "answer": "Serve the stale response anyway.",
       "distractors": [
-        "Always return a `504` error instead of serving anything.",
-        "Delete the cached response immediately.",
-        "Wait indefinitely for the origin to respond before answering."
+        "It must return `504 Gateway Timeout`.",
+        "It must delete the stored response and fail.",
+        "Treat the response as fresh for another full `max-age` period."
       ],
-      "explanation": "This surprises a lot of developers: `max-age=60` by itself doesn't ban serving a slightly-stale response during an outage — it's a soft limit. Adding `must-revalidate` is what turns 'stale' into a hard failure, trading availability for strict correctness."
+      "explanation": "Freshness is a soft limit: when disconnected, a cache may serve a stale response rather than fail. Adding `must-revalidate` makes the `504` option mandatory, trading availability for strict correctness."
+    },
+    {
+      "id": "fingerprinted-assets",
+      "type": "basic",
+      "prompt": "Why do build tools put a content hash in asset filenames such as `app.3f9a1c.js`?",
+      "answer": "So the file can be cached for a very long time, because any change to its content produces a new URL.",
+      "explanation": "Hashed assets are typically served with `Cache-Control: max-age=31536000, immutable`. The HTML page that references them stays short-lived or `no-cache`, so it always points at the newest hashed URLs."
     }
   ]
 }
