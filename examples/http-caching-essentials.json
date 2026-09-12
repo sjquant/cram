@@ -88,6 +88,41 @@
       "prompt": "Why do build tools put a content hash in asset filenames such as `app.3f9a1c.js`?",
       "answer": "So the file can be cached for a very long time, because any change to its content produces a new URL.",
       "explanation": "Hashed assets are typically served with `Cache-Control: max-age=31536000, immutable`. The HTML page that references them stays short-lived or `no-cache`, so it always points at the newest hashed URLs."
+    },
+    {
+      "id": "s-maxage-shared-only",
+      "type": "mcq",
+      "prompt": "Which `Cache-Control` directive sets a freshness lifetime that applies only to shared caches such as CDNs?",
+      "answer": "`s-maxage`",
+      "distractors": ["`max-age`", "`proxy-revalidate`", "`stale-if-error`"],
+      "explanation": "`Cache-Control: max-age=60, s-maxage=3600` lets browsers recheck every minute while the CDN keeps its copy for an hour. When both are present, shared caches use `s-maxage`."
+    },
+    {
+      "id": "last-modified-validator",
+      "type": "cloze",
+      "prompt": "The date-based validator a server sends is the {{Last-Modified}} response header; the client echoes it back in `If-Modified-Since`.",
+      "explanation": "Dates have one-second precision, so a file changed twice within a second can look unchanged. That's one reason `ETag` is preferred when the server can compute one."
+    },
+    {
+      "id": "age-header",
+      "type": "basic",
+      "prompt": "What does the `Age` response header tell a client?",
+      "answer": "How many seconds the response has spent in caches since the origin generated or last revalidated it.",
+      "explanation": "A CDN response with `max-age=600` and `Age: 590` has only 10 seconds of freshness left, which explains why a 'freshly' fetched response can expire almost immediately."
+    },
+    {
+      "id": "heuristic-freshness",
+      "type": "basic",
+      "prompt": "A response has no `Cache-Control` or `Expires` header but does have `Last-Modified`. May a cache reuse it without revalidating?",
+      "answer": "Yes. The cache may assign a heuristic freshness lifetime, commonly 10% of the time since `Last-Modified`.",
+      "explanation": "A file last modified 10 days ago can therefore be reused for about a day without any caching headers. That's why 'we never set caching headers' doesn't mean 'nothing gets cached'."
+    },
+    {
+      "id": "stale-if-error",
+      "type": "basic",
+      "prompt": "What does `Cache-Control: stale-if-error=86400` let a cache do?",
+      "answer": "Serve a stale response for up to a day when revalidation fails with an error, such as a `5xx` response or an unreachable origin.",
+      "explanation": "It is the opposite trade-off from `must-revalidate`: availability over strict freshness, so a brief origin outage doesn't take the whole site down."
     }
   ]
 }
