@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import json
 import re
-import subprocess
-import sys
 import tempfile
 import unittest
 from html.parser import HTMLParser
@@ -60,10 +58,7 @@ class RendererCliTests(unittest.TestCase):
             for language, text in expected.items():
                 with self.subTest(language=language):
                     # When the public renderer is invoked with that language.
-                    result = subprocess.run(
-                        [sys.executable, str(RENDERER), str(source), "-o", str(output), "--language", language],
-                        capture_output=True, text=True, check=False,
-                    )
+                    result = run_renderer(source, output, Path(directory), language=language)
                     self.assertEqual(result.returncode, 0, result.stderr)
                     head = _HeadMetadata()
                     head.feed(output.read_text(encoding="utf-8"))
