@@ -36,6 +36,7 @@ for (const language of LANGUAGES) {
     await page.goto(pathToFileURL(output).href);
     await expect(page.locator("html")).toHaveAttribute("lang", language.code);
     await expect(page.getByTestId("deck-title")).toHaveText(DECK.title);
+    await expect(page).toHaveTitle(`${DECK.title} — Cram`);
     await expect(page.getByTestId("card-prompt")).toHaveText("Show answer");
 
     // When: the learner opens settings, misses two cards, and answers a cloze correctly.

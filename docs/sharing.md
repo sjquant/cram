@@ -76,6 +76,15 @@ by Pages after deployment finishes. Commit an updated HTML file to update it.
 
 ## Before sending the link
 
+Generated quizzes include the deck title and a localized description in the
+HTML's page metadata, Open Graph tags, and Twitter summary-card tags. Crawlers
+can read these without running JavaScript. An image preview is not included:
+it needs a separately hosted image with a public HTTP/HTTPS URL. Base64 data
+URLs are not suitable for `og:image`; the [Open Graph URL type](https://ogp.me/)
+requires HTTP or HTTPS. Cram also omits `og:url` because the final hosting
+address is unknown when the file is created. Preview appearance and caching
+depend on the service where you share the link.
+
 Open it in a private browser window to check that your friend can access it
 without your hosting login. Try revealing an answer and moving to the next card.
 Your friend needs internet access to load the hosted quiz; the original HTML
