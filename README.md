@@ -125,8 +125,6 @@ This selects Korean controls and keeps the cards in their original language.
 
 </details>
 
-[Contribute a translation →](docs/translations.md)
-
 ## More installation options
 
 <details>
@@ -180,9 +178,6 @@ and rendering workflow, see the [skill guide](skills/cram/SKILL.md).
 - **Validation:** Cram checks the deck's structure before rendering. This does
   not fact-check AI-generated questions or answers; review them against your
   source material.
-
-Contributing to the player? The optional browser test suite uses Playwright
-and Chromium. See the [testing guide](tests/README.md) for setup.
 
 ## License
 
