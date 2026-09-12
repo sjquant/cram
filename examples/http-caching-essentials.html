@@ -1625,6 +1625,10 @@
         index: 0,
         cleanup: () => {},
         grades: Object.create(null),
+        // In-memory only (never saved or synced): lets a renderer redraw the exact
+        // submitted answer when a learner navigates back within this session, without
+        // growing what gets persisted to storage. A reload always starts this empty.
+        gradeDetails: Object.create(null),
         hintsUsed: Object.create(null),
         drillStreaks: Object.create(null),
         drilledCards: Object.create(null),
@@ -1756,6 +1760,7 @@
         state.index = 0;
         state.freshRound = true;
         state.grades = Object.create(null);
+        state.gradeDetails = Object.create(null);
         state.hintsUsed = Object.create(null);
         resetDrillState();
         setViewState("ready");
@@ -1857,6 +1862,7 @@
         state.index = 0;
         state.persistenceWarning = "";
         state.grades = progressStore.load(deck);
+        state.gradeDetails = Object.create(null);
         state.hintsUsed = Object.create(null);
         resetDrillState();
         seedPersistedAttemptGrades();
@@ -1873,6 +1879,7 @@
         if (!state.deck) return;
         const cleared = progressStore.reset(state.deck);
         state.grades = Object.create(null);
+        state.gradeDetails = Object.create(null);
         state.hintsUsed = Object.create(null);
         state.persistenceWarning = "";
         state.sessionCards = state.deck.cards.slice();
@@ -2238,7 +2245,7 @@
           if (!selected) return;
           const grade = selected.choice === answer ? MCQ_GRADES.CORRECT : MCQ_GRADES.INCORRECT;
           try {
-            player.recordGrade(card.id, grade);
+            player.recordGrade(card.id, grade, { choice: selected.choice });
           } catch (error) {
             setStatus(error instanceof Error ? error.message : t("The grade could not be recorded."), true);
             return;
@@ -2255,7 +2262,10 @@
 
         const existingGrade = player.getGrade(card.id);
         if (existingGrade === MCQ_GRADES.CORRECT || existingGrade === MCQ_GRADES.INCORRECT) {
-          applyAnsweredUI(existingGrade);
+          const existingDetail = player.getGradeDetail(card.id);
+          const restoredSelection = existingDetail
+            && optionButtons.find(({ choice }) => choice === existingDetail.choice);
+          applyAnsweredUI(existingGrade, restoredSelection ? restoredSelection.button : null);
         }
 
         return fragment;
@@ -2339,8 +2349,9 @@
           const grade = results.every(Boolean)
             ? CLOZE_GRADES.CORRECT
             : CLOZE_GRADES.INCORRECT;
+          const values = blanks.map((blank) => blank.input.value);
           try {
-            player.recordGrade(card.id, grade);
+            player.recordGrade(card.id, grade, { results, values });
           } catch (error) {
             setStatus(error instanceof Error ? error.message : t("The grade could not be recorded."), true);
             return;
@@ -2418,7 +2429,15 @@
 
         const existingGrade = player.getGrade(card.id);
         if (existingGrade === CLOZE_GRADES.CORRECT || existingGrade === CLOZE_GRADES.INCORRECT) {
-          applyAnsweredUI(existingGrade);
+          const existingDetail = player.getGradeDetail(card.id);
+          if (existingDetail && Array.isArray(existingDetail.results) && Array.isArray(existingDetail.values)) {
+            blanks.forEach((blank, index) => {
+              blank.input.value = existingDetail.values[index] ?? "";
+            });
+            applyAnsweredUI(existingGrade, existingDetail.results);
+          } else {
+            applyAnsweredUI(existingGrade);
+          }
         }
 
         return fragment;
@@ -2521,7 +2540,7 @@
       // cards are ever reordered. Each renderer defines and interprets its own grade
       // vocabulary; persistence restores only grades that belong to the current deck
       // and pass the registered renderer validator.
-      function recordGrade(cardId, grade) {
+      function recordGrade(cardId, grade, detail) {
         if (typeof cardId !== "string" || !cardId) {
           throw new TypeError("A grade needs a card id.");
         }
@@ -2536,6 +2555,9 @@
           }
         }
         state.grades[cardId] = grade;
+        // Session-only, never persisted: lets a renderer redraw its exact submitted
+        // answer if the learner navigates back before reloading. See getRendererGradeDetail.
+        state.gradeDetails[cardId] = detail;
         const currentCard = state.sessionCards[state.index];
         if (currentCard && currentCard.id === cardId) {
           state.freshAttempts.delete(state.index);
@@ -2560,6 +2582,10 @@
 
       function getGrade(cardId) {
         return state.grades[cardId];
+      }
+
+      function getGradeDetail(cardId) {
+        return state.gradeDetails[cardId];
       }
 
       function recordHintUsed(cardId) {
@@ -2593,12 +2619,19 @@
         return isPositiveGrade(card, grade) ? grade : undefined;
       }
 
+      // Mirrors getRendererGrade's masking so a fresh duplicate or masked retry
+      // attempt never sees a sibling attempt's submitted detail.
+      function getRendererGradeDetail(cardId) {
+        return getRendererGrade(cardId) ? getGradeDetail(cardId) : undefined;
+      }
+
       // Renderers can grade their own card, track hint use, and restore those values,
       // but they cannot replace the active deck, mutate the registry, or inspect shell
       // state.
       const rendererPlayer = Object.freeze({
         recordGrade,
         getGrade: getRendererGrade,
+        getGradeDetail: getRendererGradeDetail,
         recordHintUsed,
         getHintUsed
       });
@@ -3106,6 +3139,7 @@
         setDeck,
         recordGrade,
         getGrade,
+        getGradeDetail,
         recordHintUsed,
         getHintUsed,
         getState: () => ({

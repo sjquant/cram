@@ -809,6 +809,41 @@ test.describe("basic cards", () => {
     await expect(page.getByTestId("cloze-feedback-summary")).toBeVisible();
   });
 
+  test("restores the selected MCQ option and cloze submission within the same session, but forgets them after reload", async ({ page }) => {
+    await openPlayer(page, ALL_TYPES_DECK);
+
+    // Given: the learner answers the MCQ and cloze cards incorrectly.
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("mcq-option").filter({ hasText: "no-cache" }).click();
+    await page.getByTestId("mcq-check-answer").click();
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("cloze-input").nth(0).fill("wrong");
+    await page.getByTestId("cloze-input").nth(1).fill("304");
+    await page.getByTestId("cloze-check-answer").click();
+
+    // When: the learner navigates back to the MCQ card without reloading.
+    await page.getByTestId("previous-card").click();
+    await page.getByTestId("previous-card").click();
+
+    // Then: the previously selected wrong option is still highlighted, exactly like a fresh check.
+    await expect(page.getByTestId("mcq-option").filter({ hasText: "no-cache" })).toHaveClass(/mcq__option--incorrect/);
+    await expect(page.getByTestId("mcq-option").filter({ hasText: "no-store" })).toHaveClass(/mcq__option--correct/);
+
+    // When: the page reloads.
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("next-card").click();
+    await page.reload();
+    await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), ALL_TYPES_DECK);
+    await page.getByTestId("previous-card").click();
+    await page.getByTestId("previous-card").click();
+
+    // Then: the grade is still correct, but the option choice is forgotten since its detail is session-only.
+    await expect(page.getByTestId("mcq-feedback")).toHaveAttribute("data-result", "incorrect");
+    await expect(page.getByTestId("mcq-option").filter({ hasText: "no-cache" })).not.toHaveClass(/mcq__option--incorrect/);
+    await expect(page.getByTestId("mcq-option").filter({ hasText: "no-store" })).toHaveClass(/mcq__option--correct/);
+  });
+
   test("reports when saved progress is unavailable", async ({ page }) => {
     await openPlayer(page, BASIC_DECK);
 
@@ -2267,10 +2302,20 @@ test("checks cloze blanks with exact alternatives and restores aggregate feedbac
   await expect(page.getByTestId("cloze-blank-feedback").nth(1)).toHaveText("304 / 304 Not Modified");
   expect(await page.evaluate(() => window.CRAM_PLAYER.getGrade("cloze-card"))).toBe("incorrect");
 
-  // Returning to the card shows only the aggregate result because the shell stores one grade.
+  // Returning to the card within the same session restores the submitted answer and its per-blank result.
   await page.getByTestId("next-card").click();
   await page.getByTestId("previous-card").click();
-  await expect(page.getByTestId("cloze-feedback-summary")).toBeVisible();
+  await expect(page.getByTestId("cloze-feedback-summary")).toHaveText("Incorrect.");
+  await expect(page.getByTestId("cloze-input").nth(0)).toHaveValue("  if-none-match ");
+  await expect(page.getByTestId("cloze-input").nth(0)).toHaveAttribute("data-result", "correct");
+  await expect(page.getByTestId("cloze-input").nth(1)).toHaveValue("304 Not Modifie");
+  await expect(page.getByTestId("cloze-input").nth(1)).toHaveAttribute("data-result", "incorrect");
+  await expect(page.getByTestId("cloze-blank-feedback").nth(1)).toHaveText("304 / 304 Not Modified");
+
+  // But reloading the page only restores the aggregate grade, since the detail is session-only.
+  await page.reload();
+  await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), CLOZE_DECK);
+  await expect(page.getByTestId("cloze-feedback-summary")).toHaveText("This card was previously marked incorrect.");
   await expect(page.getByTestId("cloze-blank-feedback").nth(0)).toBeHidden();
   await expect(page.getByTestId("cloze-input").nth(0)).not.toHaveAttribute("data-result");
 

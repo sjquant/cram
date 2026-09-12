@@ -121,11 +121,14 @@ it("translates incorrect answers, restored feedback, and completion announcement
   await expect(page.getByTestId("cloze-blank-feedback")).toHaveText("Correct.");
   await expect(page.locator("#player-status")).toHaveText("오답입니다.");
 
-  // When: the learner revisits the answered cloze and finishes the session.
+  // When: the learner revisits the answered cloze within the same session.
   await page.getByTestId("previous-card").click();
   await page.getByTestId("next-card").click();
-  // Then: restored feedback and both completion announcements remain translated.
-  await expect(page.getByTestId("cloze-feedback-summary")).toHaveText("이전에 틀린 것으로 기록된 카드입니다.");
+  // Then: the submitted answer and its per-blank result are restored, still translated.
+  await expect(page.getByTestId("cloze-input")).toHaveValue("Wrong");
+  await expect(page.getByTestId("cloze-feedback-summary")).toHaveText("오답입니다.");
+  await expect(page.getByTestId("cloze-blank-feedback")).toHaveText("Correct.");
+  // Then: both completion announcements remain translated.
   await page.getByTestId("next-card").click();
   await expect(page.getByTestId("score-summary")).toHaveText("정답 0개 · 복습 3개");
   await expect(page.locator("#player-status")).toHaveText("학습 완료. 점수 0/3.");
