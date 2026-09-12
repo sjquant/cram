@@ -1,0 +1,68 @@
+{
+  "id": "driving-test-prep",
+  "title": "Driving Test Prep: Road Signs & Rules",
+  "source": "Common written driving-test topics: road signs, right-of-way, and basic traffic rules (right-hand-traffic countries such as the U.S.)",
+  "cards": [
+    {
+      "id": "yield-sign-shape",
+      "type": "mcq",
+      "prompt": "In a right-hand-traffic country, a downward-pointing triangular sign with a red border and white background means the driver must:",
+      "answer": "Yield (give way to other traffic)",
+      "distractors": ["Stop completely before proceeding", "Not enter the road at all", "Slow to the posted speed limit"],
+      "explanation": "Yield signs are triangular and stop signs are octagonal, so drivers can tell them apart by shape alone, even from an angle."
+    },
+    {
+      "id": "four-way-stop-right-of-way",
+      "type": "mcq",
+      "prompt": "In a right-hand-traffic country, at an all-way stop where two vehicles arrive at exactly the same time, which one has the right of way?",
+      "answer": "The vehicle on the right",
+      "distractors": ["The vehicle on the left", "The larger vehicle", "The vehicle that honks first"],
+      "explanation": "This is the standard U.S. right-of-way rule for uncontrolled or all-way stop intersections."
+    },
+    {
+      "id": "solid-yellow-line-meaning",
+      "type": "basic",
+      "prompt": "On a two-way road, what does a solid yellow line on your side of the center line mean?",
+      "answer": "Passing (overtaking) is not allowed from your side of the road."
+    },
+    {
+      "id": "prohibition-sign-cloze",
+      "type": "cloze",
+      "prompt": "On most road signs, a red circle with a diagonal line through a symbol means that action is {{prohibited}}."
+    },
+    {
+      "id": "warning-sign-color",
+      "type": "mcq",
+      "prompt": "In the U.S., what color are warning signs for general hazards such as sharp curves or falling rocks?",
+      "answer": "Yellow",
+      "distractors": ["Orange", "Red", "Blue"],
+      "explanation": "Orange is reserved for temporary construction and work-zone signs, so it is kept distinct from general yellow warning signs."
+    },
+    {
+      "id": "school-bus-stop-arm",
+      "type": "basic",
+      "prompt": "On a two-lane road, what must a driver do when approaching a school bus that has flashing red lights and an extended stop arm?",
+      "answer": "Stop completely and wait until the lights stop flashing and the stop arm is withdrawn, regardless of direction of travel."
+    },
+    {
+      "id": "dashed-white-line-meaning",
+      "type": "mcq",
+      "prompt": "Between two lanes moving in the same direction, what does a dashed (broken) white line indicate?",
+      "answer": "Lane changes are permitted when it is safe to do so.",
+      "distractors": ["Lane changes are prohibited.", "The lane ends ahead.", "Only buses may use this lane."]
+    },
+    {
+      "id": "speed-limit-sign-cloze",
+      "type": "cloze",
+      "prompt": "A speed limit sign showing a number inside a white rectangle with a red border indicates the {{maximum}} speed allowed under normal conditions."
+    },
+    {
+      "id": "stop-sign-shape",
+      "type": "mcq",
+      "prompt": "In the U.S., what shape is a stop sign, chosen so it can still be recognized even when its colors have faded?",
+      "answer": "Octagon (eight-sided)",
+      "distractors": ["Triangle", "Circle", "Diamond"],
+      "explanation": "The unique octagon shape lets drivers recognize a stop sign by its outline alone, even from behind or in poor light."
+    }
+  ]
+}

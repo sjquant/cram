@@ -1,0 +1,65 @@
+{
+  "id": "world-geography-basics",
+  "title": "World Geography Basics",
+  "source": "General-knowledge review of world capitals, continents, and landmarks",
+  "cards": [
+    {
+      "id": "australia-capital",
+      "type": "mcq",
+      "prompt": "What is the capital of Australia?",
+      "answer": "Canberra",
+      "distractors": ["Sydney", "Melbourne", "Perth"],
+      "explanation": "Canberra was purpose-built as the capital to settle the rivalry between Sydney and Melbourne."
+    },
+    {
+      "id": "amazon-rainforest-country",
+      "type": "mcq",
+      "prompt": "Which country contains the largest share of the Amazon Rainforest?",
+      "answer": "Brazil",
+      "distractors": ["Peru", "Colombia", "Ecuador"]
+    },
+    {
+      "id": "largest-ocean",
+      "type": "basic",
+      "prompt": "Which ocean is the largest by surface area?",
+      "answer": "The Pacific Ocean"
+    },
+    {
+      "id": "longest-river-cloze",
+      "type": "cloze",
+      "prompt": "The longest river in the world is the {{Nile}}, flowing through northeastern Africa."
+    },
+    {
+      "id": "sahara-continent",
+      "type": "basic",
+      "prompt": "On which continent is the Sahara Desert located?",
+      "answer": "Africa"
+    },
+    {
+      "id": "tallest-mountain",
+      "type": "mcq",
+      "prompt": "Which mountain is the tallest above sea level?",
+      "answer": "Mount Everest",
+      "distractors": ["K2", "Kangchenjunga", "Denali"]
+    },
+    {
+      "id": "smallest-country",
+      "type": "basic",
+      "prompt": "What is the smallest country in the world by land area?",
+      "answer": "Vatican City"
+    },
+    {
+      "id": "tokyo-capital-cloze",
+      "type": "cloze",
+      "prompt": "Japan's capital city is {{Tokyo}}."
+    },
+    {
+      "id": "most-populous-country-2020s",
+      "type": "mcq",
+      "prompt": "As of the early 2020s, which country has the largest population in the world?",
+      "answer": "India",
+      "distractors": ["China", "United States", "Indonesia"],
+      "explanation": "India surpassed China in total population around 2023."
+    }
+  ]
+}

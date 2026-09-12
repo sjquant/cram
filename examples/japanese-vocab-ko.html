@@ -1,0 +1,3289 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title data-i18n>Cram player</title>
+  <!-- Both icons are inlined so the rendered player stays a single
+       self-contained file with no external requests. The PNG is a fallback
+       for Safari, which does not render SVG favicons; browsers that do
+       prefer the SVG because of sizes="any". Mirrors docs/logo.svg. -->
+  <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAABPklEQVR42mNgGAVDCWw10VYAYgcgbgDi+UC8H4r7oWLo2AEJC5BikQEQB0ANWQ+15D+F2IFYy6lhGTbcMNAOmD/QDtg/0A54TzMH7PV2+n80ORKOL7bVgGksagWIccB9dI0gA++snP//yYFtcPzl/RO8GKSerJyAzYfEWIiOQXqwmFUw0A7op4kDPjy+gRI9N+ZO/n+2qoC8nIDNAaD4RI/fnQ7m5OSE+2Q54MqkDhQHgPjkZsch4YD7hBwAimNkeVB0IJcDoPgH6QGVD+Q4AKMgAhmKnuhAmFBOwFYYEeOAfkIOIBaT64CGgXZAALaynpiCB4ZB2RSUBsh1gAO21AurYGAYWwKjSi7AlRWphYl1wPuBdsD+gXbAelq0iEhpljVQYNF9pL5CAcl9AjydEXScgNQBSSC63T8KBhsAAEPWegMGWEZgAAAAAElFTkSuQmCC">
+  <link rel="icon" type="image/svg+xml" sizes="any" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 128 128%27%3E%3Cg transform=%27rotate(-4 64 64)%27%3E%3Cpath fill=%27%23b5342b%27 d=%27M20,17 L64,13 L108,18 L112,63 L109,110 L64,114 L19,109 L16,64 Z%27/%3E%3Cpath fill=%27%23f4efe4%27 d=%27M38,40 H92 V56 H54 V72 H92 V88 H38 Z%27/%3E%3C/g%3E%3C/svg%3E">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --paper: #f4efe4;
+      --ink: #1f1c18;
+      --ink-soft: #6a6357;
+      --rule: #ddd5c4;
+      --rule-strong: #c4bAa4;
+      --accent: #b5342b;
+      --positive: #356b4a;
+      --serif: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino,
+        Georgia, AppleMyungjo, "Nanum Myeongjo", Batang, "Hiragino Mincho ProN",
+        "Yu Mincho", serif;
+      --sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.5;
+
+      --surface: #ffffff;
+      --canvas: #e9e5dc;
+      --action: var(--ink);
+      --action-ink: var(--paper);
+      --card-radius: 0.75rem;
+      --card-border: var(--rule);
+      --card-shadow: 0 0.4rem 1.5rem rgb(0 0 0 / 7%), 0 0.3rem 0 -1px var(--surface), 0 0.3rem 0 var(--rule);
+      --settings-accent: light-dark(#b5342b, #e0645a);
+      --settings-border: var(--rule-strong);
+      --settings-radius: 0.85rem;
+      --control-radius: 0.5rem;
+      --settings-shadow: 0 0.75rem 2rem rgb(0 0 0 / 16%);
+
+      --s1: 0.5rem;
+      --s2: 1rem;
+      --s3: 1.5rem;
+      --s4: 2.5rem;
+      --navigation-space: calc(6.25rem + env(safe-area-inset-bottom));
+    }
+
+    @supports (color: light-dark(#000, #fff)) {
+      :root {
+        --paper: light-dark(#f4efe4, #151310);
+        --ink: light-dark(#1f1c18, #ece5d8);
+        --ink-soft: light-dark(#6a6357, #98907f);
+        --rule: light-dark(#ddd5c4, #302b23);
+        --rule-strong: light-dark(#c4bAa4, #473f33);
+        --accent: light-dark(#b5342b, #e0645a);
+        --positive: light-dark(#356b4a, #8fc9a1);
+        --surface: light-dark(#ffffff, #252525);
+        --canvas: light-dark(#e9e5dc, #080808);
+      }
+    }
+
+    [data-appearance="light"] { color-scheme: light; }
+    [data-appearance="dark"] { color-scheme: dark; }
+
+    * { box-sizing: border-box; }
+
+    html {
+      min-height: 100%;
+      scroll-padding-bottom: var(--navigation-space);
+    }
+
+    body {
+      margin: 0;
+      min-width: 18rem;
+      min-height: 100dvh;
+      color: var(--ink);
+      background: var(--canvas);
+      padding-bottom: var(--navigation-space);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      border-radius: 0.25rem;
+      padding: 0.55rem 0.9rem;
+      color: var(--ink-soft);
+      background: none;
+      font-size: 0.92rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: color 120ms ease;
+    }
+
+    button:hover:not(:disabled) { color: var(--ink); }
+
+    button:focus-visible,
+    input:focus-visible,
+    a:focus-visible,
+    [tabindex="-1"]:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.4;
+    }
+
+    /* Keep the current card action prominent while making an unanswered card's
+       optional navigation visibly secondary. */
+    .player__next-button:not(:disabled) {
+      color: var(--paper);
+      background: var(--ink);
+      padding-inline: 1.1rem;
+    }
+
+    .player__next-button:not(:disabled):hover {
+      color: var(--paper);
+      background: var(--accent);
+    }
+
+    .player__next-button--skip:not(:disabled) {
+      color: var(--ink-soft);
+      background: none;
+      padding-inline: 0;
+      font-size: 0.84rem;
+      font-weight: 500;
+    }
+
+    .player__next-button--skip:not(:disabled):hover {
+      color: var(--accent);
+      background: none;
+    }
+
+    /* Keep one response action visually stronger than optional card help. */
+    .player__primary-action {
+      align-self: flex-end;
+      min-height: 3rem;
+      border-radius: 0.55rem;
+      color: var(--action-ink);
+      background: var(--action);
+      padding-inline: 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .player__primary-action:hover:not(:disabled) {
+      color: var(--action-ink);
+      background: var(--action);
+      filter: brightness(0.92);
+    }
+
+    a { color: var(--accent); }
+
+    .player {
+      width: min(100% - 3rem, 48rem);
+      min-height: calc(100dvh - var(--navigation-space));
+      margin: 0 auto;
+      padding: clamp(1.5rem, 4vh, 3rem) 0 1rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .player__header {
+      position: relative;
+      display: grid;
+      gap: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .player__title {
+      min-width: 0;
+      margin: 0;
+      font-family: var(--serif);
+      font-size: 1.3rem;
+      font-weight: 500;
+      line-height: 1.4;
+      text-align: center;
+      overflow-wrap: anywhere;
+    }
+
+    .player__header-tools {
+      position: absolute;
+      top: -0.4rem;
+      right: -0.5rem;
+      z-index: 3;
+    }
+
+    .player__settings-toggle {
+      display: inline-flex;
+      width: 3rem;
+      height: 3rem;
+      min-height: 3rem;
+      align-items: center;
+      justify-content: center;
+      border: 0;
+      border-radius: 50%;
+      padding: 0;
+      color: var(--ink);
+      background: transparent;
+      line-height: 1;
+    }
+
+    .player__theme-picker {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .player__theme-picker::after {
+      position: absolute;
+      top: 50%;
+      right: 1rem;
+      width: 0.45rem;
+      height: 0.45rem;
+      border-right: 1.5px solid var(--ink);
+      border-bottom: 1.5px solid var(--ink);
+      content: "";
+      pointer-events: none;
+      transform: translateY(-70%) rotate(45deg);
+    }
+
+    .player__theme-icon {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      width: 1.1rem;
+      height: 1.1rem;
+      transform: translateY(-50%);
+      color: var(--ink);
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.75;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      pointer-events: none;
+    }
+
+    .player__theme-icon > g { display: none; }
+    :root:not([data-theme]) .player__theme-icon--paper,
+    [data-theme="paper"] .player__theme-icon--paper,
+    [data-theme="focus"] .player__theme-icon--focus,
+    [data-theme="sprint"] .player__theme-icon--sprint { display: inline; }
+
+    .player__theme-select {
+      width: min(11rem, calc(100vw - 4rem));
+      height: 2.75rem;
+      border: 1px solid var(--settings-border);
+      border-radius: var(--control-radius);
+      padding: 0 2.2rem 0 2.1rem;
+      color: var(--ink);
+      background: var(--surface);
+      font-size: 0.9rem;
+      line-height: normal;
+      cursor: pointer;
+      appearance: none;
+    }
+
+    .player__appearance-icon {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      width: 1.1rem;
+      height: 1.1rem;
+      transform: translateY(-50%);
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.75;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      pointer-events: none;
+    }
+
+    .player__appearance-icon > g { display: none; }
+    :root:not([data-appearance]) .player__appearance-icon--system,
+    [data-appearance="light"] .player__appearance-icon--light,
+    [data-appearance="dark"] .player__appearance-icon--dark { display: inline; }
+
+    .player__settings-toggle:hover:not(:disabled),
+    .player__settings-toggle:focus-visible {
+      color: var(--settings-accent);
+      background: var(--rule);
+    }
+
+    .player__settings-toggle svg {
+      width: 1.5rem;
+      height: 1.5rem;
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 1.75;
+    }
+
+    .player__settings-panel {
+      --accent: var(--settings-accent);
+      position: absolute;
+      top: 3.5rem;
+      right: 0.5rem;
+      width: min(calc(100vw - 2rem), 22rem);
+      max-height: calc(100dvh - 6rem);
+      overflow-y: auto;
+      padding: 1rem;
+      border: 1px solid var(--settings-border);
+      border-radius: var(--settings-radius);
+      color: var(--ink);
+      background: var(--surface);
+      box-shadow: var(--settings-shadow);
+    }
+
+    .player__settings-panel[hidden] {
+      display: none;
+    }
+
+    .player__settings-heading {
+      margin: 0 0 0.75rem;
+      font-family: var(--sans);
+      font-size: 1.1rem;
+      font-weight: 650;
+    }
+
+    .player__settings-group,
+    .player__settings-option {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding-block: 0.5rem;
+      border-top: 1px solid var(--rule);
+    }
+
+    .player__settings-label,
+    .player__settings-option-text {
+      display: grid;
+      gap: 0.15rem;
+    }
+
+    .player__settings-option {
+      cursor: pointer;
+      justify-content: flex-start;
+    }
+
+    .player__settings-option input {
+      width: 1rem;
+      height: 1rem;
+      margin: 0;
+      accent-color: var(--accent);
+    }
+
+    .player__settings-option small {
+      color: var(--ink-soft);
+      font-size: 0.8rem;
+      line-height: 1.35;
+    }
+
+    .player__order-settings { border-top: 1px solid var(--rule); padding-top: 0.75rem; }
+    .player__order-label { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; font-size: 0.9rem; }
+    .player__order-label [role="status"] { color: var(--ink-soft); font-size: 0.8rem; }
+    .player__order-settings button { display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; min-height: 2.75rem; border-radius: var(--control-radius); margin-top: 0.6rem; }
+    .player__order-settings svg { width: 1.1rem; height: 1.1rem; flex: none; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+    .player__order-shuffle { color: var(--accent); background: color-mix(in srgb, var(--accent) 9%, var(--surface)); }
+    .player__order-shuffle:hover:not(:disabled) { color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, var(--surface)); }
+    .player__order-settings .player__order-restore { margin-top: 0.15rem; font-size: 0.8rem; }
+    .player__order-settings button[hidden] { display: none; }
+
+    .player__theme-select:hover {
+      border-color: var(--accent);
+    }
+
+    .player__theme-select:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .player__theme-select option {
+      color: var(--ink);
+      background: var(--paper);
+      font-size: 0.82rem;
+      text-indent: 0;
+    }
+
+    .player__progress-panel { margin: 0; }
+
+    .player__progress-bar {
+      display: block;
+      width: 100%;
+      height: 0.3rem;
+      border: 0;
+      border-radius: 999px;
+      overflow: hidden;
+      background: var(--rule);
+      appearance: none;
+    }
+
+    .player__progress-bar::-webkit-progress-bar { background: var(--rule); }
+
+    .player__progress-bar::-webkit-progress-value {
+      background: var(--accent);
+      transition: width 260ms cubic-bezier(0.2, 0.7, 0.3, 1);
+    }
+
+    .player__progress-bar::-moz-progress-bar { background: var(--accent); }
+
+    .player__main {
+      position: relative;
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      min-height: 0;
+      padding-top: 1.5rem;
+    }
+
+    .player__study-panel { display: contents; }
+    .player__study-panel[hidden] { display: none; }
+
+    .player__card {
+      width: 100%;
+      flex: none;
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+      padding: clamp(1.5rem, 4vw, 3rem);
+      border: 1px solid var(--card-border);
+      border-radius: var(--card-radius);
+      background: var(--surface);
+      box-shadow: var(--card-shadow);
+    }
+
+    .player__card-meta {
+      flex: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--s2);
+      margin-bottom: 1.5rem;
+    }
+
+    .player__card-type {
+      font-family: var(--sans);
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+    }
+
+    .player__card-position {
+      flex: none;
+      color: var(--ink-soft);
+      font-family: var(--mono);
+      font-size: 0.9rem;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .player__card-content {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      justify-content: flex-start;
+      min-width: 0;
+    }
+
+    .player__card-content > * { flex-shrink: 0; }
+
+    /* Inset focus rings stay visible at the scrollable body's edges. */
+    .player__card-content :is(button, input, a):focus-visible {
+      outline-offset: -3px;
+    }
+
+    .player__action-rail {
+      display: flex;
+      width: 100%;
+      flex-direction: column;
+      gap: var(--s2);
+      padding-top: 1.5rem;
+    }
+
+    .player__support-actions {
+      display: flex;
+      width: 100%;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.35rem;
+    }
+
+    .player__support-actions .player__hint {
+      margin: 0;
+    }
+
+    .player__hint-button {
+      align-self: flex-start;
+      margin: 0;
+      padding-inline: 0;
+      font-size: 0.84rem;
+    }
+
+    .player__response-actions {
+      display: flex;
+      width: 100%;
+      flex-direction: column;
+      align-items: stretch;
+      gap: var(--s2);
+    }
+
+    .player__shortcut {
+      margin-left: 0.35rem;
+      padding: 0.05rem 0.28rem;
+      border: 1px solid var(--rule);
+      border-radius: 0.2rem;
+      color: var(--ink-soft);
+      background: var(--paper);
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+
+    /* Content and action rails span the card; individual controls keep their width. */
+    .player__card-content > :not(button) {
+      width: 100%;
+      max-width: none;
+    }
+
+    .player__card-prompt {
+      margin: 0;
+      font-family: var(--sans);
+      font-size: clamp(1.3rem, 2.6vw, 1.85rem);
+      font-weight: 450;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .player__unsupported-card {
+      margin: 1.25rem 0 0;
+      color: var(--ink-soft);
+      font-size: 0.86rem;
+    }
+
+    .player__hint {
+      margin: var(--s3) 0 0;
+      padding: var(--s2);
+      border-left: 2px solid var(--accent);
+      color: var(--ink-soft);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .mcq__options {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.35rem;
+      margin: 1.5rem 0 0;
+    }
+
+    .mcq__response {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: var(--s2);
+      margin: 0;
+    }
+
+    .mcq__option {
+      min-height: 3rem;
+      border: 1px solid var(--rule-strong);
+      border-radius: 0.55rem;
+      padding: 0.75rem 1rem;
+      color: var(--ink);
+      text-align: left;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      font-size: 1rem;
+    }
+
+    .mcq__option:hover:not(:disabled) {
+      background: var(--rule);
+    }
+
+    .mcq__option[aria-pressed="true"] {
+      background: var(--rule);
+      color: var(--ink);
+    }
+
+    .mcq__option--correct {
+      border-color: var(--positive);
+      color: var(--positive);
+    }
+
+    .mcq__option--incorrect {
+      text-decoration: line-through;
+    }
+
+    .mcq__feedback,
+    .mcq__explanation {
+      margin: var(--s3) 0 0;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .mcq__feedback--correct {
+      color: var(--positive);
+    }
+
+    .mcq__feedback--incorrect {
+      color: var(--ink-soft);
+    }
+
+    .mcq__explanation {
+      padding-top: var(--s2);
+      border-top: 1px solid var(--rule);
+      font-family: var(--sans);
+      font-size: clamp(1rem, 2vw, 1.125rem);
+      line-height: 1.5;
+    }
+
+    .mcq__check-button {
+      margin: 0;
+    }
+
+    .cloze__input {
+      width: auto;
+      min-width: 6ch;
+      max-width: 100%;
+      margin-inline: 0.5em;
+      padding: 0 0.2em;
+      border: 0;
+      border-bottom: 2px solid var(--rule-strong);
+      border-radius: 0;
+      color: var(--ink);
+      background: transparent;
+      text-align: center;
+    }
+
+    .cloze__input--correct {
+      border-bottom-color: var(--positive);
+      color: var(--positive);
+    }
+
+    .cloze__input--incorrect {
+      border-bottom-color: var(--ink-soft);
+    }
+
+    .cloze__check-button {
+      margin: 0;
+    }
+
+    .cloze__feedback {
+      margin: var(--s3) 0 0;
+    }
+
+    .cloze__feedback--correct {
+      color: var(--positive);
+    }
+
+    .cloze__feedback--incorrect { color: var(--ink-soft); }
+
+    .cloze__blank-feedback {
+      margin: 0.35rem 0 0;
+      color: var(--ink-soft);
+      font-size: 1rem;
+    }
+
+    .cloze__blank-feedback--correct {
+      color: var(--positive);
+    }
+
+    .cloze__blank-feedback--incorrect {
+      color: var(--ink-soft);
+    }
+
+    .cloze__explanation,
+    .basic__explanation {
+      margin: var(--s3) 0 0;
+      padding-top: var(--s2);
+      border-top: 1px solid var(--rule);
+      font-family: var(--sans);
+      font-size: clamp(1rem, 2vw, 1.125rem);
+      line-height: 1.5;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .basic__answer-section {
+      margin-top: 1.5rem;
+      padding-top: var(--s2);
+      border-top: 1px solid var(--rule);
+      scroll-margin-top: var(--s2);
+    }
+
+    .basic__answer-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: var(--ink-soft);
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .basic__answer {
+      margin: 0;
+      font-family: var(--sans);
+      font-size: clamp(1.125rem, 2vw, 1.25rem);
+      line-height: 1.5;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .basic__reveal-button {
+      margin: 0;
+    }
+
+    .basic__grading-buttons {
+      display: grid;
+      width: 100%;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+      margin: 0;
+    }
+
+    .basic__grading-buttons[hidden] {
+      display: none;
+    }
+
+    .basic__grade-button {
+      min-height: 3rem;
+      border: 1px solid var(--rule-strong);
+      border-radius: 0.55rem;
+      color: var(--ink);
+      font-size: 1rem;
+    }
+
+    .basic__grade-button[aria-pressed="true"] {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .player__attribution {
+      position: fixed;
+      inset-inline: 0;
+      bottom: calc(1rem + env(safe-area-inset-bottom));
+      z-index: 11;
+      width: fit-content;
+      margin: 0 auto;
+      color: var(--ink-soft);
+      font-size: 0.72rem;
+      text-align: center;
+    }
+
+    .player__attribution small {
+      font-size: inherit;
+    }
+
+    .player__attribution a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .player__attribution-brand {
+      color: var(--accent);
+      font-weight: 650;
+    }
+
+    .player__attribution a:hover {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+
+    .player[data-state="loading"] .player__navigation {
+      visibility: hidden;
+    }
+
+    .player[data-state="loading"] .player__navigation button {
+      transition: none;
+    }
+
+    .player__navigation {
+      position: fixed;
+      inset-inline: 0;
+      bottom: 0;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: center;
+      gap: 0.75rem;
+      width: 100%;
+      padding: 0.75rem max(1.5rem, calc((100% - 48rem) / 2)) calc(2.5rem + env(safe-area-inset-bottom));
+      background: var(--canvas);
+    }
+
+    .player__navigation button {
+      width: min(100%, 12rem);
+      height: 3rem;
+      white-space: nowrap;
+    }
+
+    .player__navigation #next-card {
+      justify-self: end;
+    }
+
+    .player__navigation #previous-card {
+      padding-inline: 0;
+    }
+
+    .player__status {
+      min-height: 1.5em;
+      margin: var(--s2) 0 0;
+      color: var(--ink-soft);
+      font-size: 0.8rem;
+    }
+
+    .player__status--error { color: var(--accent); }
+
+    .player__card--empty .player__card-type,
+    .player__card--empty .player__card-position { display: none; }
+
+    .player__card--empty {
+      align-items: center;
+      justify-content: center;
+      min-height: 11rem;
+      text-align: center;
+    }
+
+    .player__card--empty .player__card-prompt {
+      max-width: 32ch;
+      margin-inline: auto;
+      color: var(--ink-soft);
+      font-size: clamp(1.05rem, 2vw, 1.25rem);
+    }
+
+    .player__card[hidden],
+    .player__navigation[hidden] { display: none; }
+
+    .player__score-screen {
+      flex: 1;
+      min-height: 0;
+      max-height: max(20rem, calc(100dvh - 15rem));
+      padding: clamp(1.5rem, 4vw, 3rem);
+      border: 1px solid var(--card-border);
+      border-radius: var(--card-radius);
+      background: var(--surface);
+      box-shadow: var(--card-shadow);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: var(--rule-strong) transparent;
+    }
+
+    .player__score-screen::-webkit-scrollbar { width: 0.45rem; }
+
+    .player__score-screen::-webkit-scrollbar-track { background: transparent; }
+
+    .player__score-screen::-webkit-scrollbar-thumb {
+      border: 0.1rem solid transparent;
+      border-radius: 999px;
+      background: var(--rule-strong);
+      background-clip: content-box;
+    }
+
+    .player__score-screen::-webkit-scrollbar-thumb:hover {
+      background: var(--ink-soft);
+      background-clip: content-box;
+    }
+
+    .player__score-screen[hidden] { display: none; }
+
+    .player__review-scroll-overlay {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 1;
+      height: 3.25rem;
+      background: linear-gradient(to bottom, transparent, var(--surface));
+      pointer-events: none;
+    }
+
+    .player__review-scroll-overlay[hidden] { display: none; }
+
+    .player__score-header {
+      padding-bottom: var(--s4);
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .player__score-header .player__card-type { display: block; }
+
+    .player__score-title {
+      max-width: 24ch;
+      margin: var(--s2) 0 0;
+      font-family: var(--serif);
+      font-size: clamp(1.45rem, 3vw, 2rem);
+      font-weight: 500;
+      line-height: 1.25;
+    }
+
+    .player__score-value {
+      margin: var(--s3) 0 0;
+      font-family: var(--mono);
+      font-size: clamp(2rem, 7vw, 3.5rem);
+      letter-spacing: 0.02em;
+      line-height: 1;
+    }
+
+    .player__score-summary {
+      margin: var(--s2) 0 0;
+      color: var(--ink-soft);
+    }
+
+    .player__score-meter {
+      display: flex;
+      width: 100%;
+      height: 0.55rem;
+      margin-top: var(--s3);
+      overflow: hidden;
+      border-radius: 999px;
+      background: var(--rule);
+    }
+
+    .player__score-meter-segment {
+      flex: 0 0 0;
+      transition: flex-basis 380ms cubic-bezier(0.2, 0.7, 0.3, 1);
+    }
+
+    .player__score-meter-segment--correct { background: var(--positive); }
+
+    .player__score-meter-segment--missed { background: var(--accent); }
+
+    .player__score-meter-key {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: var(--s1) var(--s3);
+      margin-top: 0.6rem;
+      color: var(--ink-soft);
+      font-size: 0.8rem;
+    }
+
+    .player__score-meter-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .player__score-meter-swatch {
+      width: 0.55rem;
+      height: 0.55rem;
+      flex: none;
+      border-radius: 50%;
+    }
+
+    .player__score-meter-swatch--correct { background: var(--positive); }
+
+    .player__score-meter-swatch--missed { background: var(--accent); }
+
+    .player__score-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--s2);
+      margin-top: var(--s3);
+    }
+
+    .player__review-scroll-cue {
+      position: absolute;
+      right: var(--s2);
+      bottom: var(--s2);
+      z-index: 2;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      min-height: 2rem;
+      border: 1px solid var(--rule-strong);
+      border-radius: 999px;
+      padding: 0.35rem 0.7rem;
+      color: var(--ink-soft);
+      background: var(--paper);
+      box-shadow: 0 0.25rem 1rem rgb(31 28 24 / 14%);
+      font-size: 0.78rem;
+      pointer-events: auto;
+    }
+
+    .player__review-scroll-cue:hover:not(:disabled) {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .player__review-scroll-cue[hidden] { display: none; }
+
+    .player__score-button {
+      min-height: 2.75rem;
+      border: 1px solid var(--rule-strong);
+      padding: 0.65rem 1rem;
+    }
+
+    .player__score-button--primary {
+      border-color: var(--ink);
+      color: var(--paper);
+      background: var(--ink);
+    }
+
+    .player__score-button--primary:not(:disabled):hover {
+      border-color: var(--accent);
+      color: var(--paper);
+      background: var(--accent);
+    }
+
+    .player__score-button--secondary {
+      color: var(--ink-soft);
+      background: transparent;
+    }
+
+    .player__score-button--secondary:hover:not(:disabled) {
+      border-color: var(--ink-soft);
+      color: var(--ink);
+    }
+
+    .player__score-button[hidden] {
+      display: none;
+    }
+
+    @media (max-width: 32rem) {
+      .player__review-scroll-cue {
+        right: 0.75rem;
+        bottom: 0.75rem;
+      }
+
+      .player__score-actions {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .player__score-button {
+        width: 100%;
+      }
+    }
+
+    .player__review-section { padding-top: var(--s4); }
+
+    .player__review-heading {
+      margin: 0;
+      font-family: var(--serif);
+      font-size: 1.3rem;
+      font-weight: 500;
+    }
+
+    .player__missed-list {
+      display: grid;
+      gap: var(--s3);
+      margin: var(--s3) 0 0;
+      padding-left: 1.5rem;
+    }
+
+    .player__missed-card {
+      border-left: 2px solid var(--accent);
+      padding-left: var(--s2);
+    }
+
+    .player__missed-prompt {
+      margin: 0;
+      font-family: var(--serif);
+      font-size: 1.15rem;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .player__review-field {
+      margin: var(--s2) 0 0;
+      color: var(--ink-soft);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .player__review-label {
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    .player__no-missed-cards {
+      margin: var(--s3) 0 0;
+      color: var(--ink-soft);
+    }
+
+    .player__visually-hidden,
+    .player__status:not(.player__status--error) {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      min-height: 0;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .player__score-meter-segment { transition: none; }
+    }
+
+    .player__brand {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      min-height: 2.25rem;
+      padding-right: 3rem;
+      font-family: var(--serif);
+      font-size: 1.3rem;
+      font-weight: 650;
+    }
+
+    .player__brand-mark {
+      display: block;
+      flex: none;
+      width: 1.8rem;
+      height: 1.8rem;
+      overflow: visible;
+    }
+
+    .player__brand-seal { fill: var(--accent); }
+    .player__brand-cutout { fill: var(--paper); }
+
+    [data-theme^="focus"] .player__brand-seal,
+    [data-theme^="sprint"] .player__brand-seal { fill: var(--action); }
+    [data-theme^="focus"] .player__brand-cutout,
+    [data-theme^="sprint"] .player__brand-cutout { fill: var(--action-ink); }
+
+    .player__settings-group > label { font-size: 0.9rem; }
+    .player__hint-button { min-height: 2.75rem; font-size: 0.9rem; }
+    .player__navigation button { min-height: 2.75rem; }
+    .mcq__options { gap: 0.65rem; }
+    .mcq__option:disabled { opacity: 1; cursor: default; }
+    .mcq__option--correct { background: var(--surface); }
+    .basic__grade-button[data-testid="grade-known"][aria-pressed="true"] {
+      color: var(--positive);
+      border-color: var(--positive);
+      background: var(--surface);
+    }
+
+    [data-theme^="focus"] {
+      --settings-accent: var(--action);
+      --settings-border: light-dark(#bac8e2, #485a75);
+      --settings-radius: 1.25rem;
+      --control-radius: 0.75rem;
+      --settings-shadow: 0 0.75rem 2rem rgb(25 45 85 / 12%);
+      --canvas: #eff3fa;
+      --surface: #ffffff;
+      --action: #315be8;
+      --action-ink: #ffffff;
+      --card-radius: 1.25rem;
+      --card-shadow: none;
+    }
+
+    @supports (color: light-dark(#000, #fff)) {
+      [data-theme^="focus"] {
+        --canvas: light-dark(#eff3fa, #101722);
+        --surface: light-dark(#ffffff, #202938);
+        --action: light-dark(#315be8, #afc3ff);
+        --action-ink: light-dark(#ffffff, #142244);
+      }
+
+      [data-theme^="sprint"] {
+        --canvas: light-dark(#f5f6f0, #131711);
+        --surface: light-dark(#ffffff, #252923);
+      }
+    }
+
+    [data-theme^="focus"] .player__brand,
+    [data-theme^="focus"] .player__title,
+    [data-theme^="sprint"] .player__brand,
+    [data-theme^="sprint"] .player__title { font-family: var(--sans); }
+
+    [data-theme^="focus"] .player__progress-bar::-webkit-progress-value { background: var(--action); }
+    [data-theme^="focus"] .player__progress-bar::-moz-progress-bar { background: var(--action); }
+    [data-theme^="focus"] .player__card[data-type="basic"] .player__card-prompt {
+      text-align: center;
+      font-weight: 600;
+      padding-block: 1rem;
+    }
+
+    [data-theme^="focus"] .player__primary-action,
+    [data-theme^="sprint"] .player__primary-action { align-self: stretch; }
+
+    [data-theme^="focus"] .player__support-actions,
+    [data-theme^="sprint"] .player__support-actions { align-items: center; }
+
+    [data-theme^="focus"] .player__hint-button,
+    [data-theme^="sprint"] .player__hint-button { align-self: center; }
+
+    [data-theme^="sprint"] {
+      --settings-accent: light-dark(#42600f, #d5ef68);
+      --settings-border: var(--ink);
+      --settings-radius: 0.75rem;
+      --control-radius: 0.25rem;
+      --settings-shadow: 4px 4px 0 var(--ink);
+      --canvas: #f5f6f0;
+      --surface: #ffffff;
+      --action: #d5ef68;
+      --action-ink: #172013;
+      --card-radius: 0.75rem;
+      --card-border: var(--ink);
+      --card-shadow: 4px 4px 0 var(--ink);
+    }
+
+    [data-theme^="sprint"] .player__brand { font-weight: 850; letter-spacing: -0.04em; }
+    [data-theme^="sprint"] .player__card { border-width: 2px; }
+    [data-theme^="sprint"] .player__card-prompt { font-weight: 750; line-height: 1.4; }
+    [data-theme^="sprint"] .player__card-position { color: var(--ink); font-size: 1.35rem; font-weight: 750; }
+    [data-theme^="sprint"] .player__card-type {
+      padding: 0.25rem 0.6rem;
+      border-radius: 0.25rem;
+      background: var(--action);
+      color: var(--action-ink);
+    }
+    [data-theme^="sprint"] .player__progress-bar { height: 0.45rem; }
+    [data-theme^="sprint"] .player__progress-bar::-webkit-progress-value { background: var(--ink); }
+    [data-theme^="sprint"] .player__progress-bar::-moz-progress-bar { background: var(--ink); }
+
+    @supports (background: color-mix(in srgb, black, white)) and (color: light-dark(#000, #fff)) {
+      :root {
+        /* Keep the light mix independent from --paper's dark branch. */
+        --surface: light-dark(
+          color-mix(in srgb, #f4efe4 28%, #ffffff),
+          #252525
+        );
+        --canvas: light-dark(
+          color-mix(in srgb, #f4efe4 78%, #d9d9d9),
+          #080808
+        );
+      }
+
+      .mcq__option--correct {
+        background: color-mix(in srgb, var(--positive) 8%, var(--surface));
+      }
+
+      .basic__grade-button[data-testid="grade-known"][aria-pressed="true"] {
+        background: color-mix(in srgb, var(--positive) 8%, var(--surface));
+      }
+
+      [data-theme^="focus"] {
+        --canvas: light-dark(
+          color-mix(in srgb, #f4efe4 20%, #eff3fa),
+          #101722
+        );
+        --surface: light-dark(
+          color-mix(in srgb, #f4efe4 12%, #ffffff),
+          #202938
+        );
+      }
+
+      [data-theme^="sprint"] {
+        --canvas: light-dark(
+          color-mix(in srgb, #f4efe4 25%, #f5f6f0),
+          #131711
+        );
+        --surface: light-dark(
+          color-mix(in srgb, #f4efe4 15%, #ffffff),
+          #252923
+        );
+      }
+    }
+
+    @media (max-width: 30rem) {
+      .player { width: calc(100% - 2rem); padding-top: max(1rem, env(safe-area-inset-top)); }
+      .player__navigation { padding-inline: 1rem; }
+      .player__header { gap: 1rem; margin-bottom: 1rem; }
+      .player__title { font-size: 1.05rem; text-align: left; }
+      .player__main { padding-top: 1rem; }
+      .player__card { padding: 1.5rem 1.25rem; }
+      .player__card-prompt { font-size: 1.35rem; }
+      .player__response-actions > .player__primary-action { align-self: stretch; width: 100%; }
+      .player__shortcut { display: none; }
+      .cloze__input { margin-inline: 0.15em; }
+      .player__settings-group { align-items: flex-start; flex-direction: column; gap: 0.35rem; }
+      .player__theme-picker, .player__theme-select { width: 100%; }
+      .player__score-screen { max-height: max(18rem, calc(100dvh - 12rem)); }
+    }
+
+    @media (max-height: 32rem) and (min-width: 30rem) {
+      .player { padding-top: 1rem; }
+    }
+
+    @media (min-width: 48rem) and (min-height: 40rem) {
+      :root { --navigation-space: 0px; }
+      .player { min-height: 0; }
+      .player__study-panel {
+        display: flex;
+        flex-direction: column;
+        min-height: min(40rem, calc(100dvh - 16rem));
+        max-height: min(48rem, calc(100dvh - 16rem));
+        border: 1px solid var(--card-border);
+        border-radius: var(--card-radius);
+        background: var(--surface);
+        box-shadow: var(--card-shadow);
+      }
+      [data-theme^="sprint"] .player__study-panel { border-width: 2px; }
+      .player__study-panel .player__card {
+        flex: 1 1 auto;
+        min-height: 0;
+        padding: 1.5rem 2rem;
+        border: 0;
+        border-radius: var(--card-radius) var(--card-radius) 0 0;
+        box-shadow: none;
+      }
+      .player__navigation {
+        position: static;
+        flex: none;
+        padding: 0.75rem 2rem;
+        border-top: 1px solid var(--rule);
+        border-radius: 0 0 var(--card-radius) var(--card-radius);
+        background: var(--surface);
+      }
+      .player__card-content {
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior-y: contain;
+        scrollbar-gutter: stable;
+        scrollbar-color: var(--rule-strong) var(--surface);
+        padding-inline: 0.25rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+      }
+    }
+
+    @media (forced-colors: active) {
+      :root .player__progress-bar {
+        forced-color-adjust: none;
+        border: 1px solid CanvasText;
+        background: Canvas;
+      }
+      :root .player__progress-bar::-webkit-progress-bar { background: Canvas; }
+      :root .player__progress-bar::-webkit-progress-value { background: Highlight; box-shadow: none; }
+      :root .player__progress-bar::-moz-progress-bar { background: Highlight; }
+      button { border: 1px solid ButtonText; }
+      button[aria-pressed="true"] { outline: 2px solid Highlight; outline-offset: -3px; }
+    }
+  </style>
+  <script>
+    (() => {
+      try {
+        const preference = window.localStorage.getItem("cram:theme");
+        if (/^(paper|focus|sprint)$/.test(preference)) {
+          document.documentElement.dataset.theme = preference;
+        }
+        const appearance = window.localStorage.getItem("cram:appearance");
+        if (/^(light|dark)$/.test(appearance)) document.documentElement.dataset.appearance = appearance;
+      } catch {
+        // Theme preferences are optional; the system color scheme remains the fallback.
+      }
+    })();
+  </script>
+</head>
+<body>
+  <div class="player" id="player" data-testid="player" data-state="loading">
+    <header class="player__header">
+      <div class="player__brand">
+        <svg class="player__brand-mark" viewBox="0 0 128 128" aria-hidden="true" focusable="false">
+          <g transform="rotate(-4 64 64)">
+            <path class="player__brand-seal" d="M20,17 L64,13 L108,18 L112,63 L109,110 L64,114 L19,109 L16,64 Z"></path>
+            <path class="player__brand-cutout" d="M38,40 H92 V56 H54 V72 H92 V88 H38 Z"></path>
+          </g>
+        </svg>
+        Cram
+      </div>
+      <h1 class="player__title" id="deck-title" data-testid="deck-title" data-i18n>Loading deck…</h1>
+      <div class="player__header-tools">
+        <button type="button" class="player__settings-toggle" id="settings-toggle" data-testid="settings-toggle" data-action="toggle-settings" aria-expanded="false" aria-controls="settings-panel" aria-label="Open settings" title="Open settings" data-i18n-attrs="aria-label title">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M9.6 3.5h4.8l.6 2.1a6.8 6.8 0 0 1 1.4.8l2.1-.6 2.4 4.1-1.5 1.5a6.7 6.7 0 0 1 0 1.6l1.5 1.5-2.4 4.1-2.1-.6a6.8 6.8 0 0 1-1.4.8l-.6 2.1H9.6L9 18.9a6.8 6.8 0 0 1-1.4-.8l-2.1.6-2.4-4.1 1.5-1.5a6.7 6.7 0 0 1 0-1.6L3.1 10l2.4-4.1 2.1.6A6.8 6.8 0 0 1 9 5.6l.6-2.1Z"></path>
+            <circle cx="12" cy="12" r="2.5"></circle>
+          </svg>
+        </button>
+        <section class="player__settings-panel" id="settings-panel" data-testid="settings-panel" aria-labelledby="settings-heading" hidden>
+          <h2 class="player__settings-heading" id="settings-heading" data-i18n>Settings</h2>
+          <div class="player__settings-group">
+            <label class="player__settings-label" for="theme-select" data-i18n>Theme</label>
+            <div class="player__theme-picker">
+              <svg class="player__theme-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <g class="player__theme-icon--paper">
+                  <path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8Zm0 0v5h5M9 12h6m-6 4h6"></path>
+                </g>
+                <g class="player__theme-icon--focus">
+                  <circle cx="12" cy="12" r="9"></circle>
+                  <circle cx="12" cy="12" r="4"></circle>
+                  <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"></circle>
+                </g>
+                <g class="player__theme-icon--sprint">
+                  <path d="m13 2-9 12h7l-1 8 10-13h-8Z"></path>
+                </g>
+              </svg>
+              <select class="player__theme-select" id="theme-select" data-testid="theme-select">
+                <option value="paper" data-i18n>Paper</option>
+                <option value="focus" data-i18n>Focus</option>
+                <option value="sprint" data-i18n>Sprint</option>
+              </select>
+            </div>
+          </div>
+          <div class="player__settings-group">
+            <label class="player__settings-label" for="appearance-select" data-i18n>Appearance</label>
+            <div class="player__theme-picker">
+              <svg class="player__appearance-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <g class="player__appearance-icon--system">
+                  <rect x="3" y="4" width="18" height="13" rx="2"></rect>
+                  <path d="M12 17v4m-4 0h8"></path>
+                </g>
+                <g class="player__appearance-icon--light">
+                  <circle cx="12" cy="12" r="4"></circle>
+                  <path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"></path>
+                </g>
+                <g class="player__appearance-icon--dark">
+                  <path d="M20.5 14A9 9 0 0 1 10 3.5 9 9 0 1 0 20.5 14Z"></path>
+                </g>
+              </svg>
+              <select class="player__theme-select" id="appearance-select" data-testid="appearance-select">
+                <option value="" data-i18n>System</option>
+                <option value="light" data-i18n>Light</option>
+                <option value="dark" data-i18n>Dark</option>
+              </select>
+            </div>
+          </div>
+          <label class="player__settings-option">
+            <input type="checkbox" id="cram-mode-toggle" data-testid="cram-mode-toggle">
+            <span class="player__settings-option-text">
+              <strong data-i18n>Cram mode</strong>
+              <small data-i18n>Requeue missed cards during this session.</small>
+            </span>
+          </label>
+          <label class="player__settings-option">
+            <input type="checkbox" id="shortcuts-toggle" aria-labelledby="shortcuts-label" checked>
+            <span class="player__settings-option-text">
+              <strong id="shortcuts-label" data-i18n>Single-letter shortcuts</strong>
+              <small data-i18n>A reveals answers; H reveals hints.</small>
+            </span>
+          </label>
+          <div class="player__order-settings" role="group" aria-labelledby="order-label">
+            <div class="player__order-label">
+              <span id="order-label" data-i18n>Study order</span>
+              <span id="order-status" role="status"></span>
+            </div>
+            <button type="button" class="player__order-shuffle" data-action="shuffle" data-testid="shuffle-cards">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 6h3c5 0 7 12 12 12h3m-4-4 4 4-4 4M3 18h3c2 0 3.5-2 5-5m2-2c1.5-3 3-5 5-5h3m-4-4 4 4-4 4"></path></svg>
+              <span data-i18n>Shuffle</span>
+            </button>
+            <button type="button" class="player__order-restore" data-action="restore-order" id="restore-order" data-testid="restore-order" hidden>
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 10a9 9 0 1 1 2 9M3 4v6h6"></path></svg>
+              <span data-i18n>Restore original order</span>
+            </button>
+          </div>
+        </section>
+      </div>
+    </header>
+
+    <section class="player__progress-panel" aria-label="Deck progress" data-i18n-attrs="aria-label">
+      <div class="player__progress-row player__visually-hidden">
+        <span id="progress-label" data-testid="progress-label" data-i18n>Card 0 of 0</span>
+        <span class="player__progress-percent" id="progress-percent">0%</span>
+      </div>
+      <progress class="player__progress-bar" id="progress" data-testid="progress" max="1" value="0">0%</progress>
+    </section>
+
+    <main class="player__main">
+      <div class="player__study-panel" id="study-panel">
+        <article class="player__card" id="card-frame" data-testid="card" tabindex="-1" aria-labelledby="card-prompt">
+          <div class="player__card-meta">
+            <span class="player__card-type" id="card-type" data-testid="card-type" data-i18n>Preparing card</span>
+            <span class="player__card-position" id="card-position" data-testid="card-position">—</span>
+          </div>
+          <div class="player__card-content" id="card-content" data-testid="card-content" tabindex="0" aria-labelledby="card-prompt">
+            <p class="player__card-prompt" id="card-prompt" data-testid="card-prompt" data-i18n>Preparing your deck…</p>
+          </div>
+        </article>
+
+        <nav class="player__navigation" aria-label="Card navigation" data-i18n-attrs="aria-label">
+          <button type="button" id="previous-card" data-testid="previous-card" data-action="previous" aria-label="Previous card" aria-keyshortcuts="ArrowLeft" disabled data-i18n data-i18n-attrs="aria-label">← Previous</button>
+          <button type="button" id="next-card" data-testid="next-card" class="player__next-button player__next-button--skip" data-action="next" aria-label="Next card" aria-keyshortcuts="ArrowRight" disabled data-i18n data-i18n-attrs="aria-label">Skip →</button>
+        </nav>
+      </div>
+
+      <section class="player__score-screen" id="score-screen" data-testid="score-screen" tabindex="-1" hidden aria-labelledby="score-title">
+        <header class="player__score-header">
+          <span class="player__card-type" data-i18n>Results</span>
+          <h2 class="player__score-title" id="score-title" tabindex="-1" data-i18n>Session complete</h2>
+          <p class="player__score-value" id="score-value" data-testid="score-value">0/0</p>
+          <p class="player__score-summary" id="score-summary" data-testid="score-summary" data-i18n>0 correct · Nothing to review</p>
+          <div class="player__score-meter" id="score-meter" data-testid="score-meter" aria-hidden="true">
+            <span class="player__score-meter-segment player__score-meter-segment--correct" id="score-correct-segment"></span>
+            <span class="player__score-meter-segment player__score-meter-segment--missed" id="score-missed-segment"></span>
+          </div>
+          <div class="player__score-meter-key" aria-label="Score breakdown" data-i18n-attrs="aria-label">
+            <span class="player__score-meter-label">
+              <span class="player__score-meter-swatch player__score-meter-swatch--correct" aria-hidden="true"></span>
+              <span id="score-correct-label" data-testid="score-correct-label" data-i18n>0 correct</span>
+            </span>
+            <span class="player__score-meter-label">
+              <span class="player__score-meter-swatch player__score-meter-swatch--missed" aria-hidden="true"></span>
+              <span id="score-missed-label" data-testid="score-missed-label" data-i18n>Nothing to review</span>
+            </span>
+          </div>
+          <div class="player__score-actions">
+            <button type="button" class="player__score-button player__score-button--primary" id="retry-missed" data-testid="retry-missed" data-action="retry-missed" data-i18n>Retry missed cards</button>
+            <button type="button" class="player__score-button player__score-button--secondary" id="reset-progress" data-testid="reset-progress" data-action="reset-progress" data-i18n>Reset progress</button>
+          </div>
+        </header>
+        <section class="player__review-section" aria-labelledby="missed-heading">
+          <h3 class="player__review-heading" id="missed-heading" data-i18n>Review missed cards</h3>
+          <ol class="player__missed-list" id="missed-cards" data-testid="missed-cards"></ol>
+          <p class="player__no-missed-cards" id="no-missed-cards" data-testid="no-missed-cards" hidden data-i18n>Perfect score — nothing to review.</p>
+        </section>
+      </section>
+
+      <div class="player__review-scroll-overlay" id="review-scroll-overlay" hidden>
+        <button type="button" class="player__review-scroll-cue" id="review-scroll-cue" data-testid="review-scroll-cue" data-action="scroll-review" aria-controls="missed-cards" aria-label="Scroll down to see more missed cards" data-i18n-attrs="aria-label">
+          <span data-i18n>More cards below</span> <span aria-hidden="true">↓</span>
+        </button>
+      </div>
+
+      <p class="player__status" id="player-status" role="status" aria-live="polite"></p>
+
+      <!-- Swapping card content in place is silent for a screen reader, so each card is
+           announced here instead. The separate status region announces feedback
+           and only becomes visible for errors. -->
+      <p class="player__visually-hidden" id="card-announcer" role="status" aria-live="polite"></p>
+    </main>
+  </div>
+
+  <footer class="player__attribution">
+    <small><a href="https://github.com/sjquant/cram" data-i18n>Made with Cram</a></small>
+  </footer>
+
+  <!-- Render this template with render.py; examples/ contains the generated preview.
+       Injected JSON escapes every less-than character to keep inline scripts safe. -->
+  <script>window.__LOCALE__ = {"language": "ko", "messages": {"Cram player": "Cram \ud50c\ub808\uc774\uc5b4", "Loading deck\u2026": "\ub371 \ubd88\ub7ec\uc624\ub294 \uc911\u2026", "Open settings": "\uc124\uc815 \uc5f4\uae30", "Close settings": "\uc124\uc815 \ub2eb\uae30", "Settings": "\uc124\uc815", "Theme": "\ud14c\ub9c8", "System": "\uc2dc\uc2a4\ud15c", "Cram mode": "\uc9d1\uc911 \uc554\uae30 \ubaa8\ub4dc", "Requeue missed cards during this session.": "\uc774\ubc88 \ud559\uc2b5 \uc911 \ud2c0\ub9b0 \uce74\ub4dc\ub97c \ub2e4\uc2dc \ucd9c\uc81c\ud569\ub2c8\ub2e4.", "Study order": "\ud559\uc2b5 \uc21c\uc11c", "Original order": "\uc6d0\ubcf8", "Shuffled order": "\ubb34\uc791\uc704", "Shuffle": "\uce74\ub4dc \uc11e\uae30", "Restore original order": "\uc6d0\ub798 \uc21c\uc11c\ub85c", "This session could not be saved. Reloading may lose your place.": "\uc774\ubc88 \ud559\uc2b5\uc744 \uc800\uc7a5\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4. \uc0c8\ub85c\uace0\uce68\ud558\uba74 \ud559\uc2b5 \uc704\uce58\ub97c \uc783\uc744 \uc218 \uc788\uc2b5\ub2c8\ub2e4.", "Deck progress": "\ub371 \uc9c4\ud589 \uc0c1\ud669", "Card 0 of 0": "0 / 0\ubc88\uc9f8 \uce74\ub4dc", "Preparing card": "\uce74\ub4dc \uc900\ube44 \uc911", "Preparing your deck\u2026": "\ub371 \uc900\ube44 \uc911\u2026", "Results": "\uacb0\uacfc", "Session complete": "\ud559\uc2b5 \uc644\ub8cc", "0 correct \u00b7 Nothing to review": "\uc815\ub2f5 0\uac1c \u00b7 \ubcf5\uc2b5\ud560 \uce74\ub4dc \uc5c6\uc74c", "Score breakdown": "\uc810\uc218 \ub0b4\uc5ed", "0 correct": "\uc815\ub2f5 0\uac1c", "Nothing to review": "\ubcf5\uc2b5\ud560 \uce74\ub4dc \uc5c6\uc74c", "Retry missed cards": "\ud2c0\ub9b0 \uce74\ub4dc \ub2e4\uc2dc \ud480\uae30", "Reset progress": "\uc9c4\ud589 \uc0c1\ud669 \ucd08\uae30\ud654", "Review missed cards": "\ud2c0\ub9b0 \uce74\ub4dc \ubcf5\uc2b5", "Perfect score \u2014 nothing to review.": "\ubaa8\ub450 \ub9de\ud614\uc2b5\ub2c8\ub2e4 \u2014 \ubcf5\uc2b5\ud560 \uce74\ub4dc\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.", "Scroll down to see more missed cards": "\uc544\ub798\ub85c \uc2a4\ud06c\ub864\ud574 \ub098\uba38\uc9c0 \ud2c0\ub9b0 \uce74\ub4dc \ubcf4\uae30", "More cards below": "\uc544\ub798\uc5d0 \uce74\ub4dc \ub354 \uc788\uc74c", "Card navigation": "\uce74\ub4dc \ud0d0\uc0c9", "Previous card": "\uc774\uc804 \uce74\ub4dc", "\u2190 Previous": "\u2190 \uc774\uc804", "Next card": "\ub2e4\uc74c \uce74\ub4dc", "Skip \u2192": "\uac74\ub108\ub6f0\uae30 \u2192", "Next \u2192": "\ub2e4\uc74c \u2192", "See results \u2192": "\uacb0\uacfc \ubcf4\uae30 \u2192", "See results": "\uacb0\uacfc \ubcf4\uae30", "Skip to next card": "\ub2e4\uc74c \uce74\ub4dc\ub85c \uac74\ub108\ub6f0\uae30", "Made with Cram": "Cram\uc73c\ub85c \uc81c\uc791", "Use the arrow keys to move through the deck.": "\ubc29\ud5a5\ud0a4\ub85c \uce74\ub4dc\ub97c \uc774\ub3d9\ud558\uc138\uc694.", "Cram mode is unavailable during retry sessions": "\ub2e4\uc2dc \ud480\uae30 \uc911\uc5d0\ub294 \uc9d1\uc911 \uc554\uae30 \ubaa8\ub4dc\ub97c \uc0ac\uc6a9\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4", "Disable Cram mode": "\uc9d1\uc911 \uc554\uae30 \ubaa8\ub4dc \ub044\uae30", "Enable Cram mode": "\uc9d1\uc911 \uc554\uae30 \ubaa8\ub4dc \ucf1c\uae30", "Cram mode is unavailable during retry sessions.": "\ub2e4\uc2dc \ud480\uae30 \uc911\uc5d0\ub294 \uc9d1\uc911 \uc554\uae30 \ubaa8\ub4dc\ub97c \uc0ac\uc6a9\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.", "Cram mode enabled for this session.": "\uc774\ubc88 \ud559\uc2b5\uc5d0\uc11c \uc9d1\uc911 \uc554\uae30 \ubaa8\ub4dc\ub97c \ucf30\uc2b5\ub2c8\ub2e4.", "Cram mode disabled for this session.": "\uc774\ubc88 \ud559\uc2b5\uc5d0\uc11c \uc9d1\uc911 \uc554\uae30 \ubaa8\ub4dc\ub97c \uaed0\uc2b5\ub2c8\ub2e4.", "Cards shuffled for this session.": "\uc774\ubc88 \ud559\uc2b5\uc758 \uce74\ub4dc \uc21c\uc11c\ub97c \uc11e\uc5c8\uc2b5\ub2c8\ub2e4.", "Card order restored for this session.": "\uc774\ubc88 \ud559\uc2b5\uc758 \uce74\ub4dc \uc21c\uc11c\ub97c \uc6d0\ub798\ub300\ub85c \ub418\ub3cc\ub838\uc2b5\ub2c8\ub2e4.", "The page needs a deck with a title and at least one card.": "\uc81c\ubaa9\uacfc \uce74\ub4dc\uac00 \ud558\ub098 \uc774\uc0c1 \uc788\ub294 \ub371\uc774 \ud544\uc694\ud569\ub2c8\ub2e4.", "This card could not be rendered.": "\uce74\ub4dc\ub97c \ud45c\uc2dc\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.", "The card renderer failed.": "\uce74\ub4dc \ud45c\uc2dc \uc911 \uc624\ub958\uac00 \ubc1c\uc0dd\ud588\uc2b5\ub2c8\ub2e4.", "This card has no prompt.": "\uc9c8\ubb38\uc774 \uc5c6\ub294 \uce74\ub4dc\uc785\ub2c8\ub2e4.", "This card has no answer.": "\uc815\ub2f5\uc774 \uc5c6\ub294 \uce74\ub4dc\uc785\ub2c8\ub2e4.", "Show answer": "\uc815\ub2f5 \ubcf4\uae30", "Missed it": "\ubab0\ub790\uc5b4\uc694", "Knew it": "\uc54c\uc558\uc5b4\uc694", "Grade your recall": "\uae30\uc5b5 \uc5ec\ubd80 \ud3c9\uac00", "Optional hint": "\uc120\ud0dd \ud78c\ud2b8", "Answer actions": "\ub2f5\ubcc0 \ub3d9\uc791", "The grade could not be recorded.": "\ud3c9\uac00\ub97c \uae30\ub85d\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.", "Marked as known.": "\uc54c\uace0 \uc788\ub294 \uce74\ub4dc\ub85c \ud45c\uc2dc\ud588\uc2b5\ub2c8\ub2e4.", "Marked as missed.": "\ubaa8\ub974\ub294 \uce74\ub4dc\ub85c \ud45c\uc2dc\ud588\uc2b5\ub2c8\ub2e4.", "Choose an answer": "\uc815\ub2f5 \uc120\ud0dd", "This option has no text.": "\ub0b4\uc6a9\uc774 \uc5c6\ub294 \uc120\ud0dd\uc9c0\uc785\ub2c8\ub2e4.", "Check answer": "\uc815\ub2f5 \ud655\uc778", "Correct.": "\uc815\ub2f5\uc785\ub2c8\ub2e4.", "Incorrect.": "\uc624\ub2f5\uc785\ub2c8\ub2e4.", "Incorrect. The correct answer is: {answer}": "\uc624\ub2f5\uc785\ub2c8\ub2e4. \uc815\ub2f5: {answer}", "Answer selected. Check it when ready.": "\ub2f5\uc744 \uc120\ud0dd\ud588\uc2b5\ub2c8\ub2e4. \uc900\ube44\ub418\uba74 \uc815\ub2f5\uc744 \ud655\uc778\ud558\uc138\uc694.", "Blank {number}": "\ube48\uce78 {number}", "Check answers": "\uc815\ub2f5 \ud655\uc778", "Blank {number}: Correct.": "\ube48\uce78 {number}: \uc815\ub2f5\uc785\ub2c8\ub2e4.", "Blank {number}: Incorrect. Correct answer: {answer}": "\ube48\uce78 {number}: \uc624\ub2f5\uc785\ub2c8\ub2e4. \uc815\ub2f5: {answer}", "This card was previously marked incorrect.": "\uc774\uc804\uc5d0 \ud2c0\ub9b0 \uac83\uc73c\ub85c \uae30\ub85d\ub41c \uce74\ub4dc\uc785\ub2c8\ub2e4.", "Show hint": "\ud78c\ud2b8 \ubcf4\uae30", "The hint could not be recorded.": "\ud78c\ud2b8 \uc0ac\uc6a9\uc744 \uae30\ub85d\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.", "The \u201c{type}\u201d card renderer is not installed yet.": "\u201c{type}\u201d \uce74\ub4dc \ud45c\uc2dc \uae30\ub2a5\uc774 \uc544\uc9c1 \uc124\uce58\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4.", "Unable to load deck": "\ub371\uc744 \ubd88\ub7ec\uc62c \uc218 \uc5c6\uc2b5\ub2c8\ub2e4", "No cards loaded": "\ubd88\ub7ec\uc628 \uce74\ub4dc \uc5c6\uc74c", "Deck error": "\ub371 \uc624\ub958", "Card {position} of {total}": "{total}\uac1c \uc911 {position}\ubc88\uc9f8 \uce74\ub4dc", "Session complete. Score {score}/{total}.": "\ud559\uc2b5 \uc644\ub8cc. \uc810\uc218 {score}/{total}.", "{score} correct \u00b7 {missedCount} to review": "\uc815\ub2f5 {score}\uac1c \u00b7 \ubcf5\uc2b5 {missedCount}\uac1c", "All {total} correct \u00b7 Nothing to review": "{total}\uac1c \ubaa8\ub450 \uc815\ub2f5 \u00b7 \ubcf5\uc2b5\ud560 \uce74\ub4dc \uc5c6\uc74c", "{score} correct": "\uc815\ub2f5 {score}\uac1c", "{missedCount} to review": "\ubcf5\uc2b5 {missedCount}\uac1c", "Retry {count} missed card": {"one": "\ud2c0\ub9b0 \uce74\ub4dc {count}\uac1c \ub2e4\uc2dc \ud480\uae30", "other": "\ud2c0\ub9b0 \uce74\ub4dc {count}\uac1c \ub2e4\uc2dc \ud480\uae30"}, "Retrying {count} missed card.": {"one": "\ud2c0\ub9b0 \uce74\ub4dc {count}\uac1c\ub97c \ub2e4\uc2dc \ud489\ub2c8\ub2e4.", "other": "\ud2c0\ub9b0 \uce74\ub4dc {count}\uac1c\ub97c \ub2e4\uc2dc \ud489\ub2c8\ub2e4."}, "Session complete: score {score} of {total}": "\ud559\uc2b5 \uc644\ub8cc: {total}\uc810 \uc911 {score}\uc810", "Session complete: {score} of {total}": "\ud559\uc2b5 \uc644\ub8cc: {score}/{total}", "Nothing to retry.": "\ub2e4\uc2dc \ud480 \uce74\ub4dc\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.", "Needed a hint": "\ud78c\ud2b8\ub97c \uc0ac\uc6a9\ud588\uc5b4\uc694", "Answer:": "\uc815\ub2f5:", "Explanation:": "\ud574\uc124:", "Hint:": "\ud78c\ud2b8:", "Card {position} of {total}. {content}": "{total}\uac1c \uc911 {position}\ubc88\uc9f8 \uce74\ub4dc. {content}", "Progress could not be saved. Try again.": "\uc9c4\ud589 \uc0c1\ud669\uc744 \uc800\uc7a5\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \ub2e4\uc2dc \uc2dc\ub3c4\ud558\uc138\uc694.", "basic": "\uae30\ubcf8", "mcq": "\uac1d\uad00\uc2dd", "cloze": "\ube48\uce78 \ucc44\uc6b0\uae30", "unknown": "\uc54c \uc218 \uc5c6\uc74c", "Progress reset. Start again.": "\uc9c4\ud589 \uc0c1\ud669\uc744 \ucd08\uae30\ud654\ud588\uc2b5\ub2c8\ub2e4. \ub2e4\uc2dc \uc2dc\uc791\ud558\uc138\uc694.", "Progress reset for this session, but saved progress could not be cleared.": "\uc774\ubc88 \ud559\uc2b5\uc740 \ucd08\uae30\ud654\ud588\uc9c0\ub9cc \uc800\uc7a5\ub41c \uc9c4\ud589 \uc0c1\ud669\uc740 \uc9c0\uc6b0\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.", "Paper": "\ud398\uc774\ud37c", "Focus": "\ud3ec\ucee4\uc2a4", "Sprint": "\uc2a4\ud504\ub9b0\ud2b8", "Appearance": "\ud45c\uc2dc \ubc29\uc2dd", "Light": "\ub77c\uc774\ud2b8", "Dark": "\ub2e4\ud06c", "Single-letter shortcuts": "\ud55c \uae00\uc790 \ub2e8\ucd95\ud0a4", "A reveals answers; H reveals hints.": "A\ub294 \uc815\ub2f5\uc744, H\ub294 \ud78c\ud2b8\ub97c \ubcf4\uc5ec \uc90d\ub2c8\ub2e4."}};</script>
+  <script>window.__DECK__ = {"id": "japanese-vocab-ko", "title": "\uc77c\ubcf8\uc5b4 \uae30\ucd08 \ub2e8\uc5b4 (\ud55c\uad6d\uc5b4\ub85c \ubc30\uc6b0\ub294 \uc77c\ubcf8\uc5b4)", "source": "\uc77c\ubcf8\uc5b4 \ucd08\uae09 \ud559\uc2b5\uc790\ub97c \uc704\ud55c \uae30\ucd08 \uba85\uc0ac \uc5b4\ud718 \uc815\ub9ac", "cards": [{"id": "mizu-meaning", "type": "basic", "prompt": "\uc77c\ubcf8\uc5b4 \ub2e8\uc5b4 '\u6c34(\u307f\u305a)'\ub294 \ud55c\uad6d\uc5b4\ub85c \ubb34\uc2a8 \ub73b\uc778\uac00\uc694?", "answer": "\ubb3c", "hint": "\uc790\uc5f0\uc5d0\uc11c \ud750\ub974\uac70\ub098 \uace0\uc5ec \uc788\ub294 \ud22c\uba85\ud55c \uc561\uccb4\uc608\uc694."}, {"id": "hi-meaning", "type": "mcq", "prompt": "\uc77c\ubcf8\uc5b4 \ub2e8\uc5b4 '\u706b(\u3072)'\uc758 \ub73b\uc73c\ub85c \uc633\uc740 \uac83\uc740?", "answer": "\ubd88", "distractors": ["\ubb3c", "\ub098\ubb34", "\ubc14\ub78c"], "explanation": "'\u706b'\ub294 '\u706b\u4e8b(\u304b\u3058, \ud654\uc7ac)'\ucc98\ub7fc '\ubd88'\uacfc \uad00\ub828\ub41c \ub2e8\uc5b4\uc5d0 \uc790\uc8fc \uc4f0\uc5ec\uc694."}, {"id": "yama-reading", "type": "cloze", "prompt": "\uc0b0\uc744 \ub73b\ud558\ub294 \uc77c\ubcf8\uc5b4 '\u5c71'\uc740 \ud788\ub77c\uac00\ub098\ub85c {{\u3084\u307e}}\ub77c\uace0 \uc77d\uc2b5\ub2c8\ub2e4.", "explanation": "'\u5c71\u767b\u308a(\u3084\u307e\u306e\u307c\u308a, \ub4f1\uc0b0)'\ucc98\ub7fc '\u5c71'\uc740 \uae30\ucd08 \uc5b4\ud718\uc5d0\uc11c \uc790\uc8fc \ub4f1\uc7a5\ud574\uc694."}, {"id": "kawa-meaning", "type": "basic", "prompt": "\uc77c\ubcf8\uc5b4 \ub2e8\uc5b4 '\u5ddd(\u304b\u308f)'\uc758 \ub73b\uc740 \ubb34\uc5c7\uc778\uac00\uc694?", "answer": "\uac15 \ub610\ub294 \ud558\ucc9c"}, {"id": "ki-meaning", "type": "mcq", "prompt": "\uc77c\ubcf8\uc5b4 \ub2e8\uc5b4 '\u6728(\u304d)'\uc758 \ub73b\uc73c\ub85c \uc633\uc740 \uac83\uc740?", "answer": "\ub098\ubb34", "distractors": ["\uaf43", "\ud480", "\ub3cc"]}, {"id": "ame-reading", "type": "cloze", "prompt": "\ube44\ub97c \ub73b\ud558\ub294 \uc77c\ubcf8\uc5b4 '\u96e8'\ub294 \ud788\ub77c\uac00\ub098\ub85c {{\u3042\u3081}}\ub77c\uace0 \uc77d\uc2b5\ub2c8\ub2e4."}, {"id": "sora-meaning", "type": "basic", "prompt": "\uc77c\ubcf8\uc5b4 \ub2e8\uc5b4 '\u7a7a(\u305d\u3089)'\uc758 \ub73b\uc740 \ubb34\uc5c7\uc778\uac00\uc694?", "answer": "\ud558\ub298"}, {"id": "hana-meaning", "type": "mcq", "prompt": "\uc77c\ubcf8\uc5b4 \ub2e8\uc5b4 '\u82b1(\u306f\u306a)'\uc758 \ub73b\uc73c\ub85c \uc633\uc740 \uac83\uc740?", "answer": "\uaf43", "distractors": ["\ub098\ubb34", "\uc78e", "\uc5f4\ub9e4"]}, {"id": "neko-reading", "type": "cloze", "prompt": "\uace0\uc591\uc774\ub97c \ub73b\ud558\ub294 \uc77c\ubcf8\uc5b4 '\u732b'\ub294 \ud788\ub77c\uac00\ub098\ub85c {{\u306d\u3053}}\ub77c\uace0 \uc77d\uc2b5\ub2c8\ub2e4.", "hint": "\uac1c\ub97c \ub73b\ud558\ub294 '\u72ac(\u3044\u306c)'\uc640 \ud5f7\uac08\ub9ac\uc9c0 \uc54a\ub3c4\ub85d \uc8fc\uc758\ud558\uc138\uc694."}]};</script>
+  <script>
+    (() => {
+      "use strict";
+
+      const refs = {
+        player: document.getElementById("player"),
+        studyPanel: document.getElementById("study-panel"),
+        title: document.getElementById("deck-title"),
+        progress: document.getElementById("progress"),
+        progressLabel: document.getElementById("progress-label"),
+        progressPercent: document.getElementById("progress-percent"),
+        cardFrame: document.getElementById("card-frame"),
+        cardType: document.getElementById("card-type"),
+        cardPosition: document.getElementById("card-position"),
+        cardContent: document.getElementById("card-content"),
+        scoreScreen: document.getElementById("score-screen"),
+        scoreTitle: document.getElementById("score-title"),
+        scoreValue: document.getElementById("score-value"),
+        scoreSummary: document.getElementById("score-summary"),
+        scoreCorrectSegment: document.getElementById("score-correct-segment"),
+        scoreMissedSegment: document.getElementById("score-missed-segment"),
+        scoreCorrectLabel: document.getElementById("score-correct-label"),
+        scoreMissedLabel: document.getElementById("score-missed-label"),
+        reviewScrollOverlay: document.getElementById("review-scroll-overlay"),
+        reviewScrollCue: document.getElementById("review-scroll-cue"),
+        retryMissed: document.getElementById("retry-missed"),
+        missedCards: document.getElementById("missed-cards"),
+        noMissedCards: document.getElementById("no-missed-cards"),
+        navigation: document.querySelector(".player__navigation"),
+        previous: document.getElementById("previous-card"),
+        next: document.getElementById("next-card"),
+        settingsToggle: document.getElementById("settings-toggle"),
+        settingsPanel: document.getElementById("settings-panel"),
+        themeSelect: document.getElementById("theme-select"),
+        appearanceSelect: document.getElementById("appearance-select"),
+        cramModeToggle: document.getElementById("cram-mode-toggle"),
+        orderStatus: document.getElementById("order-status"),
+        restoreOrder: document.getElementById("restore-order"),
+        shortcutsToggle: document.getElementById("shortcuts-toggle"),
+        status: document.getElementById("player-status"),
+        announcer: document.getElementById("card-announcer")
+      };
+
+      const NAVIGATION_HINT = t("Use the arrow keys to move through the deck.");
+      const PROMPT_ID = "card-prompt";
+      const THEME_STORAGE_KEY = "cram:theme";
+      const APPEARANCE_STORAGE_KEY = "cram:appearance";
+      const SHORTCUTS_STORAGE_KEY = "cram:shortcuts:v1";
+      const REQUIRED_DRILL_STREAK = 2;
+
+      const cardTypes = Object.create(null);
+      const deckCardMaps = new WeakMap();
+      const state = {
+        deck: null,
+        // sessionCards is the mutable attempt queue; scoreCards stays unique so
+        // requeued attempts do not inflate the final score or review list.
+        sessionCards: [],
+        scoreCards: [],
+        isRetry: false,
+        cramMode: false,
+        shuffleMode: false,
+        shuffleSeed: null,
+        freshRound: false,
+        index: 0,
+        cleanup: () => {},
+        grades: Object.create(null),
+        hintsUsed: Object.create(null),
+        drillStreaks: Object.create(null),
+        drilledCards: Object.create(null),
+        freshAttempts: new Set(),
+        processedAttempts: new Set(),
+        persistenceWarning: ""
+      };
+
+      function initializeTheme() {
+        refs.themeSelect.value = document.documentElement.dataset.theme || "paper";
+        refs.appearanceSelect.value = document.documentElement.dataset.appearance || "";
+        updateCramModeToggle();
+      }
+
+      function initializeShortcuts() {
+        try {
+          refs.shortcutsToggle.checked = window.localStorage.getItem(SHORTCUTS_STORAGE_KEY) !== "off";
+        } catch {
+          // The setting remains available for this session without browser storage.
+        }
+      }
+
+      function setShortcutsPreference() {
+        try {
+          window.localStorage.setItem(SHORTCUTS_STORAGE_KEY, refs.shortcutsToggle.checked ? "on" : "off");
+        } catch {
+          // Keep the in-memory choice when browser storage is unavailable.
+        }
+        updateCardShortcuts();
+      }
+
+      function updateCardShortcuts() {
+        refs.cardContent.querySelectorAll("button[data-shortcut]").forEach((button) => {
+          if (refs.shortcutsToggle.checked) button.setAttribute("aria-keyshortcuts", button.dataset.shortcut);
+          else button.removeAttribute("aria-keyshortcuts");
+          button.querySelector("kbd").hidden = !refs.shortcutsToggle.checked;
+        });
+      }
+
+      function setAppearancePreference(preference) {
+        if (![...refs.appearanceSelect.options].some(option => option.value === preference)) return;
+        if (preference) document.documentElement.dataset.appearance = preference;
+        else document.documentElement.removeAttribute("data-appearance");
+        refs.appearanceSelect.value = preference;
+        try {
+          if (preference) window.localStorage.setItem(APPEARANCE_STORAGE_KEY, preference);
+          else window.localStorage.removeItem(APPEARANCE_STORAGE_KEY);
+        } catch {}
+      }
+
+      function setThemePreference(preference) {
+        if (![...refs.themeSelect.options].some(option => option.value === preference)) return;
+        if (preference) document.documentElement.dataset.theme = preference;
+        else document.documentElement.removeAttribute("data-theme");
+        refs.themeSelect.value = preference;
+        // Changing theme leaves the current card and unfinished input intact.
+        updateReviewScrollCue();
+        try {
+          if (preference) window.localStorage.setItem(THEME_STORAGE_KEY, preference);
+          else window.localStorage.removeItem(THEME_STORAGE_KEY);
+        } catch {
+          // The current session remains usable when preferences cannot be saved.
+        }
+      }
+
+      function toggleSettings() {
+        const shouldOpen = refs.settingsPanel.hidden;
+        setSettingsVisibility(shouldOpen);
+      }
+
+      function closeSettings() {
+        setSettingsVisibility(false);
+      }
+
+      function setSettingsVisibility(isOpen) {
+        refs.settingsPanel.hidden = !isOpen;
+        refs.settingsToggle.setAttribute("aria-expanded", String(isOpen));
+        const label = isOpen ? t("Close settings") : t("Open settings");
+        refs.settingsToggle.setAttribute("aria-label", label);
+        refs.settingsToggle.title = label;
+      }
+
+      function updateCramModeToggle() {
+        refs.cramModeToggle.checked = state.cramMode;
+        refs.cramModeToggle.disabled = state.isRetry;
+        refs.cramModeToggle.setAttribute(
+          "aria-label",
+          state.isRetry
+            ? t("Cram mode is unavailable during retry sessions")
+            : (state.cramMode ? t("Disable Cram mode") : t("Enable Cram mode"))
+        );
+      }
+
+      function updateShuffleToggle() {
+        refs.orderStatus.textContent = state.shuffleMode ? t("Shuffled order") : t("Original order");
+        refs.restoreOrder.hidden = !state.shuffleMode;
+      }
+
+      function setCramMode(enabled) {
+        if (state.isRetry) {
+          updateCramModeToggle();
+          setStatus(t("Cram mode is unavailable during retry sessions."));
+          return;
+        }
+        state.cramMode = Boolean(enabled);
+        saveSession();
+        updateCramModeToggle();
+        setStatus(state.cramMode
+          ? t("Cram mode enabled for this session.")
+          : t("Cram mode disabled for this session."));
+      }
+
+      function setShuffleMode(enabled) {
+        if (!state.deck) return;
+        state.shuffleMode = Boolean(enabled);
+        state.shuffleSeed = enabled ? crypto.getRandomValues(new Uint32Array(1))[0] : null;
+        updateShuffleToggle();
+        restartSessionForShuffle();
+        setStatus(enabled
+          ? t("Cards shuffled for this session.")
+          : t("Card order restored for this session."));
+      }
+
+      function restartSessionForShuffle() {
+        const sourceCards = state.isRetry ? state.scoreCards : state.deck.cards;
+        state.sessionCards = state.shuffleMode
+          ? shuffleCards(sourceCards)
+          : sourceCards.slice();
+        state.index = 0;
+        state.freshRound = true;
+        state.grades = Object.create(null);
+        state.hintsUsed = Object.create(null);
+        resetDrillState();
+        setViewState("ready");
+        renderCurrentCard();
+        closeSettings();
+        refs.cardFrame.focus();
+      }
+
+      function shuffleCards(cards) {
+        const shuffled = cards.slice();
+        let seed = state.shuffleSeed >>> 0;
+        for (let index = shuffled.length - 1; index > 0; index -= 1) {
+          seed = (seed + 0x6D2B79F5) | 0;
+          let random = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+          random ^= random + Math.imul(random ^ (random >>> 7), 61 | random);
+          const swapIndex = Math.floor(((random ^ (random >>> 14)) >>> 0) / 4294967296 * (index + 1));
+          [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+        }
+        return shuffled;
+      }
+
+      // Renderer options keep grade vocabulary, scoring, and navigation policy with the
+      // card type. A renderer may omit grade validation when its values are intentionally
+      // opaque; persistence then accepts non-empty strings.
+      function registerCardRenderer(
+        type,
+        renderer,
+        options = {}
+      ) {
+        if (typeof type !== "string" || !type.trim()) {
+          throw new TypeError("A card renderer needs a non-empty type.");
+        }
+        if (typeof renderer !== "function") {
+          throw new TypeError(`The renderer for ${type} must be a function.`);
+        }
+        if (!options || typeof options !== "object" || Array.isArray(options)) {
+          throw new TypeError(`The options for ${type} must be an object.`);
+        }
+        const {
+          gradeValidator = null,
+          positiveGradeValidator = null,
+          requiresGrade = false
+        } = options;
+        if (gradeValidator !== null && typeof gradeValidator !== "function") {
+          throw new TypeError(`The grade validator for ${type} must be a function.`);
+        }
+        if (positiveGradeValidator !== null && typeof positiveGradeValidator !== "function") {
+          throw new TypeError(`The positive grade validator for ${type} must be a function.`);
+        }
+        if (typeof requiresGrade !== "boolean") {
+          throw new TypeError(`The requiresGrade option for ${type} must be a boolean.`);
+        }
+
+        const previousCardType = cardTypes[type];
+        cardTypes[type] = Object.freeze({
+          renderer,
+          gradeValidator,
+          positiveGradeValidator,
+          requiresGrade
+        });
+
+        // A renderer can be loaded after a deck has already been selected. Re-run
+        // validation so grades read before its validator was available cannot leak into
+        // the renderer's state.
+        try {
+          if (state.deck) {
+            state.grades = sanitizeGrades(state.deck, state.grades) || Object.create(null);
+          }
+        } catch (error) {
+          if (previousCardType) cardTypes[type] = previousCardType;
+          else delete cardTypes[type];
+          throw error;
+        }
+
+        // A card type may be registered by a later, self-contained module. Repaint
+        // immediately if that module is loaded after the player has started.
+        if (state.deck && refs.player.dataset.state === "results") {
+          renderScoreScreen();
+        } else if (state.deck && state.sessionCards[state.index]?.type === type) {
+          renderCurrentCard();
+        }
+      }
+
+      function setDeck(deck) {
+        if (!isRenderableDeck(deck)) {
+          showDeckError(t("The page needs a deck with a title and at least one card."));
+          return;
+        }
+        state.deck = deck;
+        state.shuffleSeed = null;
+        state.freshRound = false;
+        state.sessionCards = deck.cards.slice();
+        state.scoreCards = deck.cards.slice();
+        state.isRetry = false;
+        state.cramMode = false;
+        state.shuffleMode = false;
+        updateCramModeToggle();
+        updateShuffleToggle();
+        state.index = 0;
+        state.persistenceWarning = "";
+        state.grades = progressStore.load(deck);
+        state.hintsUsed = Object.create(null);
+        resetDrillState();
+        seedPersistedAttemptGrades();
+        const view = restoreSession();
+        updateCramModeToggle();
+        updateShuffleToggle();
+        setViewState(view);
+        refs.title.textContent = deck.title;
+        if (view === "results") renderScoreScreen();
+        else renderCurrentCard();
+      }
+
+      function resetProgress() {
+        if (!state.deck) return;
+        const cleared = progressStore.reset(state.deck);
+        state.grades = Object.create(null);
+        state.hintsUsed = Object.create(null);
+        state.persistenceWarning = "";
+        state.sessionCards = state.deck.cards.slice();
+        state.scoreCards = state.deck.cards.slice();
+        state.isRetry = false;
+        state.cramMode = false;
+        state.shuffleMode = false;
+        state.shuffleSeed = null;
+        state.freshRound = false;
+        updateCramModeToggle();
+        updateShuffleToggle();
+        state.index = 0;
+        resetDrillState();
+        seedPersistedAttemptGrades();
+        setViewState("ready");
+        renderCurrentCard();
+        refs.cardFrame.focus();
+        setStatus(cleared
+          ? t("Progress reset. Start again.")
+          : t("Progress reset for this session, but saved progress could not be cleared."), !cleared);
+      }
+
+      function moveCard(delta) {
+        if (!state.deck || !state.sessionCards.length || refs.player.dataset.state === "results") return;
+        if (delta > 0) {
+          processCurrentAttempt();
+          if (state.index === state.sessionCards.length - 1) {
+            showScoreScreen();
+            return;
+          }
+        }
+        const nextIndex = Math.max(0, Math.min(state.sessionCards.length - 1, state.index + delta));
+        if (nextIndex === state.index) return;
+        state.index = nextIndex;
+        renderCurrentCard();
+        // Long cards use page scrolling; each new question starts back in view.
+        if (refs.cardFrame.getBoundingClientRect().top < 0) {
+          refs.cardFrame.scrollIntoView({ block: "start" });
+        }
+      }
+
+      function processCurrentAttempt() {
+        if (state.isRetry || !state.cramMode) return;
+        const card = state.sessionCards[state.index];
+        const isFreshAttempt = state.freshAttempts.has(state.index);
+        const cardType = card && cardTypes[card.type];
+        // A fresh duplicate has no answer until its renderer records one. An
+        // initial card with a stored grade is seeded as already processed below,
+        // so persisted D1 grades do not silently start D3 drilling.
+        const grade = card && (isFreshAttempt ? undefined : state.grades[card.id]);
+        // Opaque custom grades have no mastery semantics, so preserve their
+        // one-pass behavior instead of treating every grade as a miss forever.
+        if (
+          !card ||
+          !grade ||
+          !cardType ||
+          typeof cardType.positiveGradeValidator !== "function" ||
+          state.processedAttempts.has(state.index)
+        ) return;
+        // Later grades belong to later attempts. Revisiting this queue entry
+        // must not process it again unless the learner explicitly re-answers it.
+        state.processedAttempts.add(state.index);
+
+        if (isPositiveGrade(card, grade)) {
+          if (!state.drilledCards[card.id]) return;
+          const streak = (state.drillStreaks[card.id] || 0) + 1;
+          state.drillStreaks[card.id] = streak;
+          if (streak < REQUIRED_DRILL_STREAK) appendDrillCard(card);
+          return;
+        }
+
+        state.drilledCards[card.id] = true;
+        state.drillStreaks[card.id] = 0;
+        appendDrillCard(card);
+      }
+
+      function appendDrillCard(card) {
+        state.sessionCards.push(card);
+        state.freshAttempts.add(state.sessionCards.length - 1);
+      }
+
+      function resetDrillState() {
+        state.drillStreaks = Object.create(null);
+        state.drilledCards = Object.create(null);
+        state.freshAttempts = new Set();
+        state.processedAttempts = new Set();
+      }
+
+      function seedPersistedAttemptGrades() {
+        // Stored grades restore the existing player UI but do not count as a new
+        // answer in this sitting. A learner can still re-answer the card: recordGrade
+        // clears this marker for the current queue entry first.
+        state.sessionCards.forEach((card, index) => {
+          const grade = state.grades[card.id];
+          if (grade) state.processedAttempts.add(index);
+        });
+      }
+
+      function renderCurrentCard() {
+        if (!state.deck) return;
+        state.cleanup();
+        state.cleanup = () => {};
+        state.persistenceWarning = "";
+        const card = state.sessionCards[state.index];
+        const type = typeof card.type === "string" && card.type.trim() ? card.type : "unknown";
+        const cardType = cardTypes[type];
+        const renderer = cardType ? cardType.renderer : renderUnsupportedCard;
+
+        refs.cardFrame.classList.remove("player__card--empty");
+        refs.cardFrame.dataset.type = type;
+        const typeLabels = { basic: t("basic"), mcq: t("mcq"), cloze: t("cloze"), unknown: t("unknown") };
+        refs.cardType.textContent = Object.hasOwn(typeLabels, type) ? typeLabels[type] : type;
+        refs.cardContent.replaceChildren();
+        refs.cardFrame.scrollTop = 0;
+        refs.cardContent.scrollTop = 0;
+        // Drops any error left by the card we navigated away from. Set before the
+        // renderer runs, so a renderer that writes its own status keeps it.
+        setStatus(NAVIGATION_HINT);
+        try {
+          const result = renderer(rendererContext(card));
+          const node = result && result.node ? result.node : result;
+          if (!(node instanceof Node)) {
+            throw new TypeError(`The ${type} renderer did not return a DOM node.`);
+          }
+          refs.cardContent.replaceChildren(node);
+          if (result && typeof result.onMount === "function") {
+            const cleanup = result.onMount(rendererContext(card));
+            if (typeof cleanup === "function") state.cleanup = cleanup;
+          }
+        } catch (error) {
+          refs.cardContent.replaceChildren(createPromptElement(t("This card could not be rendered.")));
+          setStatus(error instanceof Error ? error.message : t("The card renderer failed."), true);
+        }
+        updateCardShortcuts();
+        updateProgress();
+        announceCard();
+        saveSession();
+      }
+
+      function rendererContext(card) {
+        return {
+          card,
+          index: state.index,
+          total: state.sessionCards.length,
+          createElement,
+          createPromptElement,
+          setStatus,
+          player: rendererPlayer
+        };
+      }
+
+      // This card type's own grade vocabulary — opaque to the shell (see
+      // recordGrade above), meaningful only within this renderer.
+      const BASIC_GRADES = Object.freeze({ KNOWN: "known", MISSED: "missed" });
+
+      function renderBasicCard({ card, player, createElement, createPromptElement, setStatus }) {
+        const fragment = document.createDocumentFragment();
+        fragment.append(createPromptElement(card.prompt || t("This card has no prompt.")));
+        const hint = createHintControls(card, player, createElement, setStatus);
+
+        const answer = createElement("p", "basic__answer", card.answer || t("This card has no answer."));
+        answer.dataset.testid = "card-answer";
+        answer.tabIndex = -1;
+        const answerSection = createElement("div", "basic__answer-section");
+        answerSection.hidden = true;
+        answerSection.append(createElement("span", "basic__answer-label", t("Answer:")), answer);
+        fragment.append(answerSection);
+
+        const explanation = card.explanation
+          ? createElement("p", "basic__explanation", card.explanation)
+          : null;
+        if (explanation) answerSection.append(explanation);
+
+        const reveal = createElement("button", "basic__reveal-button player__primary-action", t("Show answer"));
+        reveal.type = "button";
+        reveal.dataset.testid = "reveal-answer";
+        reveal.setAttribute("aria-expanded", "false");
+        reveal.setAttribute("aria-keyshortcuts", "A");
+        appendShortcutLabel(reveal, "A");
+
+        const missed = createGradeButton(BASIC_GRADES.MISSED, t("Missed it"));
+        const known = createGradeButton(BASIC_GRADES.KNOWN, t("Knew it"));
+
+        const grading = createElement("div", "basic__grading-buttons");
+        grading.dataset.testid = "grading-buttons";
+        grading.setAttribute("role", "group");
+        grading.setAttribute("aria-label", t("Grade your recall"));
+        grading.hidden = true;
+        grading.append(missed, known);
+
+        const actionRail = createElement("div", "player__action-rail");
+        const supportActions = createActionGroup(createElement, "player__support-actions", t("Optional hint"));
+        if (hint) {
+          supportActions.append(hint);
+          actionRail.append(supportActions);
+        }
+        const responseActions = createActionGroup(createElement, "player__response-actions", t("Answer actions"));
+        responseActions.append(reveal, grading);
+        actionRail.append(responseActions);
+        fragment.append(actionRail);
+
+        function revealAnswer(shouldFocus = false) {
+          answerSection.hidden = false;
+          supportActions.remove();
+          reveal.hidden = true;
+          reveal.setAttribute("aria-expanded", "true");
+          grading.hidden = false;
+          if (shouldFocus) {
+            focusCardFeedback(answer, answerSection);
+          }
+        }
+
+        // Pure UI update, safe to call while restoring a prior grade on mount
+        // (unlike handleGradeClick, it never re-records or touches setStatus,
+        // so revisiting a graded card doesn't stomp the navigation hint).
+        function applyGradeUI(grade) {
+          known.setAttribute("aria-pressed", String(grade === BASIC_GRADES.KNOWN));
+          missed.setAttribute("aria-pressed", String(grade === BASIC_GRADES.MISSED));
+        }
+
+        function handleGradeClick(grade) {
+          try {
+            player.recordGrade(card.id, grade);
+          } catch (error) {
+            setStatus(error instanceof Error ? error.message : t("The grade could not be recorded."), true);
+            return;
+          }
+          applyGradeUI(grade);
+          setStatus(grade === BASIC_GRADES.KNOWN ? t("Marked as known.") : t("Marked as missed."));
+        }
+
+        reveal.addEventListener("click", () => revealAnswer(true));
+        missed.addEventListener("click", () => handleGradeClick(BASIC_GRADES.MISSED));
+        known.addEventListener("click", () => handleGradeClick(BASIC_GRADES.KNOWN));
+
+        const existingGrade = player.getGrade(card.id);
+        if (existingGrade) {
+          revealAnswer();
+          applyGradeUI(existingGrade);
+        }
+
+        return fragment;
+
+        function createGradeButton(grade, label) {
+          const button = createElement("button", "basic__grade-button", label);
+          button.type = "button";
+          button.dataset.testid = `grade-${grade}`;
+          button.setAttribute("aria-pressed", "false");
+          return button;
+        }
+      }
+
+      const MCQ_GRADES = Object.freeze({ CORRECT: "correct", INCORRECT: "incorrect" });
+
+      function renderMcqCard({ card, player, createElement, createPromptElement, setStatus }) {
+        const fragment = document.createDocumentFragment();
+        fragment.append(createPromptElement(card.prompt || t("This card has no prompt.")));
+        const hint = createHintControls(card, player, createElement, setStatus);
+
+        const answer = typeof card.answer === "string" && card.answer
+          ? card.answer
+          : t("This card has no answer.");
+        const choices = [answer, ...(Array.isArray(card.distractors) ? card.distractors : [])];
+
+        // Fisher-Yates makes every option equally likely to occupy each position.
+        for (let index = choices.length - 1; index > 0; index -= 1) {
+          const swapIndex = Math.floor(Math.random() * (index + 1));
+          [choices[index], choices[swapIndex]] = [choices[swapIndex], choices[index]];
+        }
+
+        const options = createElement("div", "mcq__options");
+        options.dataset.testid = "mcq-options";
+        options.setAttribute("role", "group");
+        options.setAttribute("aria-label", t("Choose an answer"));
+        const optionButtons = [];
+
+        choices.forEach((choice) => {
+          const button = createElement("button", "mcq__option", choice || t("This option has no text."));
+          button.type = "button";
+          button.dataset.testid = "mcq-option";
+          button.setAttribute("aria-pressed", "false");
+          optionButtons.push({ button, choice });
+          options.append(button);
+        });
+
+        const checkAnswer = createElement("button", "mcq__check-button player__primary-action", t("Check answer"));
+        checkAnswer.type = "button";
+        checkAnswer.dataset.testid = "mcq-check-answer";
+        checkAnswer.hidden = true;
+        checkAnswer.disabled = true;
+
+        const feedback = createElement("p", "mcq__feedback");
+        feedback.dataset.testid = "mcq-feedback";
+        feedback.tabIndex = -1;
+        feedback.setAttribute("role", "status");
+        feedback.hidden = true;
+
+        const explanationText = typeof card.explanation === "string" ? card.explanation : "";
+        const explanation = explanationText
+          ? createElement("p", "mcq__explanation")
+          : null;
+        if (explanation) {
+          explanation.dataset.testid = "mcq-explanation";
+          explanation.hidden = true;
+        }
+
+        const response = createElement("div", "mcq__response");
+        response.append(checkAnswer);
+        const actionRail = createElement("div", "player__action-rail");
+        if (hint) {
+          const supportActions = createActionGroup(createElement, "player__support-actions", t("Optional hint"));
+          supportActions.append(hint);
+          actionRail.append(supportActions);
+        }
+        response.setAttribute("role", "group");
+        response.setAttribute("aria-label", t("Answer actions"));
+        actionRail.append(response);
+        fragment.append(options, actionRail, feedback);
+        if (explanation) fragment.append(explanation);
+
+        let selected = null;
+
+        function applySelection(selection) {
+          selected = selection;
+          const hasSelection = selection !== null;
+          optionButtons.forEach(({ button }) => {
+            button.setAttribute("aria-pressed", String(hasSelection && button === selection.button));
+          });
+          checkAnswer.hidden = !hasSelection;
+          checkAnswer.disabled = !hasSelection;
+        }
+
+        function applyAnsweredUI(grade, selectedButton = null) {
+          const isCorrect = grade === MCQ_GRADES.CORRECT;
+          optionButtons.forEach(({ button, choice }) => {
+            button.disabled = true;
+            button.setAttribute("aria-pressed", String(button === selectedButton));
+            button.classList.toggle("mcq__option--correct", choice === answer);
+            button.classList.toggle("mcq__option--incorrect", button === selectedButton && !isCorrect);
+          });
+          feedback.classList.toggle("mcq__feedback--correct", isCorrect);
+          feedback.classList.toggle("mcq__feedback--incorrect", !isCorrect);
+          feedback.dataset.result = grade;
+          feedback.textContent = isCorrect
+            ? t("Correct.")
+            : t("Incorrect. The correct answer is: {answer}", { answer });
+          feedback.hidden = false;
+          if (explanation) {
+            explanation.textContent = explanationText;
+            explanation.hidden = false;
+          }
+          checkAnswer.hidden = true;
+          checkAnswer.disabled = true;
+          actionRail.remove();
+        }
+
+        function handleOptionClick(selectedButton, selectedChoice) {
+          applySelection({ button: selectedButton, choice: selectedChoice });
+          setStatus(t("Answer selected. Check it when ready."));
+        }
+
+        function handleCheckAnswer() {
+          if (!selected) return;
+          const grade = selected.choice === answer ? MCQ_GRADES.CORRECT : MCQ_GRADES.INCORRECT;
+          try {
+            player.recordGrade(card.id, grade);
+          } catch (error) {
+            setStatus(error instanceof Error ? error.message : t("The grade could not be recorded."), true);
+            return;
+          }
+          applyAnsweredUI(grade, selected.button);
+          focusCardFeedback(feedback);
+          setStatus(grade === MCQ_GRADES.CORRECT ? t("Correct.") : t("Incorrect."));
+        }
+
+        optionButtons.forEach(({ button, choice }) => {
+          button.addEventListener("click", () => handleOptionClick(button, choice));
+        });
+        checkAnswer.addEventListener("click", handleCheckAnswer);
+
+        const existingGrade = player.getGrade(card.id);
+        if (existingGrade === MCQ_GRADES.CORRECT || existingGrade === MCQ_GRADES.INCORRECT) {
+          applyAnsweredUI(existingGrade);
+        }
+
+        return fragment;
+      }
+
+      const CLOZE_GRADES = Object.freeze({ CORRECT: "correct", INCORRECT: "incorrect" });
+
+      function renderClozeCard({ card, player, createElement, createPromptElement, setStatus }) {
+        const fragment = document.createDocumentFragment();
+        const prompt = createPromptElement("");
+        const blanks = [];
+        const promptText = typeof card.prompt === "string" ? card.prompt : "";
+        const blankPattern = /\{\{([^{}]*)\}\}/g;
+        let cursor = 0;
+        let match;
+
+        while ((match = blankPattern.exec(promptText)) !== null) {
+          prompt.append(document.createTextNode(promptText.slice(cursor, match.index)));
+
+          const answers = match[1]
+            .split("|")
+            .map((answer) => answer.trim())
+            .filter(Boolean);
+          const input = createElement("input", "cloze__input");
+          input.type = "text";
+          input.dataset.testid = "cloze-input";
+          input.dataset.blankIndex = String(blanks.length);
+          input.setAttribute("aria-label", t("Blank {number}", { number: blanks.length + 1 }));
+          input.autocomplete = "off";
+          input.spellcheck = false;
+          prompt.append(input);
+          blanks.push({ answers, input });
+          cursor = blankPattern.lastIndex;
+        }
+        prompt.append(document.createTextNode(promptText.slice(cursor)));
+        fragment.append(prompt);
+        const hint = createHintControls(card, player, createElement, setStatus);
+
+        const checkAnswer = createElement("button", "cloze__check-button player__primary-action", t("Check answers"));
+        checkAnswer.type = "button";
+        checkAnswer.dataset.testid = "cloze-check-answer";
+
+        const feedback = createElement("div", "cloze__feedback");
+        feedback.dataset.testid = "cloze-feedback";
+        feedback.tabIndex = -1;
+        feedback.setAttribute("role", "status");
+        feedback.hidden = true;
+        const feedbackSummary = createElement("p", "cloze__feedback-summary");
+        feedbackSummary.dataset.testid = "cloze-feedback-summary";
+        feedbackSummary.hidden = true;
+        feedback.append(feedbackSummary);
+        const feedbackItems = blanks.map((_, index) => {
+          const item = createElement("p", "cloze__blank-feedback");
+          item.dataset.testid = "cloze-blank-feedback";
+          item.dataset.blankIndex = String(index);
+          feedback.append(item);
+          return item;
+        });
+
+        const explanationText = typeof card.explanation === "string" ? card.explanation : "";
+        const explanation = explanationText
+          ? createElement("p", "cloze__explanation")
+          : null;
+        if (explanation) {
+          explanation.dataset.testid = "cloze-explanation";
+          explanation.hidden = true;
+        }
+
+        const actionRail = createElement("div", "player__action-rail");
+        if (hint) {
+          const supportActions = createActionGroup(createElement, "player__support-actions", t("Optional hint"));
+          supportActions.append(hint);
+          actionRail.append(supportActions);
+        }
+        const responseActions = createActionGroup(createElement, "player__response-actions", t("Answer actions"));
+        responseActions.append(checkAnswer);
+        actionRail.append(responseActions);
+        fragment.append(actionRail, feedback);
+        if (explanation) fragment.append(explanation);
+
+        function handleCheckAnswer() {
+          const results = blanks.map(checkBlank);
+          const grade = results.every(Boolean)
+            ? CLOZE_GRADES.CORRECT
+            : CLOZE_GRADES.INCORRECT;
+          try {
+            player.recordGrade(card.id, grade);
+          } catch (error) {
+            setStatus(error instanceof Error ? error.message : t("The grade could not be recorded."), true);
+            return;
+          }
+          applyAnsweredUI(grade, results);
+          focusCardFeedback(feedback);
+          setStatus(grade === CLOZE_GRADES.CORRECT ? t("Correct.") : t("Incorrect."));
+        }
+
+        function checkBlank(blank) {
+          const submitted = normalizeAnswer(blank.input.value);
+          return blank.answers.some((answer) => normalizeAnswer(answer) === submitted);
+        }
+
+        function normalizeAnswer(answer) {
+          return answer.trim().toLowerCase();
+        }
+
+        function applyAnsweredUI(grade, results = null) {
+          const isCorrect = grade === CLOZE_GRADES.CORRECT;
+          feedback.classList.toggle("cloze__feedback--correct", isCorrect);
+          feedback.classList.toggle("cloze__feedback--incorrect", !isCorrect);
+          feedback.dataset.result = grade;
+          if (results) {
+            feedbackSummary.hidden = true;
+            blanks.forEach((blank, index) => {
+              const blankCorrect = results[index];
+              blank.input.disabled = true;
+              blank.input.classList.toggle("cloze__input--correct", blankCorrect);
+              blank.input.classList.toggle("cloze__input--incorrect", !blankCorrect);
+              blank.input.dataset.result = blankCorrect
+                ? CLOZE_GRADES.CORRECT
+                : CLOZE_GRADES.INCORRECT;
+              blank.input.setAttribute("aria-invalid", String(!blankCorrect));
+              feedbackItems[index].id = `blank-feedback-${index}`;
+              blank.input.setAttribute("aria-describedby", feedbackItems[index].id);
+              feedbackItems[index].hidden = false;
+              feedbackItems[index].classList.toggle("cloze__blank-feedback--correct", blankCorrect);
+              feedbackItems[index].classList.toggle("cloze__blank-feedback--incorrect", !blankCorrect);
+              feedbackItems[index].dataset.result = blankCorrect
+                ? CLOZE_GRADES.CORRECT
+                : CLOZE_GRADES.INCORRECT;
+              feedbackItems[index].textContent = blankCorrect
+                ? t("Blank {number}: Correct.", { number: index + 1 })
+                : t("Blank {number}: Incorrect. Correct answer: {answer}", { number: index + 1, answer: blank.answers.join(" / ") });
+            });
+          } else {
+            feedbackSummary.hidden = false;
+            feedbackSummary.textContent = isCorrect
+              ? t("Correct.")
+              : t("This card was previously marked incorrect.");
+            blanks.forEach((blank, index) => {
+              blank.input.disabled = true;
+              blank.input.classList.remove("cloze__input--correct", "cloze__input--incorrect");
+              blank.input.removeAttribute("data-result");
+              blank.input.removeAttribute("aria-invalid");
+              blank.input.removeAttribute("aria-describedby");
+              feedbackItems[index].hidden = true;
+              feedbackItems[index].classList.remove(
+                "cloze__blank-feedback--correct",
+                "cloze__blank-feedback--incorrect"
+              );
+              feedbackItems[index].removeAttribute("data-result");
+              feedbackItems[index].textContent = "";
+            });
+          }
+          feedback.hidden = false;
+          checkAnswer.hidden = true;
+          checkAnswer.disabled = true;
+          actionRail.remove();
+          if (explanation) {
+            explanation.textContent = explanationText;
+            explanation.hidden = false;
+          }
+        }
+
+        checkAnswer.addEventListener("click", handleCheckAnswer);
+
+        const existingGrade = player.getGrade(card.id);
+        if (existingGrade === CLOZE_GRADES.CORRECT || existingGrade === CLOZE_GRADES.INCORRECT) {
+          applyAnsweredUI(existingGrade);
+        }
+
+        return fragment;
+      }
+
+      function focusCardFeedback(element, readingArea = element) {
+        element.tabIndex = -1;
+        element.focus({ preventScroll: true });
+        const panel = refs.cardContent;
+        const bounds = readingArea.getBoundingClientRect();
+        const panelBounds = panel.getBoundingClientRect();
+        const scrollsInside = panel.scrollHeight > panel.clientHeight && getComputedStyle(panel).overflowY === "auto";
+        const top = scrollsInside ? Math.max(0, panelBounds.top) : 0;
+        const viewportBottom = refs.navigation.hidden
+          ? window.innerHeight
+          : Math.min(window.innerHeight, refs.navigation.getBoundingClientRect().top);
+        const bottom = scrollsInside ? Math.min(viewportBottom, panelBounds.bottom) : viewportBottom;
+        // Keep nearby questions visible; only move when the result falls outside the reading area.
+        if (bounds.top < top || bounds.bottom > bottom) {
+          if (scrollsInside) panel.scrollTop += bounds.top - panelBounds.top;
+          else readingArea.scrollIntoView({ block: "start" });
+        }
+      }
+
+      function createHintControls(card, player, createElement, setStatus) {
+        const hintText = typeof card.hint === "string" && card.hint.trim()
+          ? card.hint
+          : "";
+        if (!hintText) return null;
+
+        const fragment = document.createDocumentFragment();
+        const hint = createElement("p", "player__hint", hintText);
+        hint.dataset.testid = "card-hint";
+        hint.tabIndex = -1;
+        hint.hidden = true;
+
+        const reveal = createElement("button", "player__hint-button", t("Show hint"));
+        reveal.type = "button";
+        reveal.dataset.testid = "show-hint";
+        reveal.setAttribute("aria-expanded", "false");
+        reveal.setAttribute("aria-keyshortcuts", "H");
+        appendShortcutLabel(reveal, "H");
+
+        function applyHintUI() {
+          hint.hidden = false;
+          reveal.hidden = true;
+          reveal.setAttribute("aria-expanded", "true");
+        }
+
+        function handleHintClick() {
+          try {
+            player.recordHintUsed(card.id);
+          } catch (error) {
+            setStatus(error instanceof Error ? error.message : t("The hint could not be recorded."), true);
+            return;
+          }
+          applyHintUI();
+          hint.focus();
+        }
+
+        reveal.addEventListener("click", handleHintClick);
+        if (player.getHintUsed(card.id)) applyHintUI();
+        fragment.append(hint, reveal);
+        return fragment;
+      }
+
+      function appendShortcutLabel(button, shortcut) {
+        button.dataset.shortcut = shortcut;
+        const label = createElement("kbd", "player__shortcut", shortcut);
+        label.setAttribute("aria-hidden", "true");
+        button.append(label);
+      }
+
+      function createActionGroup(createElement, className, label) {
+        const group = createElement("div", className);
+        group.setAttribute("role", "group");
+        group.setAttribute("aria-label", label);
+        return group;
+      }
+
+      function renderPromptCard({ card }) {
+        const fragment = document.createDocumentFragment();
+        fragment.append(createPromptElement(card.prompt || t("This card has no prompt.")));
+        return fragment;
+      }
+
+      function renderUnsupportedCard({ card }) {
+        const fragment = document.createDocumentFragment();
+        fragment.append(createPromptElement(card.prompt || t("This card has no prompt.")));
+        fragment.append(createElement(
+          "p",
+          "player__unsupported-card",
+          t("The “{type}” card renderer is not installed yet.", { type: card.type || t("unknown") })
+        ));
+        return fragment;
+      }
+
+      // Grades are keyed by card id rather than index, so they survive deck
+      // navigation and stay meaningful to a later score screen (B3) even if
+      // cards are ever reordered. Each renderer defines and interprets its own grade
+      // vocabulary; persistence restores only grades that belong to the current deck
+      // and pass the registered renderer validator.
+      function recordGrade(cardId, grade) {
+        if (typeof cardId !== "string" || !cardId) {
+          throw new TypeError("A grade needs a card id.");
+        }
+        if (typeof grade !== "string" || !grade) {
+          throw new TypeError("A grade needs a non-empty value.");
+        }
+        if (state.deck) {
+          const card = state.deck.cards.find((candidate) => candidate && candidate.id === cardId);
+          if (!card) throw new Error("That card is not in the current deck.");
+          if (!isValidStoredGrade(card, grade)) {
+            throw new Error(`The grade is not valid for the ${card.type || "unknown"} card.`);
+          }
+        }
+        state.grades[cardId] = grade;
+        const currentCard = state.sessionCards[state.index];
+        if (currentCard && currentCard.id === cardId) {
+          state.freshAttempts.delete(state.index);
+          // A repeat click is an explicit answer for this sitting, even when it
+          // matches a grade restored from storage or a prior attempt.
+          state.processedAttempts.delete(state.index);
+        }
+        if (state.deck) {
+          const persisted = progressStore.saveGrade(state.deck, { [cardId]: grade });
+          if (persisted) {
+            state.persistenceWarning = "";
+          } else {
+            state.persistenceWarning = t("Progress could not be saved. Try again.");
+            setStatus(state.persistenceWarning, true);
+          }
+          updateProgress();
+          saveSession();
+          return persisted;
+        }
+        return true;
+      }
+
+      function getGrade(cardId) {
+        return state.grades[cardId];
+      }
+
+      function recordHintUsed(cardId) {
+        if (typeof cardId !== "string" || !cardId) {
+          throw new TypeError("A hint needs a card id.");
+        }
+        if (state.deck) {
+          const card = state.deck.cards.find((candidate) => candidate && candidate.id === cardId);
+          if (!card) throw new Error("That card is not in the current deck.");
+          if (typeof card.hint !== "string" || !card.hint.trim()) {
+            throw new Error("That card does not have a hint.");
+          }
+        }
+        state.hintsUsed[cardId] = true;
+        saveSession();
+        return true;
+      }
+
+      function getHintUsed(cardId) {
+        return Boolean(state.hintsUsed[cardId]);
+      }
+
+      // Renderers see fresh controls for adaptive duplicates and D2 retry cards,
+      // while the public grade API and score calculations retain the persisted value.
+      function getRendererGrade(cardId) {
+        const grade = getGrade(cardId);
+        const card = state.sessionCards[state.index];
+        if (!card || card.id !== cardId) return grade;
+        if (state.freshAttempts.has(state.index)) return undefined;
+        if (!state.isRetry) return grade;
+        return isPositiveGrade(card, grade) ? grade : undefined;
+      }
+
+      // Renderers can grade their own card, track hint use, and restore those values,
+      // but they cannot replace the active deck, mutate the registry, or inspect shell
+      // state.
+      const rendererPlayer = Object.freeze({
+        recordGrade,
+        getGrade: getRendererGrade,
+        recordHintUsed,
+        getHintUsed
+      });
+
+      function showDeckError(message) {
+        state.cleanup();
+        state.cleanup = () => {};
+        state.deck = null;
+        state.sessionCards = [];
+        state.scoreCards = [];
+        state.isRetry = false;
+        state.cramMode = false;
+        state.shuffleMode = false;
+        updateCramModeToggle();
+        updateShuffleToggle();
+        resetDrillState();
+        setViewState("error");
+        state.hintsUsed = Object.create(null);
+        refs.title.textContent = t("Unable to load deck");
+        refs.progress.max = 1;
+        refs.progress.value = 0;
+        refs.progress.setAttribute("aria-label", t("No cards loaded"));
+        refs.progressLabel.textContent = t("No cards loaded");
+        refs.progressPercent.textContent = "0%";
+        refs.cardType.textContent = t("Deck error");
+        refs.cardPosition.textContent = "—";
+        refs.cardContent.replaceChildren(createPromptElement(message));
+        refs.cardFrame.classList.add("player__card--empty");
+        const focused = document.activeElement;
+        refs.previous.disabled = true;
+        refs.next.disabled = true;
+        refs.next.classList.remove("player__next-button--skip");
+        refs.next.textContent = t("Next →");
+        refs.next.setAttribute("aria-label", t("Next card"));
+        restoreNavigationFocus(focused);
+        setStatus(message, true);
+      }
+
+      function setStatus(message, isError = false) {
+        let text = message || "";
+        if (state.persistenceWarning && !isError) {
+          text = state.persistenceWarning;
+          isError = true;
+        }
+        // Rewriting a live region re-announces it, so an unchanged hint stays untouched
+        // rather than repeating itself on every card change.
+        if (refs.status.textContent !== text) refs.status.textContent = text;
+        refs.status.classList.toggle("player__status--error", Boolean(isError));
+      }
+
+      function updateProgress() {
+        const total = state.sessionCards.length;
+        const position = state.index + 1;
+        const percent = Math.round((position / total) * 100);
+        refs.progress.max = total;
+        refs.progress.value = position;
+        refs.progress.setAttribute("aria-label", t("Card {position} of {total}", { position, total }));
+        refs.progressLabel.textContent = t("Card {position} of {total}", { position, total });
+        refs.progressPercent.textContent = `${percent}%`;
+        const width = String(total).length;
+        refs.cardPosition.textContent =
+          `${String(position).padStart(width, "0")}/${total}`;
+        const focused = document.activeElement;
+        refs.previous.disabled = state.index === 0;
+        const card = state.sessionCards[state.index];
+        const atLastCard = state.index === total - 1;
+        const currentGrade = state.freshAttempts.has(state.index) ? undefined : state.grades[card.id];
+        const isSkip = !atLastCard && isAnswerRequiredCard(card) && !currentGrade;
+        refs.next.disabled = false;
+        refs.next.classList.toggle("player__next-button--skip", isSkip);
+        refs.next.textContent = atLastCard ? t("See results →") : (isSkip ? t("Skip →") : t("Next →"));
+        refs.next.setAttribute(
+          "aria-label",
+          atLastCard ? t("See results") : (isSkip ? t("Skip to next card") : t("Next card"))
+        );
+        restoreNavigationFocus(focused);
+      }
+
+      function isAnswerRequiredCard(card) {
+        const cardType = cardTypes[card.type];
+        return Boolean(cardType && cardType.requiresGrade);
+      }
+
+      function showScoreScreen() {
+        state.cleanup();
+        state.cleanup = () => {};
+        const result = renderScoreScreen();
+        setViewState("results");
+        saveSession();
+        setStatus(t("Session complete. Score {score}/{total}.", result));
+        refs.scoreTitle.focus();
+      }
+
+      function renderScoreScreen() {
+        const { grades, scoreCards } = state;
+        const total = scoreCards.length;
+        const score = scoreCards.filter((card) => isPositiveGrade(card, grades[card.id])).length;
+        const missedCards = getMissedCards(scoreCards, grades);
+
+        refs.scoreValue.textContent = `${score}/${total}`;
+        const missedCount = missedCards.length;
+        refs.scoreSummary.textContent = missedCount
+          ? t("{score} correct · {missedCount} to review", { score, missedCount })
+          : t("All {total} correct · Nothing to review", { total });
+        const correctShare = total ? (score / total) * 100 : 0;
+        const missedShare = total ? (missedCount / total) * 100 : 0;
+        refs.scoreCorrectSegment.style.flexBasis = `${correctShare}%`;
+        refs.scoreMissedSegment.style.flexBasis = `${missedShare}%`;
+        refs.scoreCorrectLabel.textContent = t("{score} correct", { score });
+        refs.scoreMissedLabel.textContent = missedCount
+          ? t("{missedCount} to review", { missedCount })
+          : t("Nothing to review");
+        refs.retryMissed.disabled = missedCount === 0;
+        refs.retryMissed.hidden = missedCount === 0;
+        refs.retryMissed.textContent = missedCount
+          ? t("Retry {count} missed card", { count: missedCount })
+          : t("Retry missed cards");
+        refs.missedCards.replaceChildren(...missedCards.map(createMissedCard));
+        refs.missedCards.hidden = missedCards.length === 0;
+        refs.noMissedCards.hidden = missedCards.length !== 0;
+        refs.progress.max = total;
+        refs.progress.value = total;
+        refs.progress.setAttribute("aria-label", t("Session complete: score {score} of {total}", { score, total }));
+        refs.progressLabel.textContent = t("Session complete: {score} of {total}", { score, total });
+        refs.progressPercent.textContent = "100%";
+        refs.announcer.textContent = t("Session complete. Score {score}/{total}.", { score, total });
+        updateReviewScrollCue();
+
+        return { score, total };
+      }
+
+      function retryMissedCards() {
+        if (!state.deck || refs.player.dataset.state !== "results") return;
+        const missedCards = getMissedCards(state.scoreCards, state.grades);
+        if (!missedCards.length) {
+          refs.retryMissed.disabled = true;
+          setStatus(t("Nothing to retry."));
+          return;
+        }
+
+        state.scoreCards = missedCards.slice();
+        state.sessionCards = state.shuffleMode
+          ? shuffleCards(state.scoreCards)
+          : state.scoreCards.slice();
+        state.isRetry = true;
+        state.cramMode = false;
+        updateCramModeToggle();
+        state.index = 0;
+        resetDrillState();
+        setViewState("ready");
+        renderCurrentCard();
+        refs.cardFrame.focus();
+        setStatus(t("Retrying {count} missed card.", { count: missedCards.length }));
+      }
+
+      function getMissedCards(cards, grades) {
+        return cards.filter((card) => !isPositiveGrade(card, grades[card.id]));
+      }
+
+      function isPositiveGrade(card, grade) {
+        const cardType = cardTypes[card.type];
+        if (!cardType || typeof cardType.positiveGradeValidator !== "function") return false;
+        try {
+          return Boolean(cardType.positiveGradeValidator(grade, card));
+        } catch {
+          return false;
+        }
+      }
+
+      function createMissedCard(card) {
+        const item = createElement("li", "player__missed-card");
+        item.dataset.testid = "missed-card";
+        const prompt = createElement(
+          "p",
+          "player__missed-prompt",
+          card.prompt || t("This card has no prompt.")
+        );
+        prompt.dataset.testid = "missed-prompt";
+        item.append(prompt);
+        if (card.answer) item.append(createReviewField("answer", t("Answer:"), card.answer));
+        if (card.explanation) item.append(createReviewField("explanation", t("Explanation:"), card.explanation));
+        if (getHintUsed(card.id)) item.append(createReviewField("hint", t("Hint:"), t("Needed a hint")));
+        return item;
+      }
+
+      function createReviewField(name, label, value) {
+        const field = createElement("p", "player__review-field");
+        field.dataset.testid = `missed-${name}`;
+        field.append(
+          createElement("strong", "player__review-label", label),
+          document.createTextNode(` ${String(value)}`)
+        );
+        return field;
+      }
+
+      function setViewState(view) {
+        const showingResults = view === "results";
+        refs.player.dataset.state = view;
+        refs.studyPanel.hidden = showingResults;
+        refs.cardFrame.hidden = showingResults;
+        refs.navigation.hidden = showingResults;
+        refs.scoreScreen.hidden = !showingResults;
+        if (showingResults) {
+          refs.scoreScreen.scrollTop = 0;
+          updateReviewScrollCue();
+        } else {
+          refs.reviewScrollOverlay.hidden = true;
+        }
+      }
+
+      function updateReviewScrollCue() {
+        const panel = refs.scoreScreen;
+        const maxScrollTop = Math.max(0, panel.scrollHeight - panel.clientHeight);
+        const hasReviewCards = refs.missedCards.children.length > 0;
+        const hasMore = hasReviewCards && maxScrollTop > 1 && panel.scrollTop < maxScrollTop - 1;
+        refs.reviewScrollOverlay.hidden = !hasMore;
+      }
+
+      function scrollReview() {
+        if (refs.scoreScreen.hidden) return;
+        refs.scoreScreen.focus({ preventScroll: true });
+        const maxScrollTop = Math.max(0, refs.scoreScreen.scrollHeight - refs.scoreScreen.clientHeight);
+        const targetTop = Math.min(
+          maxScrollTop,
+          refs.scoreScreen.scrollTop + refs.scoreScreen.clientHeight * 0.85
+        );
+        refs.scoreScreen.scrollTo({
+          top: targetTop,
+          behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"
+        });
+      }
+
+      // Reaching the first or last card disables the button that got you there, which
+      // would otherwise drop focus to the body and lose a keyboard user's place. The
+      // caller has to capture the focused element first: disabling it blurs it at once.
+      function restoreNavigationFocus(focused) {
+        if (focused !== refs.previous && focused !== refs.next) return;
+        if (!focused.disabled) return;
+        const sibling = focused === refs.next ? refs.previous : refs.next;
+        (sibling.disabled ? refs.cardFrame : sibling).focus();
+      }
+
+      function announceCard() {
+        const position = state.index + 1;
+        const total = state.sessionCards.length;
+        const prompt = refs.cardContent.querySelector(`#${PROMPT_ID}`);
+        // Announce the rendered prompt only: the card also contains hidden
+        // answers and hints, and raw cloze prompts contain their solutions.
+        const content = Array.from(prompt?.childNodes || [], (node) => (
+          node instanceof HTMLInputElement ? node.getAttribute("aria-label") : node.textContent
+        )).join("");
+        refs.announcer.textContent = t("Card {position} of {total}. {content}", { position, total, content });
+      }
+
+      // Deliberately lenient: the deck validator owns the strict contract, and the shell
+      // only needs enough structure to paint something rather than throw.
+      function isRenderableDeck(candidate) {
+        if (!candidate || typeof candidate !== "object") return false;
+        if (typeof candidate.title !== "string" || !candidate.title.trim()) return false;
+        if (!Array.isArray(candidate.cards) || candidate.cards.length === 0) return false;
+        return candidate.cards.every((card) => card && typeof card === "object");
+      }
+
+      function sanitizeGrades(deck, grades) {
+        if (!grades || typeof grades !== "object" || Array.isArray(grades)) return null;
+        const cardsById = getCardsById(deck);
+        const sanitized = Object.create(null);
+        for (const [cardId, grade] of Object.entries(grades)) {
+          const card = cardsById[cardId];
+          if (!card) continue;
+          if (!isValidStoredGrade(card, grade)) return null;
+          sanitized[cardId] = grade;
+        }
+        return sanitized;
+      }
+
+      function getCardsById(deck) {
+        const cached = deckCardMaps.get(deck);
+        if (cached && cached.cards === deck.cards) return cached.byId;
+        const byId = Object.create(null);
+        deck.cards.forEach((card) => {
+          if (card && typeof card.id === "string" && card.id) byId[card.id] = card;
+        });
+        deckCardMaps.set(deck, { cards: deck.cards, byId });
+        return byId;
+      }
+
+      function isValidStoredGrade(card, grade) {
+        const cardType = cardTypes[card.type];
+        const gradeValidator = cardType && cardType.gradeValidator;
+        if (typeof gradeValidator !== "function") {
+          return typeof grade === "string" && Boolean(grade);
+        }
+        return Boolean(gradeValidator(grade, card));
+      }
+
+      // This boundary owns localStorage keys, validation, conflict retries, and the
+      // recovery path after a failed reset. The player only sees load/save/reset/sync.
+      function createProgressStore() {
+        const pendingWrites = new WeakMap();
+
+        return Object.freeze({ load, saveGrade, reset, sync });
+
+        function load(deck) {
+          const key = getProgressKey(deck);
+          if (!key) return Object.create(null);
+          try {
+            const stored = window.localStorage.getItem(key);
+            if (stored === null) return Object.create(null);
+            const parsed = JSON.parse(stored);
+            if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+              return Object.create(null);
+            }
+            return sanitizeGrades(deck, parsed) || Object.create(null);
+          } catch {
+            return Object.create(null);
+          }
+        }
+
+        function saveGrade(deck, gradePatch) {
+          if (!getProgressKey(deck)) return false;
+          const currentGrades = sanitizeGrades(deck, gradePatch);
+          if (!currentGrades) return false;
+          const pending = pendingWrites.get(deck);
+          const queued = pending
+            ? Object.assign(pending.grades, currentGrades)
+            : currentGrades;
+          const replaceStored = Boolean(pending && pending.replaceStored);
+          const persisted = writeMerged(deck, queued, replaceStored);
+          if (persisted) pendingWrites.delete(deck);
+          else pendingWrites.set(deck, { grades: queued, replaceStored });
+          return persisted;
+        }
+
+        function reset(deck) {
+          const key = getProgressKey(deck);
+          if (!key) return false;
+          const cleared = clear(key);
+          if (cleared) pendingWrites.delete(deck);
+          else pendingWrites.set(deck, { grades: Object.create(null), replaceStored: true });
+          return cleared;
+        }
+
+        function sync(deck, localGrades, event) {
+          const key = getProgressKey(deck);
+          if (!key || (event.key !== null && event.key !== key)) return null;
+
+          const storageWasCleared = event.key === null || event.newValue === null;
+          const loadedGrades = load(deck);
+          if (storageWasCleared) {
+            pendingWrites.delete(deck);
+            return loadedGrades;
+          }
+
+          const pending = pendingWrites.get(deck);
+          if (pending) {
+            const authoritativeGrades = sanitizeGrades(
+              deck,
+              Object.assign(Object.create(null), localGrades, pending.grades)
+            ) || Object.create(null);
+            const persisted = writeMerged(deck, authoritativeGrades, pending.replaceStored);
+            if (persisted) pendingWrites.delete(deck);
+            else pendingWrites.set(deck, { grades: authoritativeGrades, replaceStored: pending.replaceStored });
+            return authoritativeGrades;
+          }
+
+          const mergedGrades = Object.assign(Object.create(null), localGrades, loadedGrades);
+          const missingGrades = Object.create(null);
+          for (const [cardId, grade] of Object.entries(mergedGrades)) {
+            if (!(cardId in loadedGrades)) missingGrades[cardId] = grade;
+          }
+          if (Object.keys(missingGrades).length) {
+            const persisted = writeMerged(deck, missingGrades, false);
+            if (!persisted) pendingWrites.set(deck, { grades: missingGrades, replaceStored: false });
+          }
+          return mergedGrades;
+        }
+
+        function writeMerged(deck, gradePatch, replaceStored) {
+          const key = getProgressKey(deck);
+          if (!key) return false;
+          try {
+            const currentGrades = sanitizeGrades(deck, gradePatch);
+            if (!currentGrades) return false;
+            for (let attempt = 0; attempt < 3; attempt += 1) {
+              const persistedGrades = replaceStored ? Object.create(null) : load(deck);
+              const serialized = JSON.stringify(
+                Object.assign(Object.create(null), persistedGrades, currentGrades)
+              );
+              window.localStorage.setItem(key, serialized);
+              if (window.localStorage.getItem(key) === serialized) return true;
+            }
+            return false;
+          } catch {
+            return false;
+          }
+        }
+
+        function clear(key) {
+          try {
+            window.localStorage.removeItem(key);
+            return true;
+          } catch {
+            return false;
+          }
+        }
+
+        function getProgressKey(deck) {
+          if (!deck || typeof deck.id !== "string" || !deck.id.trim()) return null;
+          return `fc:${deck.id}:v1`;
+        }
+      }
+
+      const progressStore = createProgressStore();
+
+      function saveSession() {
+        if (!state.deck || !state.deck.id || !state.sessionCards.length) return;
+        try {
+          window.localStorage.setItem(`fc:${state.deck.id}:session`, JSON.stringify({
+            deck: JSON.stringify(state.deck.cards),
+            queue: state.sessionCards.map(card => card.id),
+            score: state.scoreCards.map(card => card.id),
+            index: state.index,
+            view: refs.player.dataset.state,
+            seed: state.shuffleSeed,
+            freshRound: state.freshRound,
+            isRetry: state.isRetry,
+            cramMode: state.cramMode,
+            grades: state.grades,
+            hints: state.hintsUsed,
+            streaks: state.drillStreaks,
+            drilled: state.drilledCards,
+            fresh: [...state.freshAttempts],
+            processed: [...state.processedAttempts]
+          }));
+        } catch {
+          state.persistenceWarning ||= t("This session could not be saved. Reloading may lose your place.");
+          setStatus(state.persistenceWarning, true);
+        }
+      }
+
+      function restoreSession() {
+        try {
+          const saved = JSON.parse(window.localStorage.getItem(`fc:${state.deck.id}:session`));
+          if (!saved || saved.deck !== JSON.stringify(state.deck.cards)) return "ready";
+          const cards = new Map(state.deck.cards.map(card => [card.id, card]));
+          const validCards = ids => Array.isArray(ids) && ids.length > 0 && ids.every(id => cards.has(id));
+          const validIndices = indices => Array.isArray(indices) && indices.every(index =>
+            Number.isInteger(index) && index >= 0 && index < saved.queue.length);
+          const validMap = (values, check) => values && typeof values === "object" && !Array.isArray(values) &&
+            Object.entries(values).every(([id, value]) => cards.has(id) && check(value));
+          if (!validCards(saved.queue) || !validCards(saved.score) ||
+              new Set(saved.score).size !== saved.score.length ||
+              saved.queue.some(id => !saved.score.includes(id)) || saved.score.some(id => !saved.queue.includes(id)) ||
+              !Number.isInteger(saved.index) || saved.index < 0 || saved.index >= saved.queue.length ||
+              !["ready", "results"].includes(saved.view) ||
+              ![saved.freshRound, saved.isRetry, saved.cramMode].every(value => typeof value === "boolean") ||
+              (saved.isRetry && saved.cramMode) ||
+              (!saved.isRetry && saved.score.length !== cards.size) ||
+              (saved.seed !== null && (!Number.isInteger(saved.seed) || saved.seed < 0 || saved.seed > 4294967295)) ||
+              !validIndices(saved.fresh) || !validIndices(saved.processed) ||
+              !validMap(saved.hints, value => value === true) ||
+              !validMap(saved.drilled, value => value === true) ||
+              !validMap(saved.streaks, value => Number.isInteger(value) && value >= 0)) return "ready";
+          const grades = sanitizeGrades(state.deck, saved.grades);
+          if (!grades) return "ready";
+          state.sessionCards = saved.queue.map(id => cards.get(id));
+          state.scoreCards = saved.score.map(id => cards.get(id));
+          state.index = saved.index;
+          state.shuffleSeed = saved.seed;
+          state.shuffleMode = saved.seed !== null;
+          state.freshRound = saved.freshRound;
+          state.isRetry = saved.isRetry;
+          state.cramMode = saved.cramMode;
+          if (saved.freshRound) state.grades = grades;
+          state.hintsUsed = Object.assign(Object.create(null), saved.hints);
+          state.drillStreaks = Object.assign(Object.create(null), saved.streaks);
+          state.drilledCards = Object.assign(Object.create(null), saved.drilled);
+          state.freshAttempts = new Set(saved.fresh);
+          state.processedAttempts = new Set(saved.processed);
+          return saved.view;
+        } catch {
+          return "ready";
+        }
+      }
+
+      // Every renderer should build its prompt with this: the card frame is labelled by
+      // the element's id, so a renderer that rolls its own leaves the card unnamed.
+      function createPromptElement(text) {
+        const prompt = createElement("p", "player__card-prompt", text);
+        prompt.id = PROMPT_ID;
+        prompt.dataset.testid = PROMPT_ID;
+        return prompt;
+      }
+
+      function createElement(tagName, className, text) {
+        const element = document.createElement(tagName);
+        if (className) element.className = className;
+        if (text !== undefined && text !== null) element.textContent = String(text);
+        return element;
+      }
+
+      const api = {
+        registerCardRenderer,
+        setDeck,
+        recordGrade,
+        getGrade,
+        recordHintUsed,
+        getHintUsed,
+        getState: () => ({
+          deck: state.deck,
+          index: state.index,
+          total: state.sessionCards.length,
+          cramMode: state.cramMode,
+          shuffleMode: state.shuffleMode,
+          grades: { ...state.grades },
+          hintsUsed: { ...state.hintsUsed }
+        })
+      };
+
+      // The shell owns this registry and navigation. Each card-type issue can add
+      // or replace exactly one renderer without changing the shell or other types.
+      registerCardRenderer(
+        "basic",
+        renderBasicCard,
+        {
+          gradeValidator: (grade) => grade === BASIC_GRADES.KNOWN || grade === BASIC_GRADES.MISSED,
+          positiveGradeValidator: (grade) => grade === BASIC_GRADES.KNOWN,
+          requiresGrade: true
+        }
+      );
+      registerCardRenderer(
+        "mcq",
+        renderMcqCard,
+        {
+          gradeValidator: (grade) => grade === MCQ_GRADES.CORRECT || grade === MCQ_GRADES.INCORRECT,
+          positiveGradeValidator: (grade) => grade === MCQ_GRADES.CORRECT,
+          requiresGrade: true
+        }
+      );
+      registerCardRenderer(
+        "cloze",
+        renderClozeCard,
+        {
+          gradeValidator: (grade) => grade === CLOZE_GRADES.CORRECT || grade === CLOZE_GRADES.INCORRECT,
+          positiveGradeValidator: (grade) => grade === CLOZE_GRADES.CORRECT,
+          requiresGrade: true
+        }
+      );
+      window.CRAM_PLAYER = api;
+
+      refs.player.addEventListener("click", (event) => {
+        const button = event.target instanceof Element
+          ? event.target.closest("button[data-action]")
+          : null;
+        if (!button) return;
+        if (button.dataset.action === "previous") moveCard(-1);
+        if (button.dataset.action === "next") moveCard(1);
+        if (button.dataset.action === "retry-missed") retryMissedCards();
+        if (button.dataset.action === "reset-progress") resetProgress();
+        if (button.dataset.action === "scroll-review") scrollReview();
+        if (button.dataset.action === "toggle-settings") toggleSettings();
+        if (button.dataset.action === "shuffle") setShuffleMode(true);
+        if (button.dataset.action === "restore-order") setShuffleMode(false);
+      });
+
+      refs.themeSelect.addEventListener("change", () => {
+        setThemePreference(refs.themeSelect.value);
+      });
+      refs.appearanceSelect.addEventListener("change", () => {
+        setAppearancePreference(refs.appearanceSelect.value);
+      });
+
+      refs.settingsPanel.addEventListener("change", (event) => {
+        if (event.target === refs.cramModeToggle) setCramMode(event.target.checked);
+        if (event.target === refs.shortcutsToggle) setShortcutsPreference();
+      });
+
+      document.addEventListener("click", (event) => {
+        if (refs.settingsPanel.hidden) return;
+        const target = event.target;
+        if (target instanceof Node && (
+          refs.settingsToggle.contains(target) || refs.settingsPanel.contains(target)
+        )) return;
+        closeSettings();
+      });
+
+      refs.scoreScreen.addEventListener("scroll", updateReviewScrollCue, { passive: true });
+      window.addEventListener("resize", updateReviewScrollCue);
+
+      window.addEventListener("storage", (event) => {
+        if (!state.deck) return;
+        if (state.freshRound) return;
+        const currentCard = state.sessionCards[state.index];
+        const previousGrade = currentCard && state.grades[currentCard.id];
+        const grades = progressStore.sync(state.deck, state.grades, event);
+        if (!grades) return;
+        state.grades = grades;
+        if (refs.player.dataset.state === "results") {
+          renderScoreScreen();
+        } else if (currentCard && previousGrade !== state.grades[currentCard.id]) {
+          renderCurrentCard();
+        }
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !refs.settingsPanel.hidden) {
+          event.preventDefault();
+          closeSettings();
+          refs.settingsToggle.focus();
+          return;
+        }
+        const target = event.target;
+        if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement || target.isContentEditable) {
+          return;
+        }
+        if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) {
+          return;
+        }
+
+        const key = event.key.toLowerCase();
+        if (key === "h" && triggerCardShortcut("H")) {
+          event.preventDefault();
+        } else if (key === "a" && triggerCardShortcut("A")) {
+          event.preventDefault();
+        } else if (event.key === "ArrowLeft") {
+          event.preventDefault();
+          moveCard(-1);
+        } else if (event.key === "ArrowRight") {
+          event.preventDefault();
+          moveCard(1);
+        }
+      });
+
+      // Renderers declare keyboard actions through the standard aria-keyshortcuts
+      // attribute, so the shell never needs to know their private test ids or markup.
+      function triggerCardShortcut(shortcut) {
+        if (!refs.shortcutsToggle.checked || refs.player.dataset.state !== "ready") return false;
+        const expected = shortcut.toLowerCase();
+        const button = [...refs.cardContent.querySelectorAll("button[aria-keyshortcuts]")]
+          .find((candidate) => {
+            const shortcuts = candidate.getAttribute("aria-keyshortcuts")
+              .toLowerCase()
+              .split(/\s+/);
+            return shortcuts.includes(expected) && !candidate.hidden && !candidate.disabled;
+          });
+        if (!button) return false;
+        button.click();
+        return true;
+      }
+
+      // English source messages are keys. Only explicit UI call sites are translated;
+      // card content and persisted identifiers never pass through this lookup.
+      function initializeTranslations() {
+        document.querySelectorAll("[data-i18n]").forEach((element) => {
+          element.textContent = t(element.textContent.trim());
+        });
+        document.querySelectorAll("[data-i18n-attrs]").forEach((element) => {
+          element.dataset.i18nAttrs.split(" ").forEach((name) => {
+            element.setAttribute(name, t(element.getAttribute(name)));
+          });
+        });
+        emphasizeAttributionBrand();
+      }
+
+      function emphasizeAttributionBrand() {
+        const link = document.querySelector(".player__attribution a");
+        const [before, after] = link.textContent.split("Cram");
+        const brand = document.createElement("span");
+        brand.className = "player__attribution-brand";
+        brand.textContent = "Cram";
+        link.replaceChildren(before, brand, after);
+      }
+
+      function t(message, parameters = {}) {
+        const locale = window.__LOCALE__;
+        let translation = locale.messages[message];
+        if (typeof translation === "object") {
+          const category = new Intl.PluralRules(locale.language).select(parameters.count);
+          translation = translation[category] ?? translation.other;
+        }
+        return translation.replace(/\{(\w+)\}/g, (_, name) => String(parameters[name]));
+      }
+
+      initializeTranslations();
+      initializeTheme();
+      initializeShortcuts();
+
+      setDeck(window.__DECK__);
+    })();
+  </script>
+</body>
+</html>
