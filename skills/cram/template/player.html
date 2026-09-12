@@ -667,17 +667,32 @@
 
     .cloze__feedback--incorrect { color: var(--ink-soft); }
 
+    .cloze__blank-feedback[hidden] {
+      display: none;
+    }
+
     .cloze__blank-feedback {
-      margin: 0.35rem 0 0;
+      display: inline-block;
+      margin-inline-start: 0.35em;
+      padding: 0.05em 0.5em;
+      border: 1px solid var(--rule-strong);
+      border-radius: 999px;
+      background: var(--surface);
       color: var(--ink-soft);
-      font-size: 1rem;
+      font-family: var(--sans);
+      font-size: 0.8em;
+      line-height: 1.4;
+      vertical-align: middle;
+      white-space: normal;
     }
 
     .cloze__blank-feedback--correct {
+      border-color: var(--positive);
       color: var(--positive);
     }
 
     .cloze__blank-feedback--incorrect {
+      border-color: var(--rule-strong);
       color: var(--ink-soft);
     }
 
@@ -1287,6 +1302,7 @@
       .player__response-actions > .player__primary-action { align-self: stretch; width: 100%; }
       .player__shortcut { display: none; }
       .cloze__input { margin-inline: 0.15em; }
+      .cloze__blank-feedback { margin-inline-start: 0.15em; }
       .player__settings-group { align-items: flex-start; flex-direction: column; gap: 0.35rem; }
       .player__theme-picker, .player__theme-select { width: 100%; }
       .player__score-screen { max-height: max(18rem, calc(100dvh - 12rem)); }
@@ -2285,8 +2301,13 @@
           input.setAttribute("aria-label", t("Blank {number}", { number: blanks.length + 1 }));
           input.autocomplete = "off";
           input.spellcheck = false;
-          prompt.append(input);
-          blanks.push({ answers, input });
+          const correction = createElement("span", "cloze__blank-feedback");
+          correction.dataset.testid = "cloze-blank-feedback";
+          correction.dataset.blankIndex = String(blanks.length);
+          correction.id = `blank-feedback-${blanks.length}`;
+          correction.hidden = true;
+          prompt.append(input, correction);
+          blanks.push({ answers, input, correction });
           cursor = blankPattern.lastIndex;
         }
         prompt.append(document.createTextNode(promptText.slice(cursor)));
@@ -2306,13 +2327,6 @@
         feedbackSummary.dataset.testid = "cloze-feedback-summary";
         feedbackSummary.hidden = true;
         feedback.append(feedbackSummary);
-        const feedbackItems = blanks.map((_, index) => {
-          const item = createElement("p", "cloze__blank-feedback");
-          item.dataset.testid = "cloze-blank-feedback";
-          item.dataset.blankIndex = String(index);
-          feedback.append(item);
-          return item;
-        });
 
         const explanationText = typeof card.explanation === "string" ? card.explanation : "";
         const explanation = explanationText
@@ -2365,8 +2379,13 @@
           feedback.classList.toggle("cloze__feedback--correct", isCorrect);
           feedback.classList.toggle("cloze__feedback--incorrect", !isCorrect);
           feedback.dataset.result = grade;
+          feedbackSummary.hidden = false;
+          feedbackSummary.textContent = isCorrect
+            ? t("Correct.")
+            : results
+              ? t("Incorrect.")
+              : t("This card was previously marked incorrect.");
           if (results) {
-            feedbackSummary.hidden = true;
             blanks.forEach((blank, index) => {
               const blankCorrect = results[index];
               blank.input.disabled = true;
@@ -2376,36 +2395,31 @@
                 ? CLOZE_GRADES.CORRECT
                 : CLOZE_GRADES.INCORRECT;
               blank.input.setAttribute("aria-invalid", String(!blankCorrect));
-              feedbackItems[index].id = `blank-feedback-${index}`;
-              blank.input.setAttribute("aria-describedby", feedbackItems[index].id);
-              feedbackItems[index].hidden = false;
-              feedbackItems[index].classList.toggle("cloze__blank-feedback--correct", blankCorrect);
-              feedbackItems[index].classList.toggle("cloze__blank-feedback--incorrect", !blankCorrect);
-              feedbackItems[index].dataset.result = blankCorrect
+              blank.input.setAttribute("aria-describedby", blank.correction.id);
+              blank.correction.hidden = false;
+              blank.correction.classList.toggle("cloze__blank-feedback--correct", blankCorrect);
+              blank.correction.classList.toggle("cloze__blank-feedback--incorrect", !blankCorrect);
+              blank.correction.dataset.result = blankCorrect
                 ? CLOZE_GRADES.CORRECT
                 : CLOZE_GRADES.INCORRECT;
-              feedbackItems[index].textContent = blankCorrect
+              blank.correction.textContent = blankCorrect
                 ? t("Blank {number}: Correct.", { number: index + 1 })
                 : t("Blank {number}: Incorrect. Correct answer: {answer}", { number: index + 1, answer: blank.answers.join(" / ") });
             });
           } else {
-            feedbackSummary.hidden = false;
-            feedbackSummary.textContent = isCorrect
-              ? t("Correct.")
-              : t("This card was previously marked incorrect.");
-            blanks.forEach((blank, index) => {
+            blanks.forEach((blank) => {
               blank.input.disabled = true;
               blank.input.classList.remove("cloze__input--correct", "cloze__input--incorrect");
               blank.input.removeAttribute("data-result");
               blank.input.removeAttribute("aria-invalid");
               blank.input.removeAttribute("aria-describedby");
-              feedbackItems[index].hidden = true;
-              feedbackItems[index].classList.remove(
+              blank.correction.hidden = true;
+              blank.correction.classList.remove(
                 "cloze__blank-feedback--correct",
                 "cloze__blank-feedback--incorrect"
               );
-              feedbackItems[index].removeAttribute("data-result");
-              feedbackItems[index].textContent = "";
+              blank.correction.removeAttribute("data-result");
+              blank.correction.textContent = "";
             });
           }
           feedback.hidden = false;

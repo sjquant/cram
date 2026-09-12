@@ -2287,6 +2287,72 @@ test("checks cloze blanks with exact alternatives and restores aggregate feedbac
   expect(await page.evaluate(() => window.CRAM_PLAYER.getGrade("cloze-card"))).toBe("correct");
 });
 
+test("shows the accepted answer beside a single incorrect cloze blank", async ({ page }) => {
+  // Given: a cloze card with a single blank.
+  await openPlayer(page, {
+    id: "single-blank-browser-check",
+    title: "Single blank browser check",
+    cards: [{ id: "single-blank-card", type: "cloze", prompt: "The capital of France is {{Paris}}." }],
+  });
+  const input = page.getByTestId("cloze-input");
+  const correction = page.getByTestId("cloze-blank-feedback");
+
+  // When: the learner submits an incorrect answer.
+  await input.fill("London");
+  await page.getByTestId("cloze-check-answer").click();
+
+  // Then: the learner's text stays in the disabled input, marked invalid, beside its own accepted answer.
+  await expect(input).toHaveValue("London");
+  await expect(input).toBeDisabled();
+  await expect(input).toHaveAttribute("aria-invalid", "true");
+  await expect(input).toHaveAccessibleDescription(/Correct answer: Paris/);
+  await expect(correction).toBeVisible();
+  await expect(correction).toContainText("Correct answer: Paris");
+
+  // And: the correction sits right next to the blank instead of only in a card-level summary.
+  const inputBox = await input.boundingBox();
+  const correctionBox = await correction.boundingBox();
+  expect(Math.abs(correctionBox.y - inputBox.y)).toBeLessThan(60);
+});
+
+test("matches each blank's own correction to its position across multiple blanks", async ({ page }) => {
+  // Given: a cloze card with three blanks.
+  await openPlayer(page, {
+    id: "multi-blank-browser-check",
+    title: "Multi blank browser check",
+    cards: [{
+      id: "multi-blank-card",
+      type: "cloze",
+      prompt: "Send {{If-None-Match}} and accept {{304|304 Not Modified}} to confirm the response is {{fresh|still fresh}}.",
+    }],
+  });
+  const inputs = page.getByTestId("cloze-input");
+  const corrections = page.getByTestId("cloze-blank-feedback");
+
+  // When: the first and third blanks are answered correctly and the second is wrong.
+  await inputs.nth(0).fill("If-None-Match");
+  await inputs.nth(1).fill("wrong");
+  await inputs.nth(2).fill("still fresh");
+  await page.getByTestId("cloze-check-answer").click();
+
+  // Then: each blank carries its own result, distinguishable at a glance.
+  await expect(inputs.nth(0)).toHaveClass(/cloze__input--correct/);
+  await expect(inputs.nth(1)).toHaveClass(/cloze__input--incorrect/);
+  await expect(inputs.nth(2)).toHaveClass(/cloze__input--correct/);
+  await expect(corrections.nth(1)).toHaveClass(/cloze__blank-feedback--incorrect/);
+
+  // And: only the incorrect blank's own accepted answer appears, beside that blank.
+  await expect(corrections.nth(1)).toContainText("Correct answer: 304 / 304 Not Modified");
+  await expect(corrections.nth(0)).not.toContainText("304");
+  await expect(corrections.nth(2)).not.toContainText("304");
+  const wrongInputBox = await inputs.nth(1).boundingBox();
+  const wrongCorrectionBox = await corrections.nth(1).boundingBox();
+  expect(Math.abs(wrongCorrectionBox.y - wrongInputBox.y)).toBeLessThan(60);
+
+  // And: the incorrect input's accessible description names its own accepted answer, not another blank's.
+  await expect(inputs.nth(1)).toHaveAccessibleDescription(/Correct answer: 304/);
+});
+
 async function openPlayer(page, deck) {
   await page.goto(PLAYER_URL);
   await page.evaluate(() => {
