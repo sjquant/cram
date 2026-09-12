@@ -122,17 +122,6 @@ A/H 단축키가 불편하면 설정에서 끌 수 있어요. 브라우저 저�
 에이전트에 “플레이어는 한국어로 만들어줘”라고 요청하면 돼요.
 화면 언어를 바꿔도 문제까지 번역되지는 않으니, 문제도 한국어로 원한다면 함께 말해주세요.
 
-<details>
-<summary>직접 HTML 파일을 만들 때 언어 설정하기</summary>
-
-```sh
-python3 skills/cram/scripts/render.py deck.json -o quiz.html --language ko
-```
-
-버튼과 메뉴가 한국어로 바뀌고, 문제는 원래 언어로 남아요.
-
-</details>
-
 ## 다른 설치 방법
 
 <details>

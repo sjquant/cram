@@ -116,17 +116,6 @@ Study with controls in English, Korean, Japanese, Simplified Chinese,
 Spanish, or French. Ask your agent for the player language you want.
 Card language is separate: ask for translated cards if you want those changed too.
 
-<details>
-<summary>Set the player language when rendering a deck yourself</summary>
-
-```sh
-python3 skills/cram/scripts/render.py deck.json -o quiz.html --language ko
-```
-
-This selects Korean controls and keeps the cards in their original language.
-
-</details>
-
 ## More installation options
 
 <details>
