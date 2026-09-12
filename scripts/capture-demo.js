@@ -437,8 +437,9 @@ async function triggerCursorClick(page) {
 
 function transcodeGif(videoPath, outputPath) {
   const filter = [
-    "fps=10,scale=800:-2:flags=lanczos,split[s0][s1]",
-    "[s0]palettegen=max_colors=32:stats_mode=diff[p]",
+    // Preserve text at capture resolution and retain antialiased edge colors.
+    "fps=15,split[s0][s1]",
+    "[s0]palettegen=max_colors=256:stats_mode=diff[p]",
     "[s1][p]paletteuse=dither=none:diff_mode=rectangle"
   ].join(";");
   const result = spawnSync("ffmpeg", [
