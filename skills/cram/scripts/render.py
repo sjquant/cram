@@ -68,11 +68,15 @@ def render_deck(deck: dict, language: str = "en") -> str:
 
     template = TEMPLATE_PATH.read_text(encoding="utf-8")
     messages = _load_messages(language, template)
+    # ``source`` helps the extraction workflow but can contain private paths,
+    # query strings, or access tokens.  It is not needed by the offline player,
+    # so never copy it into a file intended to be opened or shared.
+    player_deck = {key: value for key, value in deck.items() if key != "source"}
     injections = {
         "__CRAM_METADATA__": _render_metadata(deck, messages),
         "__CRAM_LANGUAGE__": language,
         "__CRAM_LOCALE__": _escape_for_inline_script(json.dumps({"language": language, "messages": messages})),
-        "__CRAM_DECK__": _escape_for_inline_script(json.dumps(deck)),
+        "__CRAM_DECK__": _escape_for_inline_script(json.dumps(player_deck)),
     }
     for marker in injections:
         if template.count(marker) != 1:

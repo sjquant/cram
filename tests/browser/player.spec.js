@@ -33,6 +33,16 @@ const LONG_COUNT_DECK = {
     answer: `Answer ${index + 1}`,
   })),
 };
+const LARGE_SESSION_DECK = {
+  id: "large-session-browser-check",
+  title: "Large session browser check",
+  cards: Array.from({ length: 1000 }, (_, index) => ({
+    id: `large-session-card-${index + 1}`,
+    type: "basic",
+    prompt: `Card ${index + 1}`,
+    answer: `Answer ${index + 1}`,
+  })),
+};
 const RETRY_DECK = {
   id: "retry-browser-check",
   title: "Retry browser check",
@@ -614,6 +624,71 @@ test.describe("basic cards", () => {
     await page.getByTestId("next-card").click();
     await expect(page.getByTestId("score-screen")).toBeVisible();
     await expect(page.getByTestId("score-value")).toHaveText("1/1");
+  });
+
+  test("does not persist card content in the resumable session", async ({ page }) => {
+    // Given: the learner has started a deck and recorded an answer.
+    await openPlayer(page, BASIC_DECK);
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+
+    // When: the browser session record is inspected.
+    const stored = await page.evaluate((id) => localStorage.getItem(`fc:${id}:session`), BASIC_DECK.id);
+    const session = JSON.parse(stored);
+
+    // Then: it contains only resumable state and a fixed-size deck fingerprint.
+    expect(session).toHaveProperty("fingerprint");
+    expect(session.fingerprint).toMatch(/^[0-9a-f]{16}$/);
+    expect(session).not.toHaveProperty("deck");
+    expect(stored).not.toContain(BASIC_DECK.cards[0].prompt);
+    expect(stored).not.toContain(BASIC_DECK.cards[0].answer);
+  });
+
+  test("removes legacy sessions that duplicated the deck", async ({ page }) => {
+    // Given: an older player left a full deck copy in the session record.
+    await page.goto(PLAYER_URL);
+    const key = `fc:${BASIC_DECK.id}:session`;
+    await page.evaluate(({ storageKey, cards }) => {
+      localStorage.setItem(storageKey, JSON.stringify({
+        deck: JSON.stringify(cards),
+        queue: cards.map(card => card.id),
+        score: cards.map(card => card.id),
+        index: 0,
+        view: "ready",
+        seed: null,
+        freshRound: false,
+        isRetry: false,
+        cramMode: false,
+        grades: {},
+        hints: {},
+        streaks: {},
+        drilled: {},
+        fresh: [],
+        processed: [],
+      }));
+    }, { storageKey: key, cards: BASIC_DECK.cards });
+
+    // When: the current player opens that deck.
+    await page.evaluate(deck => window.CRAM_PLAYER.setDeck(deck), BASIC_DECK);
+
+    // Then: the obsolete record is replaced by a content-free resumable record.
+    const replacement = await page.evaluate(storageKey => localStorage.getItem(storageKey), key);
+    expect(JSON.parse(replacement)).not.toHaveProperty("deck");
+    expect(replacement).not.toContain(BASIC_DECK.cards[0].answer);
+  });
+
+  test("restores the position of a large session queue", async ({ page }) => {
+    // Given: a large deck has been advanced once and its resumable state saved.
+    await openPlayer(page, LARGE_SESSION_DECK);
+    await page.getByTestId("next-card").click();
+
+    // When: the page reloads and the same deck is selected again.
+    await page.reload();
+    await page.evaluate(deck => window.CRAM_PLAYER.setDeck(deck), LARGE_SESSION_DECK);
+
+    // Then: the saved position survives without changing the queue semantics.
+    await expect(page.getByTestId("card-position")).toHaveText("0002/1000");
+    await expect(page.getByTestId("card-prompt")).toHaveText("Card 2");
   });
 
   test("discards invalid or outdated sessions without discarding grade history", async ({ page }) => {
