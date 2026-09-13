@@ -1941,6 +1941,26 @@ test("keeps the desktop attribution anchored to the viewport footer", async ({ p
   expect(1200 - (expandedAttribution.y + expandedAttribution.height)).toBeLessThanOrEqual(32);
 });
 
+test("opens the Cram repository in a new tab from the header brand and the attribution", async ({ page, context }) => {
+  // Given: a learner partway through a deck, with the repository page stubbed offline.
+  await context.route("https://github.com/**", route => route.fulfill({ contentType: "text/html", body: "<title>Cram</title>" }));
+  await openPlayer(page, BASIC_DECK);
+  await page.getByTestId("next-card").click();
+
+  for (const name of ["Cram on GitHub", "Made with Cram"]) {
+    // When: the learner activates a Cram link.
+    const popupPromise = page.waitForEvent("popup");
+    await page.getByRole("link", { name }).click();
+    const popup = await popupPromise;
+
+    // Then: the repository opens in a new tab and the quiz stays on the current card.
+    await expect(popup).toHaveURL("https://github.com/sjquant/cram");
+    await expect(page).toHaveURL(PLAYER_URL);
+    await expect(page.getByTestId("player")).toHaveAttribute("data-state", "ready");
+    await popup.close();
+  }
+});
+
 test("scrolls long desktop cards internally and switches to page scrolling on phones", async ({ page }) => {
   // Given: a desktop card with an answer longer than the available screen.
   await page.setViewportSize({ width: 1280, height: 844 });
