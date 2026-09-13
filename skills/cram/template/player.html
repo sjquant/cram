@@ -1268,6 +1268,12 @@
       font-family: var(--serif);
       font-size: 1.3rem;
       font-weight: 650;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .player__brand:hover {
+      color: var(--accent);
     }
 
     .player__brand-mark {
@@ -1521,7 +1527,7 @@
 <body>
   <div class="player" id="player" data-testid="player" data-state="loading">
     <header class="player__header">
-      <div class="player__brand">
+      <a class="player__brand" href="https://github.com/sjquant/cram" target="_blank" rel="noopener" aria-label="Cram on GitHub" title="Cram on GitHub" data-i18n-attrs="aria-label title">
         <svg class="player__brand-mark" viewBox="0 0 128 128" aria-hidden="true" focusable="false">
           <g transform="rotate(-4 64 64)">
             <path class="player__brand-seal" d="M20,17 L64,13 L108,18 L112,63 L109,110 L64,114 L19,109 L16,64 Z"></path>
@@ -1529,7 +1535,7 @@
           </g>
         </svg>
         Cram
-      </div>
+      </a>
       <h1 class="player__title" id="deck-title" data-testid="deck-title" data-i18n>Loading deck…</h1>
       <div class="player__header-tools">
         <button type="button" class="player__settings-toggle" id="settings-toggle" data-testid="settings-toggle" data-action="toggle-settings" aria-expanded="false" aria-controls="settings-panel" aria-label="Open settings" title="Open settings" data-i18n-attrs="aria-label title">
@@ -1716,7 +1722,7 @@
   </div>
 
   <footer class="player__attribution">
-    <small><a href="https://github.com/sjquant/cram" data-i18n>Made with Cram</a></small>
+    <small><a href="https://github.com/sjquant/cram" target="_blank" rel="noopener" data-i18n>Made with Cram</a></small>
   </footer>
 
   <!-- Render this template with render.py; examples/ contains the generated preview.
