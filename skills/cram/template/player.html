@@ -1671,6 +1671,10 @@
       const deckCardMaps = new WeakMap();
       const state = {
         deck: null,
+        // Computed once for the selected deck and reused by every session save or
+        // restore. The fingerprint is only a change detector; it is not exposed
+        // as an authentication value.
+        deckFingerprint: null,
         // sessionCards is the mutable attempt queue; scoreCards stays unique so
         // requeued attempts do not inflate the final score or review list.
         sessionCards: [],
@@ -1936,6 +1940,13 @@
           return;
         }
         state.deck = deck;
+        state.deckFingerprint = null;
+        try {
+          state.deckFingerprint = fingerprintDeck(deck.cards);
+        } catch {
+          // Keep the existing lenient custom-deck behavior. Persistence will report
+          // its normal warning if a non-serializable deck is supplied.
+        }
         state.shuffleSeed = null;
         state.freshRound = false;
         state.sessionCards = deck.cards.slice();
@@ -2644,7 +2655,7 @@
           throw new TypeError("A grade needs a non-empty value.");
         }
         if (state.deck) {
-          const card = state.deck.cards.find((candidate) => candidate && candidate.id === cardId);
+          const card = getCardsById(state.deck)[cardId];
           if (!card) throw new Error("That card is not in the current deck.");
           if (!isValidStoredGrade(card, grade)) {
             throw new Error(`The grade is not valid for the ${card.type || "unknown"} card.`);
@@ -2701,7 +2712,7 @@
           throw new TypeError("A hint needs a card id.");
         }
         if (state.deck) {
-          const card = state.deck.cards.find((candidate) => candidate && candidate.id === cardId);
+          const card = getCardsById(state.deck)[cardId];
           if (!card) throw new Error("That card is not in the current deck.");
           if (typeof card.hint !== "string" || !card.hint.trim()) {
             throw new Error("That card does not have a hint.");
@@ -2748,6 +2759,7 @@
         state.cleanup();
         state.cleanup = () => {};
         state.deck = null;
+        state.deckFingerprint = null;
         state.sessionCards = [];
         state.scoreCards = [];
         state.isRetry = false;
@@ -3204,7 +3216,7 @@
             // Keep only a fixed-size content fingerprint here.  The card bodies
             // are already present in the page and must not be duplicated into
             // persistent browser storage.
-            fingerprint: fingerprintDeck(state.deck.cards),
+            fingerprint: getDeckFingerprint(),
             queue: state.sessionCards.map(card => card.id),
             score: state.scoreCards.map(card => card.id),
             index: state.index,
@@ -3242,11 +3254,16 @@
         return `${(first >>> 0).toString(16).padStart(8, "0")}${(second >>> 0).toString(16).padStart(8, "0")}`;
       }
 
+      function getDeckFingerprint() {
+        if (!state.deckFingerprint) state.deckFingerprint = fingerprintDeck(state.deck.cards);
+        return state.deckFingerprint;
+      }
+
       function restoreSession() {
         try {
           const key = `fc:${state.deck.id}:session`;
           const saved = JSON.parse(window.localStorage.getItem(key));
-          if (!saved || saved.fingerprint !== fingerprintDeck(state.deck.cards)) {
+          if (!saved || saved.fingerprint !== getDeckFingerprint()) {
             // Remove sessions written by older players: they duplicated the full
             // deck, so leaving one behind would retain private card content even
             // after this version has stopped using it.
@@ -3261,9 +3278,11 @@
             Number.isInteger(index) && index >= 0 && index < saved.queue.length);
           const validMap = (values, check) => values && typeof values === "object" && !Array.isArray(values) &&
             Object.entries(values).every(([id, value]) => cards.has(id) && check(value));
+          const scoreIds = new Set(saved.score);
+          const queueIds = new Set(saved.queue);
           if (!validCards(saved.queue) || !validCards(saved.score) ||
-              new Set(saved.score).size !== saved.score.length ||
-              saved.queue.some(id => !saved.score.includes(id)) || saved.score.some(id => !saved.queue.includes(id)) ||
+              scoreIds.size !== saved.score.length ||
+              saved.queue.some(id => !scoreIds.has(id)) || saved.score.some(id => !queueIds.has(id)) ||
               !Number.isInteger(saved.index) || saved.index < 0 || saved.index >= saved.queue.length ||
               !["ready", "results"].includes(saved.view) ||
               ![saved.freshRound, saved.isRetry, saved.cramMode].every(value => typeof value === "boolean") ||

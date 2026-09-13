@@ -33,6 +33,16 @@ const LONG_COUNT_DECK = {
     answer: `Answer ${index + 1}`,
   })),
 };
+const LARGE_SESSION_DECK = {
+  id: "large-session-browser-check",
+  title: "Large session browser check",
+  cards: Array.from({ length: 1000 }, (_, index) => ({
+    id: `large-session-card-${index + 1}`,
+    type: "basic",
+    prompt: `Card ${index + 1}`,
+    answer: `Answer ${index + 1}`,
+  })),
+};
 const RETRY_DECK = {
   id: "retry-browser-check",
   title: "Retry browser check",
@@ -665,6 +675,20 @@ test.describe("basic cards", () => {
     const replacement = await page.evaluate(storageKey => localStorage.getItem(storageKey), key);
     expect(JSON.parse(replacement)).not.toHaveProperty("deck");
     expect(replacement).not.toContain(BASIC_DECK.cards[0].answer);
+  });
+
+  test("restores the position of a large session queue", async ({ page }) => {
+    // Given: a large deck has been advanced once and its resumable state saved.
+    await openPlayer(page, LARGE_SESSION_DECK);
+    await page.getByTestId("next-card").click();
+
+    // When: the page reloads and the same deck is selected again.
+    await page.reload();
+    await page.evaluate(deck => window.CRAM_PLAYER.setDeck(deck), LARGE_SESSION_DECK);
+
+    // Then: the saved position survives without changing the queue semantics.
+    await expect(page.getByTestId("card-position")).toHaveText("0002/1000");
+    await expect(page.getByTestId("card-prompt")).toHaveText("Card 2");
   });
 
   test("discards invalid or outdated sessions without discarding grade history", async ({ page }) => {
