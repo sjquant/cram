@@ -1076,6 +1076,86 @@
       color: var(--ink);
     }
 
+    .player__review-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--s2);
+    }
+
+    .player__review-filter {
+      position: relative;
+      display: inline-grid;
+      grid-template-columns: repeat(2, 1fr);
+      min-width: 0;
+      margin: 0;
+      padding: 2px;
+      border: 1px solid var(--rule);
+      border-radius: 999px;
+    }
+
+    .player__review-filter::before {
+      content: "";
+      position: absolute;
+      top: 2px;
+      bottom: 2px;
+      left: 2px;
+      width: calc((100% - 4px) / 2);
+      border-radius: inherit;
+      background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 40%, var(--rule));
+      transition: transform 180ms ease-out;
+      pointer-events: none;
+    }
+
+    .player__review-filter[data-scope="all"]::before {
+      transform: translateX(100%);
+    }
+
+    .player__review-option {
+      position: relative;
+      cursor: pointer;
+    }
+
+    .player__review-option input {
+      position: absolute;
+      z-index: 1;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .player__review-option span {
+      display: block;
+      padding: 0.3rem 0.65rem;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      color: var(--ink-soft);
+      font-size: 0.78rem;
+      line-height: 1.4;
+      font-weight: 550;
+      text-align: center;
+      transition: color 180ms ease-out;
+    }
+
+    .player__review-option input:checked + span {
+      color: var(--ink);
+    }
+
+    .player__review-option input:focus-visible + span {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .player__review-filter::before,
+      .player__review-option span { transition: none; }
+    }
+
     .player__score-button[hidden] {
       display: none;
     }
@@ -1105,19 +1185,36 @@
       font-weight: 500;
     }
 
-    .player__missed-list {
+    .player__review-list {
       display: grid;
       gap: var(--s3);
       margin: var(--s3) 0 0;
       padding-left: 1.5rem;
     }
 
-    .player__missed-card {
+    .player__review-card {
       border-left: 2px solid var(--accent);
       padding-left: var(--s2);
     }
 
-    .player__missed-prompt {
+    .player__review-card--correct {
+      border-left-color: var(--positive);
+    }
+
+    .player__review-status {
+      margin: 0 0 var(--s1);
+      color: var(--accent);
+      font-size: 0.8rem;
+      font-weight: 650;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .player__review-status--correct {
+      color: var(--positive);
+    }
+
+    .player__review-prompt {
       margin: 0;
       font-family: var(--serif);
       font-size: 1.15rem;
@@ -1138,7 +1235,7 @@
       font-weight: 600;
     }
 
-    .player__no-missed-cards {
+    .player__no-review-cards {
       margin: var(--s3) 0 0;
       color: var(--ink-soft);
     }
@@ -1583,15 +1680,28 @@
             <button type="button" class="player__score-button player__score-button--secondary" id="reset-progress" data-testid="reset-progress" data-action="reset-progress" data-i18n>Reset progress</button>
           </div>
         </header>
-        <section class="player__review-section" aria-labelledby="missed-heading">
-          <h3 class="player__review-heading" id="missed-heading" data-i18n>Review missed cards</h3>
-          <ol class="player__missed-list" id="missed-cards" data-testid="missed-cards"></ol>
-          <p class="player__no-missed-cards" id="no-missed-cards" data-testid="no-missed-cards" hidden data-i18n>Perfect score — nothing to review.</p>
+        <section class="player__review-section" aria-labelledby="review-heading">
+          <div class="player__review-header">
+            <h3 class="player__review-heading" id="review-heading" data-testid="review-heading" data-i18n>Review</h3>
+            <fieldset class="player__review-filter" id="review-filter">
+              <legend class="player__visually-hidden" data-i18n>Review scope</legend>
+              <label class="player__review-option">
+                <input type="radio" name="review-scope" value="missed" id="review-missed" data-testid="review-missed" aria-controls="review-cards" checked>
+                <span id="review-missed-label"></span>
+              </label>
+              <label class="player__review-option">
+                <input type="radio" name="review-scope" value="all" id="review-all" data-testid="review-all" aria-controls="review-cards">
+                <span id="review-all-label"></span>
+              </label>
+            </fieldset>
+          </div>
+          <ol class="player__review-list" id="review-cards" data-testid="review-cards"></ol>
+          <p class="player__no-review-cards" id="no-review-cards" data-testid="no-review-cards" hidden data-i18n>Perfect score — nothing to review.</p>
         </section>
       </section>
 
       <div class="player__review-scroll-overlay" id="review-scroll-overlay" hidden>
-        <button type="button" class="player__review-scroll-cue" id="review-scroll-cue" data-testid="review-scroll-cue" data-action="scroll-review" aria-controls="missed-cards" aria-label="Scroll down to see more missed cards" data-i18n-attrs="aria-label">
+        <button type="button" class="player__review-scroll-cue" id="review-scroll-cue" data-testid="review-scroll-cue" data-action="scroll-review" aria-controls="review-cards" aria-label="Scroll down to see more missed cards" data-i18n-attrs="aria-label">
           <span data-i18n>More cards below</span> <span aria-hidden="true">↓</span>
         </button>
       </div>
@@ -1640,8 +1750,13 @@
         reviewScrollOverlay: document.getElementById("review-scroll-overlay"),
         reviewScrollCue: document.getElementById("review-scroll-cue"),
         retryMissed: document.getElementById("retry-missed"),
-        missedCards: document.getElementById("missed-cards"),
-        noMissedCards: document.getElementById("no-missed-cards"),
+        reviewFilter: document.getElementById("review-filter"),
+        reviewMissed: document.getElementById("review-missed"),
+        reviewAll: document.getElementById("review-all"),
+        reviewMissedLabel: document.getElementById("review-missed-label"),
+        reviewAllLabel: document.getElementById("review-all-label"),
+        reviewCards: document.getElementById("review-cards"),
+        noReviewCards: document.getElementById("no-review-cards"),
         navigation: document.querySelector(".player__navigation"),
         previous: document.getElementById("previous-card"),
         next: document.getElementById("next-card"),
@@ -1676,14 +1791,18 @@
         // as an authentication value.
         deckFingerprint: null,
         // sessionCards is the mutable attempt queue; scoreCards stays unique so
-        // requeued attempts do not inflate the final score or review list.
+        // requeued attempts do not inflate the final score or retry scope.
         sessionCards: [],
         scoreCards: [],
+        // reviewCards is the unique order in which this session presents cards.
+        // It stays independent from scoreCards, which narrows during retries.
+        reviewCards: [],
         isRetry: false,
         cramMode: false,
         shuffleMode: false,
         shuffleSeed: null,
         freshRound: false,
+        showAllReviews: false,
         index: 0,
         cleanup: () => {},
         celebrationCleanup: () => {},
@@ -1844,6 +1963,8 @@
         state.sessionCards = state.shuffleMode
           ? shuffleCards(sourceCards)
           : sourceCards.slice();
+        state.showAllReviews = false;
+        if (!state.isRetry) state.reviewCards = uniqueCards(state.sessionCards);
         state.index = 0;
         state.freshRound = true;
         // Only the cards in this round restart fresh. Clearing grades outside sourceCards
@@ -1870,6 +1991,15 @@
           [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
         }
         return shuffled;
+      }
+
+      function uniqueCards(cards) {
+        const seen = new Set();
+        return cards.filter((card) => {
+          if (seen.has(card.id)) return false;
+          seen.add(card.id);
+          return true;
+        });
       }
 
       // Renderer options keep grade vocabulary, scoring, and navigation policy with the
@@ -1951,12 +2081,14 @@
         state.freshRound = false;
         state.sessionCards = deck.cards.slice();
         state.scoreCards = deck.cards.slice();
+        state.reviewCards = deck.cards.slice();
         state.isRetry = false;
         state.cramMode = false;
         state.shuffleMode = false;
         updateCramModeToggle();
         updateShuffleToggle();
         state.index = 0;
+        state.showAllReviews = false;
         state.persistenceWarning = "";
         state.grades = progressStore.load(deck);
         state.gradeDetails = Object.create(null);
@@ -1981,11 +2113,13 @@
         state.persistenceWarning = "";
         state.sessionCards = state.deck.cards.slice();
         state.scoreCards = state.deck.cards.slice();
+        state.reviewCards = state.deck.cards.slice();
         state.isRetry = false;
         state.cramMode = false;
         state.shuffleMode = false;
         state.shuffleSeed = null;
         state.freshRound = false;
+        state.showAllReviews = false;
         updateCramModeToggle();
         updateShuffleToggle();
         state.index = 0;
@@ -2762,9 +2896,11 @@
         state.deckFingerprint = null;
         state.sessionCards = [];
         state.scoreCards = [];
+        state.reviewCards = [];
         state.isRetry = false;
         state.cramMode = false;
         state.shuffleMode = false;
+        state.showAllReviews = false;
         state.gradeDetails = Object.create(null);
         updateCramModeToggle();
         updateShuffleToggle();
@@ -2877,6 +3013,12 @@
         }
       }
 
+      function setReviewScope(showAll) {
+        if (!state.deck || refs.player.dataset.state !== "results") return;
+        state.showAllReviews = showAll;
+        renderScoreScreen();
+      }
+
       function renderScoreScreen() {
         const { grades, scoreCards, deck } = state;
         // scoreCards is the current retry round's scope (it shrinks with each retry so
@@ -2910,15 +3052,27 @@
         refs.retryMissed.textContent = missedCount
           ? t("Retry {count} missed card", { count: missedCount })
           : t("Retry missed cards");
-        refs.missedCards.replaceChildren(...missedCards.map(createMissedCard));
-        refs.missedCards.hidden = missedCards.length === 0;
-        refs.noMissedCards.hidden = missedCards.length !== 0;
+        const reviewCards = state.showAllReviews ? state.reviewCards : missedCards;
+        refs.reviewMissed.checked = !state.showAllReviews;
+        refs.reviewAll.checked = state.showAllReviews;
+        refs.reviewFilter.dataset.scope = state.showAllReviews ? "all" : "missed";
+        refs.reviewMissedLabel.textContent = t("Missed {count}", { count: missedCount });
+        refs.reviewAllLabel.textContent = t("All {count}", { count: state.reviewCards.length });
+        refs.reviewCards.replaceChildren(
+          ...reviewCards.map((card) => createReviewCard(card, isPositiveGrade(card, grades[card.id])))
+        );
+        refs.reviewCards.hidden = reviewCards.length === 0;
+        refs.noReviewCards.hidden = state.showAllReviews || missedCards.length !== 0;
         refs.progress.max = total;
         refs.progress.value = total;
         refs.progress.setAttribute("aria-label", t("Session complete: score {score} of {total}", { score, total }));
         refs.progressLabel.textContent = t("Session complete: {score} of {total}", { score, total });
         refs.progressPercent.textContent = "100%";
         refs.announcer.textContent = t("Session complete. Score {score}/{total}.", { score, total });
+        refs.reviewScrollCue.setAttribute(
+          "aria-label",
+          t(state.showAllReviews ? "Scroll down to see more review cards" : "Scroll down to see more missed cards")
+        );
         updateReviewScrollCue();
 
         return { score, total };
@@ -2939,6 +3093,7 @@
           : state.scoreCards.slice();
         state.isRetry = true;
         state.cramMode = false;
+        state.showAllReviews = false;
         updateCramModeToggle();
         state.index = 0;
         resetDrillState();
@@ -2962,15 +3117,23 @@
         }
       }
 
-      function createMissedCard(card) {
-        const item = createElement("li", "player__missed-card");
-        item.dataset.testid = "missed-card";
+      function createReviewCard(card, isCorrect) {
+        const item = createElement("li", "player__review-card");
+        item.classList.toggle("player__review-card--correct", isCorrect);
+        item.dataset.testid = "review-card";
+        const status = createElement(
+          "p",
+          `player__review-status${isCorrect ? " player__review-status--correct" : ""}`,
+          t(isCorrect ? "Correct" : "Missed")
+        );
+        status.dataset.testid = "review-status";
+        item.append(status);
         const prompt = createElement(
           "p",
-          "player__missed-prompt",
+          "player__review-prompt",
           card.prompt || t("This card has no prompt.")
         );
-        prompt.dataset.testid = "missed-prompt";
+        prompt.dataset.testid = "review-prompt";
         item.append(prompt);
         if (card.answer) item.append(createReviewField("answer", t("Answer:"), card.answer));
         if (card.explanation) item.append(createReviewField("explanation", t("Explanation:"), card.explanation));
@@ -2980,7 +3143,7 @@
 
       function createReviewField(name, label, value) {
         const field = createElement("p", "player__review-field");
-        field.dataset.testid = `missed-${name}`;
+        field.dataset.testid = `review-${name}`;
         field.append(
           createElement("strong", "player__review-label", label),
           document.createTextNode(` ${String(value)}`)
@@ -3007,7 +3170,7 @@
       function updateReviewScrollCue() {
         const panel = refs.scoreScreen;
         const maxScrollTop = Math.max(0, panel.scrollHeight - panel.clientHeight);
-        const hasReviewCards = refs.missedCards.children.length > 0;
+        const hasReviewCards = refs.reviewCards.children.length > 0;
         const hasMore = hasReviewCards && maxScrollTop > 1 && panel.scrollTop < maxScrollTop - 1;
         refs.reviewScrollOverlay.hidden = !hasMore;
       }
@@ -3219,6 +3382,7 @@
             fingerprint: getDeckFingerprint(),
             queue: state.sessionCards.map(card => card.id),
             score: state.scoreCards.map(card => card.id),
+            review: state.reviewCards.map(card => card.id),
             index: state.index,
             view: refs.player.dataset.state,
             seed: state.shuffleSeed,
@@ -3276,11 +3440,14 @@
           const validCards = ids => Array.isArray(ids) && ids.length > 0 && ids.every(id => cards.has(id));
           const validIndices = indices => Array.isArray(indices) && indices.every(index =>
             Number.isInteger(index) && index >= 0 && index < saved.queue.length);
+          const validReview = ids => Array.isArray(ids) && ids.length === cards.size &&
+            new Set(ids).size === ids.length && ids.every(id => cards.has(id));
           const validMap = (values, check) => values && typeof values === "object" && !Array.isArray(values) &&
             Object.entries(values).every(([id, value]) => cards.has(id) && check(value));
           const scoreIds = new Set(saved.score);
           const queueIds = new Set(saved.queue);
           if (!validCards(saved.queue) || !validCards(saved.score) ||
+              !validReview(saved.review) ||
               scoreIds.size !== saved.score.length ||
               saved.queue.some(id => !scoreIds.has(id)) || saved.score.some(id => !queueIds.has(id)) ||
               !Number.isInteger(saved.index) || saved.index < 0 || saved.index >= saved.queue.length ||
@@ -3297,6 +3464,7 @@
           if (!grades) return "ready";
           state.sessionCards = saved.queue.map(id => cards.get(id));
           state.scoreCards = saved.score.map(id => cards.get(id));
+          state.reviewCards = saved.review.map(id => cards.get(id));
           state.index = saved.index;
           state.shuffleSeed = saved.seed;
           state.shuffleMode = saved.seed !== null;
@@ -3397,6 +3565,10 @@
         if (button.dataset.action === "request-reset") requestSettingsReset();
         if (button.dataset.action === "cancel-reset") cancelSettingsReset();
         if (button.dataset.action === "confirm-reset") confirmSettingsReset();
+      });
+
+      refs.reviewFilter.addEventListener("change", () => {
+        setReviewScope(refs.reviewAll.checked);
       });
 
       refs.themeSelect.addEventListener("change", () => {

@@ -61,6 +61,34 @@ const RETRY_DECK = {
     },
   ],
 };
+const RESULTS_REVIEW_DECK = {
+  id: "results-review-browser-check",
+  title: "Results review browser check",
+  cards: [
+    {
+      id: "results-review-known-first",
+      type: "basic",
+      prompt: "First card in session order",
+      answer: "First answer",
+      explanation: "First explanation",
+    },
+    {
+      id: "results-review-missed-second",
+      type: "basic",
+      prompt: "Second card in session order",
+      answer: "Second answer",
+      explanation: "Second explanation",
+      hint: "Second hint",
+    },
+    {
+      id: "results-review-known-third",
+      type: "basic",
+      prompt: "Third card in session order",
+      answer: "Third answer",
+      explanation: "Third explanation",
+    },
+  ],
+};
 const CUMULATIVE_RETRY_DECK = {
   id: "cumulative-retry-browser-check",
   title: "Cumulative retry browser check",
@@ -1228,7 +1256,7 @@ test.describe("basic cards", () => {
     await expect(page.getByTestId("score-value")).toHaveText("2/2");
     await expect(page.getByTestId("score-summary")).toHaveText("All 2 correct · Nothing to review");
     await expect(page.getByTestId("score-recovered")).toHaveText("1 card recovered");
-    await expect(page.getByTestId("no-missed-cards")).toBeVisible();
+    await expect(page.getByTestId("no-review-cards")).toBeVisible();
     await expect(page.getByTestId("retry-missed")).toBeDisabled();
     await expect(page.getByTestId("retry-missed")).toBeHidden();
     await expect(page.getByTestId("review-scroll-cue")).toBeHidden();
@@ -1285,6 +1313,144 @@ test.describe("basic cards", () => {
     await expect(page.getByTestId("score-value")).toHaveText("2/2");
   });
 
+  test("expands an ordered full-session review with outcomes and card details", async ({ page }) => {
+    await openPlayer(page, RESULTS_REVIEW_DECK);
+
+    // Given: the completed session has two known cards and one missed card that used a hint.
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("show-hint").click();
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-missed").click();
+    await page.getByTestId("next-card").click();
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+    await page.getByTestId("next-card").click();
+
+    // Then: RESULTS keeps the prominent missed-card review and starts with the full review collapsed.
+    await expect(page.getByTestId("review-card")).toHaveCount(1);
+    await expect(page.getByTestId("review-all")).not.toBeChecked();
+    await expect(page.getByTestId("review-heading")).toHaveText("Review");
+
+    // When: the learner switches scope using the keyboard.
+    await expect(page.getByRole("radio", { name: "Missed 1", exact: true })).toBeChecked();
+    await expect(page.getByRole("radio", { name: "All 3", exact: true })).not.toBeChecked();
+    await page.getByTestId("review-missed").focus();
+    await page.keyboard.press("ArrowRight");
+
+    // Then: every card is shown once in session order, with its outcome and available details.
+    const reviewCards = page.getByTestId("review-card");
+    await expect(reviewCards).toHaveCount(RESULTS_REVIEW_DECK.cards.length);
+    await expect(page.getByTestId("review-heading")).toHaveText("Review");
+    await expect(page.getByTestId("review-all")).toBeChecked();
+    await expect(page.getByTestId("review-all")).toBeFocused();
+    await expect(reviewCards.getByTestId("review-prompt")).toHaveText(
+      RESULTS_REVIEW_DECK.cards.map(card => card.prompt)
+    );
+    await expect(reviewCards.nth(0).getByTestId("review-status")).toHaveText("Correct");
+    await expect(reviewCards.nth(1).getByTestId("review-status")).toHaveText("Missed");
+    await expect(reviewCards.nth(2).getByTestId("review-status")).toHaveText("Correct");
+    await expect(reviewCards.nth(0)).toContainText("First answer");
+    await expect(reviewCards.nth(0)).toContainText("First explanation");
+    await expect(reviewCards.nth(1).getByTestId("review-hint")).toContainText("Needed a hint");
+
+    // And: reloading restores the order while returning to the compact default view.
+    await page.reload();
+    await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), RESULTS_REVIEW_DECK);
+    await expect(page.getByTestId("score-screen")).toBeVisible();
+    await expect(page.getByTestId("review-all")).not.toBeChecked();
+    await expect(page.getByTestId("review-card")).toHaveCount(1);
+
+    // And: the learner can return to the compact missed-card review after expanding again.
+    await page.getByTestId("review-all").check();
+    await expect(page.getByTestId("review-card")).toHaveCount(RESULTS_REVIEW_DECK.cards.length);
+    await page.getByTestId("review-missed").check();
+    await expect(page.getByTestId("review-card")).toHaveCount(1);
+    await expect(page.getByTestId("review-all")).not.toBeChecked();
+  });
+
+  test("preserves shuffled presentation order in the expanded review", async ({ page }) => {
+    await openPlayer(page, RESULTS_REVIEW_DECK);
+
+    // Given: the learner starts a shuffled session.
+    await page.evaluate(() => {
+      let seed = 1;
+      crypto.getRandomValues = values => { values[0] = seed++; return values; };
+    });
+    await page.getByTestId("settings-toggle").click();
+    await page.getByTestId("shuffle-cards").click();
+    const presentedPrompts = [];
+
+    // When: every card is answered in the shuffled order.
+    for (let index = 0; index < RESULTS_REVIEW_DECK.cards.length; index += 1) {
+      presentedPrompts.push(await page.getByTestId("card-prompt").textContent());
+      await page.getByTestId("reveal-answer").click();
+      await page.getByTestId("grade-known").click();
+      await page.getByTestId("next-card").click();
+    }
+
+    // Then: the expanded review follows the order the learner saw.
+    expect(presentedPrompts).not.toEqual(RESULTS_REVIEW_DECK.cards.map(card => card.prompt));
+    await page.getByTestId("review-all").check();
+    await expect(page.getByTestId("review-card").getByTestId("review-prompt")).toHaveText(presentedPrompts);
+  });
+
+  test("collapses the full review after starting a new shuffled round", async ({ page }) => {
+    await openPlayer(page, RESULTS_REVIEW_DECK);
+
+    // Given: a completed result is expanded before the learner starts another round.
+    await completeScoredSession(page, RESULTS_REVIEW_DECK, RESULTS_REVIEW_DECK.cards.length);
+    await page.getByTestId("review-all").check();
+    await expect(page.getByTestId("review-card")).toHaveCount(RESULTS_REVIEW_DECK.cards.length);
+
+    // When: the learner starts and completes a fresh shuffled round.
+    await page.evaluate(() => {
+      let seed = 1;
+      crypto.getRandomValues = values => { values[0] = seed++; return values; };
+    });
+    await page.getByTestId("settings-toggle").click();
+    await page.getByTestId("shuffle-cards").click();
+    for (let index = 0; index < RESULTS_REVIEW_DECK.cards.length; index += 1) {
+      await page.getByTestId("reveal-answer").click();
+      await page.getByTestId("grade-known").click();
+      await page.getByTestId("next-card").click();
+    }
+
+    // Then: the new RESULTS screen returns to its compact missed-card default.
+    await expect(page.getByTestId("review-all")).not.toBeChecked();
+    await expect(page.getByTestId("review-card")).toHaveCount(0);
+    await expect(page.getByTestId("no-review-cards")).toBeVisible();
+  });
+
+  test("rejects a saved session with an invalid review order", async ({ page }) => {
+    await openPlayer(page, RESULTS_REVIEW_DECK);
+    await completeScoredSession(page, RESULTS_REVIEW_DECK, RESULTS_REVIEW_DECK.cards.length);
+    const sessionKey = `fc:${RESULTS_REVIEW_DECK.id}:session`;
+    const savedSession = await page.evaluate(key => JSON.parse(localStorage.getItem(key)), sessionKey);
+    const cardIds = RESULTS_REVIEW_DECK.cards.map(card => card.id);
+    const invalidSessions = [
+      (() => {
+        const invalid = { ...savedSession };
+        delete invalid.review;
+        return invalid;
+      })(),
+      { ...savedSession, review: [cardIds[0], cardIds[0], cardIds[2]] },
+      { ...savedSession, review: [cardIds[0], cardIds[1], "not-in-deck"] },
+    ];
+
+    // When: the persisted order is missing, duplicated, or references an unknown card.
+    for (const invalidSession of invalidSessions) {
+      await page.evaluate(([key, value]) => localStorage.setItem(key, JSON.stringify(value)), [sessionKey, invalidSession]);
+      await page.reload();
+      await page.evaluate(deck => window.CRAM_PLAYER.setDeck(deck), RESULTS_REVIEW_DECK);
+
+      // Then: the player safely starts a fresh round instead of restoring a corrupt session.
+      await expect(page.getByTestId("player")).toHaveAttribute("data-state", "ready");
+      await expect(page.getByTestId("card-position")).toHaveText("1/3");
+    }
+  });
+
   test("scores retry results against the full original session and narrows a second retry to what's still missed", async ({ page }) => {
     await openPlayer(page, CUMULATIVE_RETRY_DECK);
 
@@ -1318,6 +1484,17 @@ test.describe("basic cards", () => {
     await expect(page.getByTestId("score-recovered")).toHaveText("2 cards recovered");
     await expect(page.getByTestId("retry-missed")).toHaveText("Retry 1 missed card");
 
+    // And: expanding after a retry still reviews every original card exactly once.
+    await page.getByTestId("review-all").check();
+    await expect(page.getByTestId("review-card")).toHaveCount(CUMULATIVE_RETRY_DECK.cards.length);
+    await expect(page.getByTestId("review-card").getByTestId("review-prompt")).toHaveText(
+      CUMULATIVE_RETRY_DECK.cards.map(card => card.prompt)
+    );
+    await expect(page.getByTestId("review-card").getByTestId("review-status")).toHaveText([
+      "Correct", "Correct", "Missed", ...Array.from({ length: 7 }, () => "Correct"),
+    ]);
+    await page.getByTestId("review-missed").check();
+
     // And: reloading the results screen keeps the cumulative score.
     await page.reload();
     await page.evaluate((deck) => window.CRAM_PLAYER.setDeck(deck), CUMULATIVE_RETRY_DECK);
@@ -1338,7 +1515,7 @@ test.describe("basic cards", () => {
     await page.getByTestId("grade-known").click();
     await page.getByTestId("next-card").click();
     await expect(page.getByTestId("score-value")).toHaveText("10/10");
-    await expect(page.getByTestId("no-missed-cards")).toBeVisible();
+    await expect(page.getByTestId("no-review-cards")).toBeVisible();
   });
 
   for (const { deck, correct, celebrates } of [
@@ -1464,10 +1641,19 @@ test.describe("basic cards", () => {
     }
 
     // Then: the perfect-score empty state is shown and retry is unavailable.
-    await expect(page.getByTestId("no-missed-cards")).toBeVisible();
+    await expect(page.getByTestId("no-review-cards")).toBeVisible();
     await expect(page.getByTestId("score-summary")).toHaveText(
       `All ${BASIC_DECK.cards.length} correct · Nothing to review`
     );
+    await page.getByTestId("review-all").check();
+    await expect(page.getByTestId("review-card")).toHaveCount(BASIC_DECK.cards.length);
+    await expect(page.getByTestId("no-review-cards")).toBeHidden();
+    await expect(page.getByTestId("review-card").getByTestId("review-status")).toHaveText(
+      Array.from({ length: BASIC_DECK.cards.length }, () => "Correct")
+    );
+    await expect(page.getByTestId("review-all")).toBeChecked();
+    await page.getByTestId("review-missed").check();
+    await expect(page.getByTestId("no-review-cards")).toBeVisible();
     await expect(page.getByTestId("score-missed-label")).toHaveText("Nothing to review");
     await expect(page.getByTestId("retry-missed")).toBeDisabled();
     await expect(page.getByTestId("retry-missed")).toBeHidden();
@@ -1501,7 +1687,7 @@ test.describe("basic cards", () => {
     // When: the learner scrolls to the end of the review list.
     const scrollState = await page.evaluate(() => {
       const panel = document.querySelector("#score-screen");
-      const lastCard = document.querySelector("#missed-cards > li:last-child");
+      const lastCard = document.querySelector("#review-cards > li:last-child");
       panel.scrollTop = panel.scrollHeight;
       const panelBounds = panel.getBoundingClientRect();
       const cardBounds = lastCard.getBoundingClientRect();
@@ -2064,19 +2250,19 @@ test.describe("hints", () => {
 
     // And: the normal session's missed-card review identifies exactly the cards that needed hints.
     await expect(page.getByTestId("score-value")).toHaveText("0/4");
-    await expect(page.getByTestId("missed-hint")).toHaveCount(3);
-    const missedCards = page.getByTestId("missed-card");
+    await expect(page.getByTestId("review-hint")).toHaveCount(3);
+    const missedCards = page.getByTestId("review-card");
     await expect(
-      missedCards.filter({ hasText: HINT_DECK.cards[0].prompt }).getByTestId("missed-hint")
+      missedCards.filter({ hasText: HINT_DECK.cards[0].prompt }).getByTestId("review-hint")
     ).toHaveCount(1);
     await expect(
-      missedCards.filter({ hasText: HINT_DECK.cards[1].prompt }).getByTestId("missed-hint")
+      missedCards.filter({ hasText: HINT_DECK.cards[1].prompt }).getByTestId("review-hint")
     ).toHaveCount(1);
     await expect(
-      missedCards.filter({ hasText: HINT_DECK.cards[2].prompt }).getByTestId("missed-hint")
+      missedCards.filter({ hasText: HINT_DECK.cards[2].prompt }).getByTestId("review-hint")
     ).toHaveCount(1);
     await expect(
-      missedCards.filter({ hasText: HINT_DECK.cards[3].prompt }).getByTestId("missed-hint")
+      missedCards.filter({ hasText: HINT_DECK.cards[3].prompt }).getByTestId("review-hint")
     ).toHaveCount(0);
     expect(await page.evaluate(() => window.CRAM_PLAYER.getState().hintsUsed)).toEqual({
       "hint-basic-card": true,
