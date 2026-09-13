@@ -616,6 +616,57 @@ test.describe("basic cards", () => {
     await expect(page.getByTestId("score-value")).toHaveText("1/1");
   });
 
+  test("does not persist card content in the resumable session", async ({ page }) => {
+    // Given: the learner has started a deck and recorded an answer.
+    await openPlayer(page, BASIC_DECK);
+    await page.getByTestId("reveal-answer").click();
+    await page.getByTestId("grade-known").click();
+
+    // When: the browser session record is inspected.
+    const stored = await page.evaluate((id) => localStorage.getItem(`fc:${id}:session`), BASIC_DECK.id);
+    const session = JSON.parse(stored);
+
+    // Then: it contains only resumable state and a fixed-size deck fingerprint.
+    expect(session).toHaveProperty("fingerprint");
+    expect(session.fingerprint).toMatch(/^[0-9a-f]{16}$/);
+    expect(session).not.toHaveProperty("deck");
+    expect(stored).not.toContain(BASIC_DECK.cards[0].prompt);
+    expect(stored).not.toContain(BASIC_DECK.cards[0].answer);
+  });
+
+  test("removes legacy sessions that duplicated the deck", async ({ page }) => {
+    // Given: an older player left a full deck copy in the session record.
+    await page.goto(PLAYER_URL);
+    const key = `fc:${BASIC_DECK.id}:session`;
+    await page.evaluate(({ storageKey, cards }) => {
+      localStorage.setItem(storageKey, JSON.stringify({
+        deck: JSON.stringify(cards),
+        queue: cards.map(card => card.id),
+        score: cards.map(card => card.id),
+        index: 0,
+        view: "ready",
+        seed: null,
+        freshRound: false,
+        isRetry: false,
+        cramMode: false,
+        grades: {},
+        hints: {},
+        streaks: {},
+        drilled: {},
+        fresh: [],
+        processed: [],
+      }));
+    }, { storageKey: key, cards: BASIC_DECK.cards });
+
+    // When: the current player opens that deck.
+    await page.evaluate(deck => window.CRAM_PLAYER.setDeck(deck), BASIC_DECK);
+
+    // Then: the obsolete record is replaced by a content-free resumable record.
+    const replacement = await page.evaluate(storageKey => localStorage.getItem(storageKey), key);
+    expect(JSON.parse(replacement)).not.toHaveProperty("deck");
+    expect(replacement).not.toContain(BASIC_DECK.cards[0].answer);
+  });
+
   test("discards invalid or outdated sessions without discarding grade history", async ({ page }) => {
     // Given: a graded card and a saved session that references an unknown card.
     await openPlayer(page, BASIC_DECK);

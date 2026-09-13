@@ -23,6 +23,7 @@ class RendererCliTests(unittest.TestCase):
         # Given a title with Unicode, HTML, quotes, and an injection-marker lookalike.
         deck = read_deck(fixture_paths("valid")[0])
         deck["title"] = '한국어 </title><script>alert("x")</script> & __CRAM_DECK__'
+        deck["source"] = "https://example.test/private?access_token=synthetic-audit-token"
         template_head = _HeadMetadata()
         template_head.feed(TEMPLATE.read_text(encoding="utf-8"))
         with tempfile.TemporaryDirectory() as directory:
@@ -48,6 +49,7 @@ class RendererCliTests(unittest.TestCase):
             self.assertNotIn("og:url", head.meta)
             self.assertNotIn("og:image", head.meta)
             self.assertNotIn("twitter:image", head.meta)
+            self.assertNotIn("synthetic-audit-token", html)
 
     def test_metadata_descriptions_follow_the_selected_player_language(self):
         # Given a deck that can be shared with any supported player language.
@@ -99,7 +101,10 @@ class RendererCliTests(unittest.TestCase):
                     rendered_deck = json.loads(match.group("deck"))
                 except json.JSONDecodeError as error:
                     self.fail(f"the injected deck should be valid JSON: {error}")
-                self.assertEqual(rendered_deck, deck)
+                expected_player_deck = {key: value for key, value in deck.items() if key != "source"}
+                self.assertEqual(rendered_deck, expected_player_deck)
+                if deck.get("source"):
+                    self.assertNotIn(deck["source"], match.group("deck"))
 
                 self.assertEqual(
                     html.count("</script>"),

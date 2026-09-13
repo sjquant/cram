@@ -3201,7 +3201,10 @@
         if (!state.deck || !state.deck.id || !state.sessionCards.length) return;
         try {
           window.localStorage.setItem(`fc:${state.deck.id}:session`, JSON.stringify({
-            deck: JSON.stringify(state.deck.cards),
+            // Keep only a fixed-size content fingerprint here.  The card bodies
+            // are already present in the page and must not be duplicated into
+            // persistent browser storage.
+            fingerprint: fingerprintDeck(state.deck.cards),
             queue: state.sessionCards.map(card => card.id),
             score: state.scoreCards.map(card => card.id),
             index: state.index,
@@ -3223,10 +3226,35 @@
         }
       }
 
+      function fingerprintDeck(cards) {
+        const serialized = JSON.stringify(cards);
+        if (typeof serialized !== "string") throw new TypeError("The deck cannot be fingerprinted.");
+        // This is a change detector, not an authentication token. Two independent
+        // 32-bit hashes make accidental matches unlikely while keeping the value
+        // small and synchronous so session persistence stays lightweight.
+        let first = 2166136261;
+        let second = 2654435769;
+        for (let index = 0; index < serialized.length; index += 1) {
+          const code = serialized.charCodeAt(index);
+          first = Math.imul(first ^ code, 16777619);
+          second = Math.imul(second ^ (code + index), 2246822519);
+        }
+        return `${(first >>> 0).toString(16).padStart(8, "0")}${(second >>> 0).toString(16).padStart(8, "0")}`;
+      }
+
       function restoreSession() {
         try {
-          const saved = JSON.parse(window.localStorage.getItem(`fc:${state.deck.id}:session`));
-          if (!saved || saved.deck !== JSON.stringify(state.deck.cards)) return "ready";
+          const key = `fc:${state.deck.id}:session`;
+          const saved = JSON.parse(window.localStorage.getItem(key));
+          if (!saved || saved.fingerprint !== fingerprintDeck(state.deck.cards)) {
+            // Remove sessions written by older players: they duplicated the full
+            // deck, so leaving one behind would retain private card content even
+            // after this version has stopped using it.
+            if (saved && Object.hasOwn(saved, "deck")) {
+              try { window.localStorage.removeItem(key); } catch {}
+            }
+            return "ready";
+          }
           const cards = new Map(state.deck.cards.map(card => [card.id, card]));
           const validCards = ids => Array.isArray(ids) && ids.length > 0 && ids.every(id => cards.has(id));
           const validIndices = indices => Array.isArray(indices) && indices.every(index =>
