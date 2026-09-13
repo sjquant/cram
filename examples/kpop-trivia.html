@@ -1084,6 +1084,86 @@
       color: var(--ink);
     }
 
+    .player__review-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--s2);
+    }
+
+    .player__review-filter {
+      position: relative;
+      display: inline-grid;
+      grid-template-columns: repeat(2, 1fr);
+      min-width: 0;
+      margin: 0;
+      padding: 2px;
+      border: 1px solid var(--rule);
+      border-radius: 999px;
+    }
+
+    .player__review-filter::before {
+      content: "";
+      position: absolute;
+      top: 2px;
+      bottom: 2px;
+      left: 2px;
+      width: calc((100% - 4px) / 2);
+      border-radius: inherit;
+      background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 40%, var(--rule));
+      transition: transform 180ms ease-out;
+      pointer-events: none;
+    }
+
+    .player__review-filter[data-scope="all"]::before {
+      transform: translateX(100%);
+    }
+
+    .player__review-option {
+      position: relative;
+      cursor: pointer;
+    }
+
+    .player__review-option input {
+      position: absolute;
+      z-index: 1;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .player__review-option span {
+      display: block;
+      padding: 0.3rem 0.65rem;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      color: var(--ink-soft);
+      font-size: 0.78rem;
+      line-height: 1.4;
+      font-weight: 550;
+      text-align: center;
+      transition: color 180ms ease-out;
+    }
+
+    .player__review-option input:checked + span {
+      color: var(--ink);
+    }
+
+    .player__review-option input:focus-visible + span {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .player__review-filter::before,
+      .player__review-option span { transition: none; }
+    }
+
     .player__score-button[hidden] {
       display: none;
     }
@@ -1113,19 +1193,36 @@
       font-weight: 500;
     }
 
-    .player__missed-list {
+    .player__review-list {
       display: grid;
       gap: var(--s3);
       margin: var(--s3) 0 0;
       padding-left: 1.5rem;
     }
 
-    .player__missed-card {
+    .player__review-card {
       border-left: 2px solid var(--accent);
       padding-left: var(--s2);
     }
 
-    .player__missed-prompt {
+    .player__review-card--correct {
+      border-left-color: var(--positive);
+    }
+
+    .player__review-status {
+      margin: 0 0 var(--s1);
+      color: var(--accent);
+      font-size: 0.8rem;
+      font-weight: 650;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .player__review-status--correct {
+      color: var(--positive);
+    }
+
+    .player__review-prompt {
       margin: 0;
       font-family: var(--serif);
       font-size: 1.15rem;
@@ -1146,7 +1243,7 @@
       font-weight: 600;
     }
 
-    .player__no-missed-cards {
+    .player__no-review-cards {
       margin: var(--s3) 0 0;
       color: var(--ink-soft);
     }
@@ -1591,15 +1688,28 @@
             <button type="button" class="player__score-button player__score-button--secondary" id="reset-progress" data-testid="reset-progress" data-action="reset-progress" data-i18n>Reset progress</button>
           </div>
         </header>
-        <section class="player__review-section" aria-labelledby="missed-heading">
-          <h3 class="player__review-heading" id="missed-heading" data-i18n>Review missed cards</h3>
-          <ol class="player__missed-list" id="missed-cards" data-testid="missed-cards"></ol>
-          <p class="player__no-missed-cards" id="no-missed-cards" data-testid="no-missed-cards" hidden data-i18n>Perfect score — nothing to review.</p>
+        <section class="player__review-section" aria-labelledby="review-heading">
+          <div class="player__review-header">
+            <h3 class="player__review-heading" id="review-heading" data-testid="review-heading" data-i18n>Review</h3>
+            <fieldset class="player__review-filter" id="review-filter">
+              <legend class="player__visually-hidden" data-i18n>Review scope</legend>
+              <label class="player__review-option">
+                <input type="radio" name="review-scope" value="missed" id="review-missed" data-testid="review-missed" aria-controls="review-cards" checked>
+                <span id="review-missed-label"></span>
+              </label>
+              <label class="player__review-option">
+                <input type="radio" name="review-scope" value="all" id="review-all" data-testid="review-all" aria-controls="review-cards">
+                <span id="review-all-label"></span>
+              </label>
+            </fieldset>
+          </div>
+          <ol class="player__review-list" id="review-cards" data-testid="review-cards"></ol>
+          <p class="player__no-review-cards" id="no-review-cards" data-testid="no-review-cards" hidden data-i18n>Perfect score — nothing to review.</p>
         </section>
       </section>
 
       <div class="player__review-scroll-overlay" id="review-scroll-overlay" hidden>
-        <button type="button" class="player__review-scroll-cue" id="review-scroll-cue" data-testid="review-scroll-cue" data-action="scroll-review" aria-controls="missed-cards" aria-label="Scroll down to see more missed cards" data-i18n-attrs="aria-label">
+        <button type="button" class="player__review-scroll-cue" id="review-scroll-cue" data-testid="review-scroll-cue" data-action="scroll-review" aria-controls="review-cards" aria-label="Scroll down to see more missed cards" data-i18n-attrs="aria-label">
           <span data-i18n>More cards below</span> <span aria-hidden="true">↓</span>
         </button>
       </div>
@@ -1619,7 +1729,7 @@
 
   <!-- Render this template with render.py; examples/ contains the generated preview.
        Injected JSON escapes every less-than character to keep inline scripts safe. -->
-  <script>window.__LOCALE__ = {"language": "en", "messages": {"Flashcards: {count}. Test your knowledge and review what you missed with Cram.": "Flashcards: {count}. Test your knowledge and review what you missed with Cram.", "Loading deck\u2026": "Loading deck\u2026", "Open settings": "Open settings", "Close settings": "Close settings", "Settings": "Settings", "Theme": "Theme", "System": "System", "Cram mode": "Cram mode", "Requeue missed cards during this session.": "Requeue missed cards during this session.", "Study order": "Study order", "Original order": "Original", "Shuffled order": "Shuffled", "Shuffle": "Shuffle", "Restore original order": "Restore original order", "This session could not be saved. Reloading may lose your place.": "This session could not be saved. Reloading may lose your place.", "Deck progress": "Deck progress", "Card 0 of 0": "Card 0 of 0", "Preparing card": "Preparing card", "Preparing your deck\u2026": "Preparing your deck\u2026", "Results": "Results", "Session complete": "Session complete", "0 correct \u00b7 Nothing to review": "0 correct \u00b7 Nothing to review", "Score breakdown": "Score breakdown", "0 correct": "0 correct", "Nothing to review": "Nothing to review", "Retry missed cards": "Retry missed cards", "Reset progress": "Reset progress", "Review missed cards": "Review missed cards", "Perfect score \u2014 nothing to review.": "Perfect score \u2014 nothing to review.", "Scroll down to see more missed cards": "Scroll down to see more missed cards", "More cards below": "More cards below", "Card navigation": "Card navigation", "Previous card": "Previous card", "\u2190 Previous": "\u2190 Previous", "Next card": "Next card", "Skip \u2192": "Skip \u2192", "Next \u2192": "Next \u2192", "See results \u2192": "See results \u2192", "See results": "See results", "Skip to next card": "Skip to next card", "Made with Cram": "Made with Cram", "Use the arrow keys to move through the deck.": "Use the arrow keys to move through the deck.", "Cram mode is unavailable during retry sessions": "Cram mode is unavailable during retry sessions", "Disable Cram mode": "Disable Cram mode", "Enable Cram mode": "Enable Cram mode", "Cram mode is unavailable during retry sessions.": "Cram mode is unavailable during retry sessions.", "Cram mode enabled for this session.": "Cram mode enabled for this session.", "Cram mode disabled for this session.": "Cram mode disabled for this session.", "Cards shuffled for this session.": "Cards shuffled for this session.", "Card order restored for this session.": "Card order restored for this session.", "The page needs a deck with a title and at least one card.": "The page needs a deck with a title and at least one card.", "This card could not be rendered.": "This card could not be rendered.", "The card renderer failed.": "The card renderer failed.", "This card has no prompt.": "This card has no prompt.", "This card has no answer.": "This card has no answer.", "Show answer": "Show answer", "Missed it": "Missed it", "Knew it": "Knew it", "Grade your recall": "Grade your recall", "Optional hint": "Optional hint", "Answer actions": "Answer actions", "The grade could not be recorded.": "The grade could not be recorded.", "Marked as known.": "Marked as known.", "Marked as missed.": "Marked as missed.", "Choose an answer": "Choose an answer", "This option has no text.": "This option has no text.", "Check answer": "Check answer", "Correct.": "Correct.", "Incorrect.": "Incorrect.", "Incorrect. The correct answer is: {answer}": "Incorrect. The correct answer is: {answer}", "Answer selected. Check it when ready.": "Answer selected. Check it when ready.", "Blank {number}": "Blank {number}", "Check answers": "Check answers", "This card was previously marked incorrect.": "This card was previously marked incorrect.", "Show hint": "Show hint", "The hint could not be recorded.": "The hint could not be recorded.", "The \u201c{type}\u201d card renderer is not installed yet.": "The \u201c{type}\u201d card renderer is not installed yet.", "Unable to load deck": "Unable to load deck", "No cards loaded": "No cards loaded", "Deck error": "Deck error", "Card {position} of {total}": "Card {position} of {total}", "Session complete. Score {score}/{total}.": "Session complete. Score {score}/{total}.", "{score} correct \u00b7 {missedCount} to review": "{score} correct \u00b7 {missedCount} to review", "All {total} correct \u00b7 Nothing to review": "All {total} correct \u00b7 Nothing to review", "{score} correct": "{score} correct", "{missedCount} to review": "{missedCount} to review", "Retry {count} missed card": {"one": "Retry {count} missed card", "other": "Retry {count} missed cards"}, "{count} card recovered": {"one": "{count} card recovered", "other": "{count} cards recovered"}, "Retrying {count} missed card.": {"one": "Retrying {count} missed card.", "other": "Retrying {count} missed cards."}, "Session complete: score {score} of {total}": "Session complete: score {score} of {total}", "Session complete: {score} of {total}": "Session complete: {score} of {total}", "Nothing to retry.": "Nothing to retry.", "Needed a hint": "Needed a hint", "Answer:": "Answer:", "Explanation:": "Explanation:", "Hint:": "Hint:", "Card {position} of {total}. {content}": "Card {position} of {total}. {content}", "Progress could not be saved. Try again.": "Progress could not be saved. Try again.", "basic": "basic", "mcq": "mcq", "cloze": "cloze", "unknown": "unknown", "Progress reset. Start again.": "Progress reset. Start again.", "Progress reset for this session, but saved progress could not be cleared.": "Progress reset for this session, but saved progress could not be cleared.", "Reset": "Reset", "Cancel": "Cancel", "This deletes your answers and your place in this deck. Settings are kept. This can\u2019t be undone.": "This deletes your answers and your place in this deck. Settings are kept. This can\u2019t be undone.", "Paper": "Paper", "Focus": "Focus", "Sprint": "Sprint", "Appearance": "Appearance", "Light": "Light", "Dark": "Dark", "Single-letter shortcuts": "Single-letter shortcuts", "A reveals answers; H reveals hints.": "A reveals answers; H reveals hints."}};</script>
+  <script>window.__LOCALE__ = {"language": "en", "messages": {"Flashcards: {count}. Test your knowledge and review what you missed with Cram.": "Flashcards: {count}. Test your knowledge and review what you missed with Cram.", "Loading deck\u2026": "Loading deck\u2026", "Open settings": "Open settings", "Close settings": "Close settings", "Settings": "Settings", "Theme": "Theme", "System": "System", "Cram mode": "Cram mode", "Requeue missed cards during this session.": "Requeue missed cards during this session.", "Study order": "Study order", "Original order": "Original", "Shuffled order": "Shuffled", "Shuffle": "Shuffle", "Restore original order": "Restore original order", "This session could not be saved. Reloading may lose your place.": "This session could not be saved. Reloading may lose your place.", "Deck progress": "Deck progress", "Card 0 of 0": "Card 0 of 0", "Preparing card": "Preparing card", "Preparing your deck\u2026": "Preparing your deck\u2026", "Results": "Results", "Session complete": "Session complete", "0 correct \u00b7 Nothing to review": "0 correct \u00b7 Nothing to review", "Score breakdown": "Score breakdown", "0 correct": "0 correct", "Nothing to review": "Nothing to review", "Retry missed cards": "Retry missed cards", "Reset progress": "Reset progress", "Review": "Review", "Review scope": "Review scope", "Missed {count}": "Missed {count}", "All {count}": "All {count}", "Perfect score \u2014 nothing to review.": "Perfect score \u2014 nothing to review.", "Scroll down to see more missed cards": "Scroll down to see more missed cards", "Scroll down to see more review cards": "Scroll down to see more review cards", "More cards below": "More cards below", "Card navigation": "Card navigation", "Previous card": "Previous card", "\u2190 Previous": "\u2190 Previous", "Next card": "Next card", "Skip \u2192": "Skip \u2192", "Next \u2192": "Next \u2192", "See results \u2192": "See results \u2192", "See results": "See results", "Skip to next card": "Skip to next card", "Made with Cram": "Made with Cram", "Use the arrow keys to move through the deck.": "Use the arrow keys to move through the deck.", "Cram mode is unavailable during retry sessions": "Cram mode is unavailable during retry sessions", "Disable Cram mode": "Disable Cram mode", "Enable Cram mode": "Enable Cram mode", "Cram mode is unavailable during retry sessions.": "Cram mode is unavailable during retry sessions.", "Cram mode enabled for this session.": "Cram mode enabled for this session.", "Cram mode disabled for this session.": "Cram mode disabled for this session.", "Cards shuffled for this session.": "Cards shuffled for this session.", "Card order restored for this session.": "Card order restored for this session.", "The page needs a deck with a title and at least one card.": "The page needs a deck with a title and at least one card.", "This card could not be rendered.": "This card could not be rendered.", "The card renderer failed.": "The card renderer failed.", "This card has no prompt.": "This card has no prompt.", "This card has no answer.": "This card has no answer.", "Show answer": "Show answer", "Missed it": "Missed it", "Knew it": "Knew it", "Grade your recall": "Grade your recall", "Optional hint": "Optional hint", "Answer actions": "Answer actions", "The grade could not be recorded.": "The grade could not be recorded.", "Marked as known.": "Marked as known.", "Marked as missed.": "Marked as missed.", "Choose an answer": "Choose an answer", "This option has no text.": "This option has no text.", "Check answer": "Check answer", "Correct.": "Correct.", "Correct": "Correct", "Missed": "Missed", "Incorrect.": "Incorrect.", "Incorrect. The correct answer is: {answer}": "Incorrect. The correct answer is: {answer}", "Answer selected. Check it when ready.": "Answer selected. Check it when ready.", "Blank {number}": "Blank {number}", "Check answers": "Check answers", "This card was previously marked incorrect.": "This card was previously marked incorrect.", "Show hint": "Show hint", "The hint could not be recorded.": "The hint could not be recorded.", "The \u201c{type}\u201d card renderer is not installed yet.": "The \u201c{type}\u201d card renderer is not installed yet.", "Unable to load deck": "Unable to load deck", "No cards loaded": "No cards loaded", "Deck error": "Deck error", "Card {position} of {total}": "Card {position} of {total}", "Session complete. Score {score}/{total}.": "Session complete. Score {score}/{total}.", "{score} correct \u00b7 {missedCount} to review": "{score} correct \u00b7 {missedCount} to review", "All {total} correct \u00b7 Nothing to review": "All {total} correct \u00b7 Nothing to review", "{score} correct": "{score} correct", "{missedCount} to review": "{missedCount} to review", "Retry {count} missed card": {"one": "Retry {count} missed card", "other": "Retry {count} missed cards"}, "{count} card recovered": {"one": "{count} card recovered", "other": "{count} cards recovered"}, "Retrying {count} missed card.": {"one": "Retrying {count} missed card.", "other": "Retrying {count} missed cards."}, "Session complete: score {score} of {total}": "Session complete: score {score} of {total}", "Session complete: {score} of {total}": "Session complete: {score} of {total}", "Nothing to retry.": "Nothing to retry.", "Needed a hint": "Needed a hint", "Answer:": "Answer:", "Explanation:": "Explanation:", "Hint:": "Hint:", "Card {position} of {total}. {content}": "Card {position} of {total}. {content}", "Progress could not be saved. Try again.": "Progress could not be saved. Try again.", "basic": "basic", "mcq": "mcq", "cloze": "cloze", "unknown": "unknown", "Progress reset. Start again.": "Progress reset. Start again.", "Progress reset for this session, but saved progress could not be cleared.": "Progress reset for this session, but saved progress could not be cleared.", "Reset": "Reset", "Cancel": "Cancel", "This deletes your answers and your place in this deck. Settings are kept. This can\u2019t be undone.": "This deletes your answers and your place in this deck. Settings are kept. This can\u2019t be undone.", "Paper": "Paper", "Focus": "Focus", "Sprint": "Sprint", "Appearance": "Appearance", "Light": "Light", "Dark": "Dark", "Single-letter shortcuts": "Single-letter shortcuts", "A reveals answers; H reveals hints.": "A reveals answers; H reveals hints."}};</script>
   <script>window.__DECK__ = {"id": "kpop-trivia", "title": "K-pop Trivia", "cards": [{"id": "gangnam-style-billion", "type": "cloze", "prompt": "The first YouTube video to pass 1 billion views, in 2012, was PSY's '{{Gangnam Style|\uac15\ub0a8\uc2a4\ud0c0\uc77c|\uac15\ub0a8 \uc2a4\ud0c0\uc77c}}'.", "hint": "Think of the horse-riding dance.", "explanation": "In 2014 YouTube said the video had pushed past the maximum of its original 32-bit view counter (2,147,483,647), so the counter was upgraded to 64-bit."}, {"id": "seo-taiji-birth-of-kpop", "type": "mcq", "prompt": "Which 1992 debut is often called the birth of modern K-pop?", "answer": "Seo Taiji and Boys \u2013 'Nan Arayo (I Know)'", "distractors": ["H.O.T. \u2013 'Candy'", "PSY \u2013 'Bird'", "BoA \u2013 'ID; Peace B'"], "explanation": "The trio got the lowest score from the judges on a 1992 MBC talent show, then topped the charts for weeks by mixing rap and hip-hop into Korean pop. The distractors are real early hits, but from 1996, 2001, and 2000."}, {"id": "dynamite-hot-100", "type": "mcq", "prompt": "Which BTS song, their first sung entirely in English, made them the first Korean act to reach No. 1 on the Billboard Hot 100 (2020)?", "answer": "Dynamite", "distractors": ["Butter", "Permission to Dance", "Boy With Luv"], "explanation": "Butter and Permission to Dance also hit No. 1 in 2021, but Dynamite came first, in August 2020."}, {"id": "blackpink-coachella", "type": "mcq", "prompt": "Which group was the first K-pop girl group to perform at Coachella, in 2019?", "answer": "BLACKPINK", "distractors": ["TWICE", "Red Velvet", "Girls' Generation"], "explanation": "BLACKPINK returned in 2023 as the first Asian act to headline the festival."}, {"id": "iu-nations-little-sister", "type": "mcq", "prompt": "Which solo singer is nicknamed Korea's 'Nation's Little Sister' (\uad6d\ubbfc \uc5ec\ub3d9\uc0dd)?", "answer": "IU", "distractors": ["Taeyeon", "Sunmi", "BoA"], "explanation": "The nickname took off with IU's 2010 hit 'Good Day' (\uc88b\uc740 \ub0a0), whose climax climbs three key steps. Fans still call that the '3-step high note' (3\ub2e8 \uace0\uc74c)."}, {"id": "ddu-du-ddu-du", "type": "mcq", "prompt": "Which BLACKPINK song is named after the sound of a gunshot and performed with a finger-gun move?", "answer": "DDU-DU DDU-DU", "distractors": ["Kill This Love", "How You Like That", "BOOMBAYAH"], "explanation": "'Ddu-du ddu-du' is Korean onomatopoeia for gunfire, like 'bang bang' in English. In 2019 its music video became the first by a K-pop group to pass 1 billion YouTube views."}, {"id": "twice-tt-pose", "type": "cloze", "prompt": "TWICE's 2016 hit '{{TT}}' is named after the crying emoticon \u3160\u3160, and fans copy it by making a T with their fingers under each eye.", "explanation": "The 'TT pose' spread far beyond the fandom, with celebrities across Korea copying it in photos and on TV."}, {"id": "sana-shy-shy-shy", "type": "mcq", "prompt": "In TWICE's 'Cheer Up', Sana's line 'shy shy shy' went viral in 2016 because of how she pronounced it. What did it sound like?", "answer": "'sha sha sha'", "distractors": ["'shai shai shai'", "'sy sy sy'", "'chu chu chu'"], "explanation": "'Sha sha sha' became one of 2016's biggest memes in Korea and turned a single line into Sana's signature."}, {"id": "jin-super-tuna", "type": "mcq", "prompt": "BTS's Jin released a joke song about fishing that became a viral dance challenge. What is it called?", "answer": "Super Tuna", "distractors": ["Abyss", "Moon", "Epiphany"], "explanation": "Jin, a real fishing enthusiast who also calls himself 'Worldwide Handsome', released it for free on his birthday in December 2021. The distractors are his serious solo songs."}, {"id": "twice-fandom-once", "type": "mcq", "prompt": "What is TWICE's fandom called?", "answer": "ONCE", "distractors": ["BLINK", "MY", "Bunnies"], "explanation": "The idea: if fans love TWICE once, TWICE will love them back twice. The distractors are other fandoms: BLINK (BLACKPINK), MY (aespa), and Bunnies (NewJeans)."}, {"id": "i-purple-you", "type": "basic", "prompt": "What does 'I purple you' (\ubcf4\ub77c\ud574, borahae) mean in the BTS fandom?", "answer": "'I will trust and love you for a long time.'", "explanation": "V coined it at a 2016 fan meeting: violet is the last color of the rainbow, so purple means loving someone until the very end."}, {"id": "fanchant-intro", "type": "mcq", "prompt": "What do fans usually shout during the intro of a K-pop fanchant (\uc751\uc6d0\ubc95)?", "answer": "The members' names in a fixed order, often ending with the group name", "distractors": ["The song title, repeated until the first verse", "The fandom's name, over and over", "The lyrics of the chorus, sung in advance"], "explanation": "BTS's is famous: 'Kim Namjoon! Kim Seokjin! Min Yoongi! Jung Hoseok! Park Jimin! Kim Taehyung! Jeon Jungkook! BTS!' Agencies often publish an official fanchant guide before each comeback."}, {"id": "army-bomb", "type": "mcq", "prompt": "What is BTS's official lightstick called?", "answer": "ARMY Bomb", "distractors": ["Candybong", "Carat Bong", "Heart Stick"], "explanation": "Lightsticks are called '-bong' (\ubd09, stick) in Korean: TWICE's is the Candybong and SEVENTEEN's is the Carat Bong. At concerts they can be controlled centrally, so a whole stadium changes color together."}, {"id": "encore-stage", "type": "basic", "prompt": "What happens in an 'encore stage' after a group wins first place on a weekly music show?", "answer": "The group performs the winning song again, live, while the credits roll.", "explanation": "Exhausted and emotional, members often cry, laugh, or ignore the choreography, which is why fans clip encore stages as some of the most chaotic K-pop videos."}, {"id": "aegyo", "type": "basic", "prompt": "What is 'aegyo' (\uc560\uad50)?", "answer": "Acting cute on purpose, with a baby voice, pouting, or finger hearts.", "explanation": "Variety shows constantly ask idols to do it, which is how the 2013 'Gwiyomi' song, a counting game with cute gestures, turned into a meme across Asia."}]};</script>
   <script>
     (() => {
@@ -1648,8 +1758,13 @@
         reviewScrollOverlay: document.getElementById("review-scroll-overlay"),
         reviewScrollCue: document.getElementById("review-scroll-cue"),
         retryMissed: document.getElementById("retry-missed"),
-        missedCards: document.getElementById("missed-cards"),
-        noMissedCards: document.getElementById("no-missed-cards"),
+        reviewFilter: document.getElementById("review-filter"),
+        reviewMissed: document.getElementById("review-missed"),
+        reviewAll: document.getElementById("review-all"),
+        reviewMissedLabel: document.getElementById("review-missed-label"),
+        reviewAllLabel: document.getElementById("review-all-label"),
+        reviewCards: document.getElementById("review-cards"),
+        noReviewCards: document.getElementById("no-review-cards"),
         navigation: document.querySelector(".player__navigation"),
         previous: document.getElementById("previous-card"),
         next: document.getElementById("next-card"),
@@ -1684,14 +1799,18 @@
         // as an authentication value.
         deckFingerprint: null,
         // sessionCards is the mutable attempt queue; scoreCards stays unique so
-        // requeued attempts do not inflate the final score or review list.
+        // requeued attempts do not inflate the final score or retry scope.
         sessionCards: [],
         scoreCards: [],
+        // reviewCards is the unique order in which this session presents cards.
+        // It stays independent from scoreCards, which narrows during retries.
+        reviewCards: [],
         isRetry: false,
         cramMode: false,
         shuffleMode: false,
         shuffleSeed: null,
         freshRound: false,
+        showAllReviews: false,
         index: 0,
         cleanup: () => {},
         celebrationCleanup: () => {},
@@ -1852,6 +1971,8 @@
         state.sessionCards = state.shuffleMode
           ? shuffleCards(sourceCards)
           : sourceCards.slice();
+        state.showAllReviews = false;
+        if (!state.isRetry) state.reviewCards = uniqueCards(state.sessionCards);
         state.index = 0;
         state.freshRound = true;
         // Only the cards in this round restart fresh. Clearing grades outside sourceCards
@@ -1878,6 +1999,15 @@
           [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
         }
         return shuffled;
+      }
+
+      function uniqueCards(cards) {
+        const seen = new Set();
+        return cards.filter((card) => {
+          if (seen.has(card.id)) return false;
+          seen.add(card.id);
+          return true;
+        });
       }
 
       // Renderer options keep grade vocabulary, scoring, and navigation policy with the
@@ -1959,12 +2089,14 @@
         state.freshRound = false;
         state.sessionCards = deck.cards.slice();
         state.scoreCards = deck.cards.slice();
+        state.reviewCards = deck.cards.slice();
         state.isRetry = false;
         state.cramMode = false;
         state.shuffleMode = false;
         updateCramModeToggle();
         updateShuffleToggle();
         state.index = 0;
+        state.showAllReviews = false;
         state.persistenceWarning = "";
         state.grades = progressStore.load(deck);
         state.gradeDetails = Object.create(null);
@@ -1989,11 +2121,13 @@
         state.persistenceWarning = "";
         state.sessionCards = state.deck.cards.slice();
         state.scoreCards = state.deck.cards.slice();
+        state.reviewCards = state.deck.cards.slice();
         state.isRetry = false;
         state.cramMode = false;
         state.shuffleMode = false;
         state.shuffleSeed = null;
         state.freshRound = false;
+        state.showAllReviews = false;
         updateCramModeToggle();
         updateShuffleToggle();
         state.index = 0;
@@ -2770,9 +2904,11 @@
         state.deckFingerprint = null;
         state.sessionCards = [];
         state.scoreCards = [];
+        state.reviewCards = [];
         state.isRetry = false;
         state.cramMode = false;
         state.shuffleMode = false;
+        state.showAllReviews = false;
         state.gradeDetails = Object.create(null);
         updateCramModeToggle();
         updateShuffleToggle();
@@ -2885,6 +3021,12 @@
         }
       }
 
+      function setReviewScope(showAll) {
+        if (!state.deck || refs.player.dataset.state !== "results") return;
+        state.showAllReviews = showAll;
+        renderScoreScreen();
+      }
+
       function renderScoreScreen() {
         const { grades, scoreCards, deck } = state;
         // scoreCards is the current retry round's scope (it shrinks with each retry so
@@ -2918,15 +3060,27 @@
         refs.retryMissed.textContent = missedCount
           ? t("Retry {count} missed card", { count: missedCount })
           : t("Retry missed cards");
-        refs.missedCards.replaceChildren(...missedCards.map(createMissedCard));
-        refs.missedCards.hidden = missedCards.length === 0;
-        refs.noMissedCards.hidden = missedCards.length !== 0;
+        const reviewCards = state.showAllReviews ? state.reviewCards : missedCards;
+        refs.reviewMissed.checked = !state.showAllReviews;
+        refs.reviewAll.checked = state.showAllReviews;
+        refs.reviewFilter.dataset.scope = state.showAllReviews ? "all" : "missed";
+        refs.reviewMissedLabel.textContent = t("Missed {count}", { count: missedCount });
+        refs.reviewAllLabel.textContent = t("All {count}", { count: state.reviewCards.length });
+        refs.reviewCards.replaceChildren(
+          ...reviewCards.map((card) => createReviewCard(card, isPositiveGrade(card, grades[card.id])))
+        );
+        refs.reviewCards.hidden = reviewCards.length === 0;
+        refs.noReviewCards.hidden = state.showAllReviews || missedCards.length !== 0;
         refs.progress.max = total;
         refs.progress.value = total;
         refs.progress.setAttribute("aria-label", t("Session complete: score {score} of {total}", { score, total }));
         refs.progressLabel.textContent = t("Session complete: {score} of {total}", { score, total });
         refs.progressPercent.textContent = "100%";
         refs.announcer.textContent = t("Session complete. Score {score}/{total}.", { score, total });
+        refs.reviewScrollCue.setAttribute(
+          "aria-label",
+          t(state.showAllReviews ? "Scroll down to see more review cards" : "Scroll down to see more missed cards")
+        );
         updateReviewScrollCue();
 
         return { score, total };
@@ -2947,6 +3101,7 @@
           : state.scoreCards.slice();
         state.isRetry = true;
         state.cramMode = false;
+        state.showAllReviews = false;
         updateCramModeToggle();
         state.index = 0;
         resetDrillState();
@@ -2970,15 +3125,23 @@
         }
       }
 
-      function createMissedCard(card) {
-        const item = createElement("li", "player__missed-card");
-        item.dataset.testid = "missed-card";
+      function createReviewCard(card, isCorrect) {
+        const item = createElement("li", "player__review-card");
+        item.classList.toggle("player__review-card--correct", isCorrect);
+        item.dataset.testid = "review-card";
+        const status = createElement(
+          "p",
+          `player__review-status${isCorrect ? " player__review-status--correct" : ""}`,
+          t(isCorrect ? "Correct" : "Missed")
+        );
+        status.dataset.testid = "review-status";
+        item.append(status);
         const prompt = createElement(
           "p",
-          "player__missed-prompt",
+          "player__review-prompt",
           card.prompt || t("This card has no prompt.")
         );
-        prompt.dataset.testid = "missed-prompt";
+        prompt.dataset.testid = "review-prompt";
         item.append(prompt);
         if (card.answer) item.append(createReviewField("answer", t("Answer:"), card.answer));
         if (card.explanation) item.append(createReviewField("explanation", t("Explanation:"), card.explanation));
@@ -2988,7 +3151,7 @@
 
       function createReviewField(name, label, value) {
         const field = createElement("p", "player__review-field");
-        field.dataset.testid = `missed-${name}`;
+        field.dataset.testid = `review-${name}`;
         field.append(
           createElement("strong", "player__review-label", label),
           document.createTextNode(` ${String(value)}`)
@@ -3015,7 +3178,7 @@
       function updateReviewScrollCue() {
         const panel = refs.scoreScreen;
         const maxScrollTop = Math.max(0, panel.scrollHeight - panel.clientHeight);
-        const hasReviewCards = refs.missedCards.children.length > 0;
+        const hasReviewCards = refs.reviewCards.children.length > 0;
         const hasMore = hasReviewCards && maxScrollTop > 1 && panel.scrollTop < maxScrollTop - 1;
         refs.reviewScrollOverlay.hidden = !hasMore;
       }
@@ -3227,6 +3390,7 @@
             fingerprint: getDeckFingerprint(),
             queue: state.sessionCards.map(card => card.id),
             score: state.scoreCards.map(card => card.id),
+            review: state.reviewCards.map(card => card.id),
             index: state.index,
             view: refs.player.dataset.state,
             seed: state.shuffleSeed,
@@ -3284,11 +3448,14 @@
           const validCards = ids => Array.isArray(ids) && ids.length > 0 && ids.every(id => cards.has(id));
           const validIndices = indices => Array.isArray(indices) && indices.every(index =>
             Number.isInteger(index) && index >= 0 && index < saved.queue.length);
+          const validReview = ids => Array.isArray(ids) && ids.length === cards.size &&
+            new Set(ids).size === ids.length && ids.every(id => cards.has(id));
           const validMap = (values, check) => values && typeof values === "object" && !Array.isArray(values) &&
             Object.entries(values).every(([id, value]) => cards.has(id) && check(value));
           const scoreIds = new Set(saved.score);
           const queueIds = new Set(saved.queue);
           if (!validCards(saved.queue) || !validCards(saved.score) ||
+              !validReview(saved.review) ||
               scoreIds.size !== saved.score.length ||
               saved.queue.some(id => !scoreIds.has(id)) || saved.score.some(id => !queueIds.has(id)) ||
               !Number.isInteger(saved.index) || saved.index < 0 || saved.index >= saved.queue.length ||
@@ -3305,6 +3472,7 @@
           if (!grades) return "ready";
           state.sessionCards = saved.queue.map(id => cards.get(id));
           state.scoreCards = saved.score.map(id => cards.get(id));
+          state.reviewCards = saved.review.map(id => cards.get(id));
           state.index = saved.index;
           state.shuffleSeed = saved.seed;
           state.shuffleMode = saved.seed !== null;
@@ -3405,6 +3573,10 @@
         if (button.dataset.action === "request-reset") requestSettingsReset();
         if (button.dataset.action === "cancel-reset") cancelSettingsReset();
         if (button.dataset.action === "confirm-reset") confirmSettingsReset();
+      });
+
+      refs.reviewFilter.addEventListener("change", () => {
+        setReviewScope(refs.reviewAll.checked);
       });
 
       refs.themeSelect.addEventListener("change", () => {
