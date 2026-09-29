@@ -27,9 +27,9 @@ and synced to cue points the page exports.
   - save stills (`--stills=1.5,7.0`),
   - pipe a frame range into ffmpeg (`--video`, `--f0`, `--f1`).
 - `audio.py` synthesizes the soundtrack into a WAV file:
-  - a 120 BPM A-minor track (Am–F–C–G) programmed on a 16-step grid: 808 kick,
-    snare, and hats, a gliding 808 bass, a pluck hook, and sidechained
-    supersaw stabs,
+  - a minimal 120 BPM groove in A minor (Am9–Fmaj9–Cadd9–G6) programmed on a
+    16-step grid: tight kick, snap, off-beat hats, a clean sub bass, a
+    sidechained chord pad, and a three-note pluck motif with ping-pong delay,
   - impacts on the stamp hits,
   - the cue-synced sound effects.
 - `render.sh` runs the whole pipeline. It renders frame ranges in parallel
@@ -45,13 +45,13 @@ and synced to cue points the page exports.
 ## Render
 
 ```sh
-python3 scripts/promo/fetchfonts.py     # once: Fraunces, Inter, JetBrains Mono, Caveat, Noto KR, Pretendard
+python3 scripts/promo/fetchfonts.py     # once: Inter Tight, Inter, Fraunces, JetBrains Mono, Caveat, Noto KR, Pretendard
 scripts/promo/render.sh long en         # → scripts/promo/out/cram-long-en.mp4
 scripts/promo/render.sh short ko        # → scripts/promo/out/cram-short-ko.mp4
 ```
 
-A full render takes about 10 minutes for the long cut and 5 minutes for the
-short cut, using 4 workers. Environment variables:
+A full render takes a few minutes per video with 4 workers. Environment
+variables:
 
 - `WORKERS`: number of parallel workers
 - `CRF`: final x264 quality (default 22)
@@ -64,6 +64,18 @@ To preview frames while editing, render stills:
 node scripts/promo/render.js --lang=ko --stills=4.4,11,27 --out=/tmp/stills
 node scripts/promo/render.js --lang=ko --page=short.html --w=1080 --h=1920 --stills=5 --out=/tmp/stills
 ```
+
+## Look
+
+The palette is "red pen on white paper":
+
+- paper `#f6f6f4`
+- ink `#121316`
+- seal red `#e0231b` (the key color, used for the logo and emphasis)
+- highlighter `#ffd400` (secondary)
+
+Headlines use Inter Tight in English and Pretendard in Korean. Keep the red
+for the stamp and the emphasized words only.
 
 ## Editing copy
 

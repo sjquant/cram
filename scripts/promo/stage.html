@@ -6,9 +6,9 @@
 <link rel="stylesheet" href="fonts.css">
 <style>
 :root{
-  --paper:#f4efe4; --paper-2:#efe8da; --ink:#1f1c18; --ink-soft:#6a6357; --rule:#ddd5c4; --rule-strong:#c4baa4;
-  --accent:#b5342b; --accent-2:#e0645a; --positive:#356b4a; --surface:#fdfbf7; --canvas:#e9e5dc;
-  --hl:#f2c14e; --night:#161310;
+  --paper:#f6f6f4; --paper-2:#f0f1f3; --ink:#121316; --ink-soft:#5f636b; --rule:#dcdde0; --rule-strong:#c3c5ca;
+  --accent:#e0231b; --accent-2:#ff4d42; --positive:#15803d; --surface:#ffffff; --canvas:#eceef1;
+  --hl:#ffd400; --night:#0e0f11;
   --serif:"Fraunces","Noto Serif KR",serif;
   --sans:"Inter","Noto Sans KR",sans-serif;
   --mono:"JetBrains Mono","Noto Sans KR",monospace;
@@ -20,17 +20,17 @@ html,body{width:1920px;height:1080px;overflow:hidden;background:var(--paper)}
 body{font-family:var(--sans);color:var(--ink);-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
 #stage{position:absolute;inset:0;overflow:hidden;background:var(--paper)}
 #bg{position:absolute;inset:-40px;background:
-  radial-gradient(1200px 700px at 30% 20%, #f8f4ea 0%, transparent 60%),
-  radial-gradient(900px 600px at 85% 90%, #ece4d3 0%, transparent 65%),
+  radial-gradient(1200px 700px at 30% 20%, #fafafa 0%, transparent 60%),
+  radial-gradient(900px 600px at 85% 90%, #eceef1 0%, transparent 65%),
   var(--paper)}
-#night{position:absolute;inset:0;background:radial-gradient(1400px 900px at 50% 40%, #221d18 0%, var(--night) 70%);opacity:0}
+#night{position:absolute;inset:0;background:radial-gradient(1400px 900px at 50% 40%, #18191c 0%, var(--night) 70%);opacity:0}
 #cam{position:absolute;inset:0;transform-origin:960px 540px}
 .scene{position:absolute;inset:0;display:none;z-index:0}
 .abs{position:absolute;left:0;top:0}
 .ctr{position:absolute;left:0;top:0;will-change:transform}
 #grain{position:absolute;inset:-200px;pointer-events:none;opacity:.055;mix-blend-mode:multiply;background-size:420px 420px}
-#vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center, transparent 55%, rgba(60,40,20,.16) 100%)}
-#flash{position:absolute;inset:0;background:#fffaf0;opacity:0;pointer-events:none}
+#vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center, transparent 55%, rgba(18,20,26,.16) 100%)}
+#flash{position:absolute;inset:0;background:#ffffff;opacity:0;pointer-events:none}
 .wipe{position:absolute;top:-100px;height:1280px;width:2400px;left:0}
 
 /* type */
@@ -51,18 +51,18 @@ body{font-family:var(--sans);color:var(--ink);-webkit-font-smoothing:antialiased
 .seal svg{width:100%;height:100%;overflow:visible}
 
 /* cards / ui */
-.win{background:var(--canvas);border-radius:22px;box-shadow:0 40px 90px rgba(60,40,20,.22),0 10px 24px rgba(60,40,20,.12),0 0 0 1px rgba(60,40,20,.08);overflow:hidden}
-.chrome{height:64px;background:#e2dccf;display:flex;align-items:center;padding:0 24px;gap:10px;border-bottom:1px solid #d4ccbb}
-.dot{width:15px;height:15px;border-radius:50%;background:#c9c0ad}
-.addr{margin-left:28px;height:38px;border-radius:10px;background:#f4efe4;display:flex;align-items:center;padding:0 18px;gap:10px;font-family:var(--mono);font-size:19px;color:var(--ink-soft);min-width:420px}
-.term{background:#1d1a16;border-radius:22px;box-shadow:0 40px 90px rgba(40,25,10,.3),0 0 0 1px rgba(0,0,0,.2);overflow:hidden;color:#ece5d8}
-.term .chrome{background:#28241f;border-bottom:1px solid #332e27}
-.term .dot{background:#4a433a}
-.term .ttl{margin-left:auto;margin-right:auto;font-family:var(--mono);font-size:18px;color:#8d8577;transform:translateX(-30px)}
+.win{background:var(--canvas);border-radius:22px;box-shadow:0 40px 90px rgba(18,20,26,.22),0 10px 24px rgba(18,20,26,.12),0 0 0 1px rgba(18,20,26,.08);overflow:hidden}
+.chrome{height:64px;background:#e3e5e8;display:flex;align-items:center;padding:0 24px;gap:10px;border-bottom:1px solid #d3d5da}
+.dot{width:15px;height:15px;border-radius:50%;background:#c5c8cd}
+.addr{margin-left:28px;height:38px;border-radius:10px;background:#f6f6f4;display:flex;align-items:center;padding:0 18px;gap:10px;font-family:var(--mono);font-size:19px;color:var(--ink-soft);min-width:420px}
+.term{background:#121316;border-radius:22px;box-shadow:0 40px 90px rgba(10,12,16,.3),0 0 0 1px rgba(0,0,0,.2);overflow:hidden;color:#eaebee}
+.term .chrome{background:#1b1c20;border-bottom:1px solid #26282d}
+.term .dot{background:#3a3c43}
+.term .ttl{margin-left:auto;margin-right:auto;font-family:var(--mono);font-size:18px;color:#858991;transform:translateX(-30px)}
 .tbody{padding:34px 40px;font-family:var(--mono);font-size:30px;line-height:1.55}
 .caret{display:inline-block;width:.55em;height:1.1em;background:var(--accent-2);vertical-align:-.18em;margin-left:2px}
 
-.mini{position:absolute;width:300px;height:196px;background:var(--surface);border-radius:16px;box-shadow:0 18px 40px rgba(60,40,20,.16),0 0 0 1px rgba(60,40,20,.08);padding:22px 24px;left:0;top:0}
+.mini{position:absolute;width:300px;height:196px;background:var(--surface);border-radius:16px;box-shadow:0 18px 40px rgba(18,20,26,.16),0 0 0 1px rgba(18,20,26,.08);padding:22px 24px;left:0;top:0}
 .mini .lbl{font-family:var(--sans);font-weight:700;font-size:14px;letter-spacing:.14em;color:var(--ink-soft);text-transform:uppercase}
 .mini .pr{margin-top:14px;font-size:21px;line-height:1.35;color:var(--ink);font-weight:500}
 .mini .num{position:absolute;right:22px;top:20px;font-family:var(--mono);font-size:15px;color:var(--ink-soft)}
@@ -83,7 +83,7 @@ body{font-family:var(--sans);color:var(--ink);-webkit-font-smoothing:antialiased
 .btn{position:absolute;display:flex;align-items:center;justify-content:center;border-radius:12px;font-size:25px;font-weight:600}
 .btn.dark{background:var(--ink);color:var(--paper)}
 .btn.line{background:transparent;border:1.5px solid var(--rule-strong);color:var(--ink);font-weight:500}
-.kbd{font-family:var(--mono);font-size:16px;background:#ece5d8;color:var(--ink);padding:1px 7px;border-radius:5px;margin-left:12px}
+.kbd{font-family:var(--mono);font-size:16px;background:#eaebee;color:var(--ink);padding:1px 7px;border-radius:5px;margin-left:12px}
 .ans-l{font-size:18px;font-weight:700;color:var(--ink-soft)}
 .ans{font-size:30px;line-height:1.45;margin-top:10px}
 :lang(ko) .ans{letter-spacing:-.02em}
@@ -102,6 +102,13 @@ body{font-family:var(--sans);color:var(--ink);-webkit-font-smoothing:antialiased
 .file{position:absolute;width:300px;height:380px}
 .file svg{width:100%;height:100%;overflow:visible}
 .cap-l{position:absolute;left:140px;top:0}
+
+:root{ --serif:"Inter Tight","Pretendard",sans-serif; }
+.h1{font-family:"Inter Tight","Pretendard",sans-serif;font-weight:700;letter-spacing:-.035em;word-spacing:.16em;font-variation-settings:normal}
+:lang(ko) .h1{font-family:"Pretendard",sans-serif;word-spacing:0}
+.pl-head,.pl-title{font-family:"Inter Tight","Pretendard",sans-serif !important;font-weight:700}
+#grain{display:none} #vig{background:radial-gradient(ellipse at center, transparent 60%, rgba(10,12,16,.10) 100%)}
+#bg{background:#f6f6f4}
 </style>
 </head>
 <body>
@@ -335,23 +342,23 @@ const T = STR[LANG];
 
 // ───────────────────────────── assets ─────────────────────────────
 const SEAL_SVG = (filter = true) => `<svg viewBox="0 0 128 128"><g ${filter ? 'filter="url(#inky)"' : ""} transform="rotate(-4 64 64)">
-  <path fill="#b5342b" d="M20,17 L64,13 L108,18 L112,63 L109,110 L64,114 L19,109 L16,64 Z"/>
-  <path fill="#f4efe4" d="M38,40 H92 V56 H54 V72 H92 V88 H38 Z"/></g></svg>`;
+  <path fill="#e0231b" d="M20,17 L64,13 L108,18 L112,63 L109,110 L64,114 L19,109 L16,64 Z"/>
+  <path fill="#f6f6f4" d="M38,40 H92 V56 H54 V72 H92 V88 H38 Z"/></g></svg>`;
 const FILE_SVG = (dark) => `<svg viewBox="0 0 300 380">
-  <defs><linearGradient id="fg${dark ? 1 : 0}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fdfbf7"/><stop offset="1" stop-color="#f1ebdf"/></linearGradient></defs>
-  <path d="M18 0 H214 L300 86 V362 Q300 380 282 380 H18 Q0 380 0 362 V18 Q0 0 18 0Z" fill="url(#fg${dark ? 1 : 0})" stroke="${dark ? "none" : "#d9d0bf"}" stroke-width="2"/>
-  <path d="M214 0 V68 Q214 86 232 86 H300Z" fill="#ddd3c1"/>
-  <g transform="translate(40 120) scale(.42)"><path fill="#b5342b" d="M20,17 L64,13 L108,18 L112,63 L109,110 L64,114 L19,109 L16,64 Z"/><path fill="#fdfbf7" d="M38,40 H92 V56 H54 V72 H92 V88 H38 Z"/></g>
-  <text x="40" y="250" font-family="JetBrains Mono" font-weight="700" font-size="38" fill="#1f1c18">study</text>
-  <text x="40" y="292" font-family="JetBrains Mono" font-weight="500" font-size="30" fill="#b5342b">.html</text>
-  <rect x="40" y="322" width="150" height="10" rx="5" fill="#e3dccd"/></svg>`;
-const CURSOR_SVG = `<svg viewBox="0 0 44 44" width="44" height="44"><path d="M8 4 L8 36 L16 28.5 L21.5 40 L27 37.5 L21.5 26.5 L32 26 Z" fill="#1f1c18" stroke="#fff" stroke-width="2.6" stroke-linejoin="round"/></svg>`;
+  <defs><linearGradient id="fg${dark ? 1 : 0}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#f1f2f4"/></linearGradient></defs>
+  <path d="M18 0 H214 L300 86 V362 Q300 380 282 380 H18 Q0 380 0 362 V18 Q0 0 18 0Z" fill="url(#fg${dark ? 1 : 0})" stroke="${dark ? "none" : "#d6d8dc"}" stroke-width="2"/>
+  <path d="M214 0 V68 Q214 86 232 86 H300Z" fill="#d9dbdf"/>
+  <g transform="translate(40 120) scale(.42)"><path fill="#e0231b" d="M20,17 L64,13 L108,18 L112,63 L109,110 L64,114 L19,109 L16,64 Z"/><path fill="#ffffff" d="M38,40 H92 V56 H54 V72 H92 V88 H38 Z"/></g>
+  <text x="40" y="250" font-family="JetBrains Mono" font-weight="700" font-size="38" fill="#121316">study</text>
+  <text x="40" y="292" font-family="JetBrains Mono" font-weight="500" font-size="30" fill="#e0231b">.html</text>
+  <rect x="40" y="322" width="150" height="10" rx="5" fill="#e3e5e8"/></svg>`;
+const CURSOR_SVG = `<svg viewBox="0 0 44 44" width="44" height="44"><path d="M8 4 L8 36 L16 28.5 L21.5 40 L27 37.5 L21.5 26.5 L32 26 Z" fill="#121316" stroke="#fff" stroke-width="2.6" stroke-linejoin="round"/></svg>`;
 const ICON = {
-  offline: `<svg viewBox="0 0 40 40" fill="none" stroke="#b5342b" stroke-width="3" stroke-linecap="round"><path d="M6 15a20 20 0 0 1 28 0M11 21a13 13 0 0 1 18 0M16 27a6 6 0 0 1 8 0"/><circle cx="20" cy="32" r="1.8" fill="#b5342b"/><path d="M6 6l28 28" stroke="#1f1c18"/></svg>`,
-  nosignup: `<svg viewBox="0 0 40 40" fill="none" stroke="#b5342b" stroke-width="3" stroke-linecap="round"><circle cx="20" cy="14" r="6"/><path d="M8 34c1.5-7 6.5-10 12-10s10.5 3 12 10"/><path d="M6 6l28 28" stroke="#1f1c18"/></svg>`,
-  noinstall: `<svg viewBox="0 0 40 40" fill="none" stroke="#b5342b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6v18M13 17l7 7 7-7M8 30v4h24v-4"/><path d="M6 6l28 28" stroke="#1f1c18"/></svg>`,
-  browser: `<svg viewBox="0 0 40 40" fill="none" stroke="#b5342b" stroke-width="3" stroke-linecap="round"><circle cx="20" cy="20" r="14"/><path d="M6 20h28M20 6c5 5 5 23 0 28M20 6c-5 5-5 23 0 28"/></svg>`,
-  globe: `<svg viewBox="0 0 40 40" fill="none" stroke="#6a6357" stroke-width="3" stroke-linecap="round"><circle cx="20" cy="20" r="14"/><path d="M6 20h28M20 6c5 5 5 23 0 28M20 6c-5 5-5 23 0 28"/></svg>`,
+  offline: `<svg viewBox="0 0 40 40" fill="none" stroke="#e0231b" stroke-width="3" stroke-linecap="round"><path d="M6 15a20 20 0 0 1 28 0M11 21a13 13 0 0 1 18 0M16 27a6 6 0 0 1 8 0"/><circle cx="20" cy="32" r="1.8" fill="#e0231b"/><path d="M6 6l28 28" stroke="#121316"/></svg>`,
+  nosignup: `<svg viewBox="0 0 40 40" fill="none" stroke="#e0231b" stroke-width="3" stroke-linecap="round"><circle cx="20" cy="14" r="6"/><path d="M8 34c1.5-7 6.5-10 12-10s10.5 3 12 10"/><path d="M6 6l28 28" stroke="#121316"/></svg>`,
+  noinstall: `<svg viewBox="0 0 40 40" fill="none" stroke="#e0231b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6v18M13 17l7 7 7-7M8 30v4h24v-4"/><path d="M6 6l28 28" stroke="#121316"/></svg>`,
+  browser: `<svg viewBox="0 0 40 40" fill="none" stroke="#e0231b" stroke-width="3" stroke-linecap="round"><circle cx="20" cy="20" r="14"/><path d="M6 20h28M20 6c5 5 5 23 0 28M20 6c-5 5-5 23 0 28"/></svg>`,
+  globe: `<svg viewBox="0 0 40 40" fill="none" stroke="#5f636b" stroke-width="3" stroke-linecap="round"><circle cx="20" cy="20" r="14"/><path d="M6 20h28M20 6c5 5 5 23 0 28M20 6c-5 5-5 23 0 28"/></svg>`,
 };
 
 // grain texture
@@ -405,11 +412,11 @@ scene(0, 7.05, el => {
   const hlWord = l2.ws.find(w => w.textContent.includes(T.a2hl)).parentElement;
   hlWord.style.padding = "0 .12em .12em"; hlWord.style.margin = "0 -.12em -.12em";
   const hl = h("div", "", hlWord); css(hl, { position: "absolute", left: "2px", right: "2px", top: "38%", height: "58%", zIndex: -1, transformOrigin: "left center" });
-  hl.innerHTML = `<svg viewBox="0 0 400 100" preserveAspectRatio="none" style="width:100%;height:100%;filter:url(#rough)"><path d="M6 18 Q120 6 250 12 T396 10 L392 88 Q260 96 140 90 T4 92 Z" fill="#f2c14e" opacity=".85"/></svg>`;
+  hl.innerHTML = `<svg viewBox="0 0 400 100" preserveAspectRatio="none" style="width:100%;height:100%;filter:url(#rough)"><path d="M6 18 Q120 6 250 12 T396 10 L392 88 Q260 96 140 90 T4 92 Z" fill="#ffd400" opacity=".85"/></svg>`;
   hlWord.style.position = "relative"; hlWord.style.zIndex = 0; hlWord.firstChild.style.position = "relative";
   const big = h("div", "h1 serif ctr", el); css(big, { fontSize: LANG === "ko" ? "128px" : "156px", whiteSpace: "nowrap", fontWeight: LANG === "ko" ? 800 : 700 });
   const bw = words(big, T.a4.replace(T.a4acc, "**" + T.a4acc + "**"));
-  const shadow = h("div", "ctr", el); css(shadow, { width: "520px", height: "520px", borderRadius: "50%", background: "radial-gradient(circle, rgba(40,20,10,.55) 0%, rgba(40,20,10,.25) 40%, transparent 70%)" });
+  const shadow = h("div", "ctr", el); css(shadow, { width: "520px", height: "520px", borderRadius: "50%", background: "radial-gradient(circle, rgba(10,12,16,.55) 0%, rgba(10,12,16,.25) 40%, transparent 70%)" });
   cue(.35, "tick"); cue(1.8, "tick"); cue(2.3, "marker"); cue(3.5, "tick"); cue(4.95, "whoosh"); cue(5.35, "hit-soft"); cue(6.0, "riser");
   return t => {
     revealWords(l1.ws, t, .35); revealWords(l2.ws, t, 1.8); revealWords(l3.ws, t, 3.5);
@@ -435,17 +442,17 @@ scene(6.3, 12.9, el => {
   const specks = [];
   for (let i = 0; i < 26; i++) {
     const d = h("div", "abs", el); const s = 6 + rnd() * 16;
-    css(d, { width: s + "px", height: s * (0.7 + rnd() * .6) + "px", borderRadius: "50%", background: "#b5342b", left: "0", top: "0" });
+    css(d, { width: s + "px", height: s * (0.7 + rnd() * .6) + "px", borderRadius: "50%", background: "#e0231b", left: "0", top: "0" });
     const a = rnd() * Math.PI * 2, r = 190 + rnd() * 170;
     specks.push({ d, a, r, s });
   }
-  const ring = h("div", "ctr", el); css(ring, { width: "300px", height: "300px", borderRadius: "50%", border: "6px solid #b5342b" });
+  const ring = h("div", "ctr", el); css(ring, { width: "300px", height: "300px", borderRadius: "50%", border: "6px solid #e0231b" });
   const seal = h("div", "seal ctr", el, SEAL_SVG());
-  const word = h("div", "ctr serif", el); css(word, { fontSize: "250px", fontWeight: 800, letterSpacing: "-.02em", whiteSpace: "nowrap", fontVariationSettings: '"opsz" 144, "SOFT" 0, "WONK" 1', fontFamily: 'Fraunces, serif', lineHeight: 1 });
+  const word = h("div", "ctr serif", el); css(word, { fontSize: "250px", fontWeight: 800, letterSpacing: "-.02em", whiteSpace: "nowrap", fontVariationSettings: '"opsz" 144, "SOFT" 0, "WONK" 1', fontFamily: '"Inter Tight", sans-serif', letterSpacing: '-.06em', lineHeight: 1 });
   const letters = [...T.wordmark].map(ch => { const s = h("span", "", word); s.textContent = ch; s.style.display = "inline-block"; return s; });
   const tag = h("div", "ctr serif", el); css(tag, { fontSize: LANG === "ko" ? "84px" : "96px", fontWeight: LANG === "ko" ? 700 : 500, whiteSpace: "nowrap", letterSpacing: LANG === "ko" ? "-.03em" : "-.01em" });
   const tw = words(tag, T.tagline);
-  const squig = h("div", "abs", el); squig.innerHTML = `<svg width="420" height="60" viewBox="0 0 420 60"><path d="M8 38 C60 20 90 50 140 32 S220 18 260 34 S350 46 412 22" fill="none" stroke="#f2c14e" stroke-width="12" stroke-linecap="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/></svg>`;
+  const squig = h("div", "abs", el); squig.innerHTML = `<svg width="420" height="60" viewBox="0 0 420 60"><path d="M8 38 C60 20 90 50 140 32 S220 18 260 34 S350 46 412 22" fill="none" stroke="#ffd400" stroke-width="12" stroke-linecap="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/></svg>`;
   const sqp = squig.querySelector("path");
   cue(IMPACT, "stamp");
   [0, 1, 2, 3].forEach(i => cue(8.05 + i * .085, "letter"));
@@ -497,23 +504,23 @@ scene(12.2, 19.6, el => {
   const eye = h("div", "", cap); const sub = h("div", "", cap);
   const hd = h("div", "h1", cap); const hw = words(hd, T.c_h);
   // sources
-  const notes = h("div", "ctr", el); css(notes, { width: "300px", height: "360px", background: "#fffdf6", borderRadius: "10px", boxShadow: "0 22px 50px rgba(60,40,20,.18),0 0 0 1px rgba(60,40,20,.08)", padding: "26px 28px", backgroundImage: "repeating-linear-gradient(transparent 0 47px, #e7dfcf 47px 49px)", backgroundPosition: "0 58px" });
+  const notes = h("div", "ctr", el); css(notes, { width: "300px", height: "360px", background: "#ffffff", borderRadius: "10px", boxShadow: "0 22px 50px rgba(18,20,26,.18),0 0 0 1px rgba(18,20,26,.08)", padding: "26px 28px", backgroundImage: "repeating-linear-gradient(transparent 0 47px, #e6e8eb 47px 49px)", backgroundPosition: "0 58px" });
   notes.innerHTML = `<div style="font-family:var(--mono);font-size:18px;color:var(--ink-soft);margin-bottom:18px">${T.notes}</div>` +
-    T.notesHand.map((l, i) => `<div style="font-family:var(--hand);font-size:34px;line-height:48px;color:#2b2a5a;${i === 2 ? "background:linear-gradient(transparent 45%, rgba(242,193,78,.8) 45%, rgba(242,193,78,.8) 88%, transparent 88%);display:inline-block" : ""}">${l}</div>`).join("");
-  const pdf = h("div", "ctr", el); css(pdf, { width: "270px", height: "340px", background: "#fdfbf7", borderRadius: "10px", boxShadow: "0 22px 50px rgba(60,40,20,.18),0 0 0 1px rgba(60,40,20,.08)", padding: "30px 28px" });
-  pdf.innerHTML = `<div style="display:inline-block;background:#b5342b;color:#fff;font-weight:800;font-size:18px;padding:5px 12px;border-radius:6px;letter-spacing:.08em">PDF</div>
-   <div style="font-family:var(--mono);font-size:18px;color:var(--ink-soft);margin:14px 0 20px">${T.pdf}</div>` + [92, 80, 88, 60, 84, 72, 90, 50].map(w => `<div style="height:10px;border-radius:5px;background:#e6dfd1;margin:0 0 15px;width:${w}%"></div>`).join("");
+    T.notesHand.map((l, i) => `<div style="font-family:var(--hand);font-size:34px;line-height:48px;color:#2b2a5a;${i === 2 ? "background:linear-gradient(transparent 45%, rgba(255,212,0,.8) 45%, rgba(255,212,0,.8) 88%, transparent 88%);display:inline-block" : ""}">${l}</div>`).join("");
+  const pdf = h("div", "ctr", el); css(pdf, { width: "270px", height: "340px", background: "#ffffff", borderRadius: "10px", boxShadow: "0 22px 50px rgba(18,20,26,.18),0 0 0 1px rgba(18,20,26,.08)", padding: "30px 28px" });
+  pdf.innerHTML = `<div style="display:inline-block;background:#e0231b;color:#fff;font-weight:800;font-size:18px;padding:5px 12px;border-radius:6px;letter-spacing:.08em">PDF</div>
+   <div style="font-family:var(--mono);font-size:18px;color:var(--ink-soft);margin:14px 0 20px">${T.pdf}</div>` + [92, 80, 88, 60, 84, 72, 90, 50].map(w => `<div style="height:10px;border-radius:5px;background:#e4e6e9;margin:0 0 15px;width:${w}%"></div>`).join("");
   const link = h("div", "chip ctr", el, `${ICON.globe}<span style="font-family:var(--mono);font-size:24px;font-weight:500;color:var(--ink)">${T.link}</span>`);
-  link.style.boxShadow = "0 18px 40px rgba(60,40,20,.18),0 0 0 1px rgba(60,40,20,.08)";
+  link.style.boxShadow = "0 18px 40px rgba(18,20,26,.18),0 0 0 1px rgba(18,20,26,.08)";
   // terminal
   const term = h("div", "term ctr", el); css(term, { width: "900px", height: "470px" });
   term.innerHTML = `<div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="ttl">${T.termTitle}</div></div><div class="tbody"></div>`;
   const tb = term.querySelector(".tbody");
-  const pl = h("div", "", tb); pl.innerHTML = `<span style="color:#e0645a">›</span> <span class="p1" style="color:#f4efe4"></span><span class="p2" style="color:#bdb4a4"></span><span class="caret"></span>`;
+  const pl = h("div", "", tb); pl.innerHTML = `<span style="color:#ff4d42">›</span> <span class="p1" style="color:#f6f6f4"></span><span class="p2" style="color:#b8bcc3"></span><span class="caret"></span>`;
   const p1 = pl.querySelector(".p1"), p2 = pl.querySelector(".p2"), caret = pl.querySelector(".caret");
-  const outs = T.out.map((o, i) => { const d = h("div", "", tb); d.style.marginTop = i === 0 ? "26px" : "6px"; d.innerHTML = o.replace(/^✓/, '<span style="color:#8fc9a1">✓</span>').replace("study.html", '<span style="color:#e0645a">study.html</span>'); if (i === 0) d.style.color = "#98907f"; return d; });
-  const spin = h("span", "", outs[0]); spin.style.color = "#e0645a";
-  const glow = h("div", "ctr", el); css(glow, { width: "900px", height: "470px", borderRadius: "22px", boxShadow: "0 0 0 3px #e0645a, 0 0 60px rgba(224,100,90,.5)" });
+  const outs = T.out.map((o, i) => { const d = h("div", "", tb); d.style.marginTop = i === 0 ? "26px" : "6px"; d.innerHTML = o.replace(/^✓/, '<span style="color:#86d4a0">✓</span>').replace("study.html", '<span style="color:#ff4d42">study.html</span>'); if (i === 0) d.style.color = "#8b8f97"; return d; });
+  const spin = h("span", "", outs[0]); spin.style.color = "#ff4d42";
+  const glow = h("div", "ctr", el); css(glow, { width: "900px", height: "470px", borderRadius: "22px", boxShadow: "0 0 0 3px #ff4d42, 0 0 60px rgba(255,77,66,.5)" });
   const T1 = 14.0, cps = LANG === "ko" ? 14 : 20;
   const T2 = T1 + T.prompt1.length / cps + .15;
   const TE = T2 + T.prompt2.length / cps;
@@ -551,7 +558,7 @@ scene(12.2, 19.6, el => {
     outs.forEach((o, i) => { const tt = [17.25, 17.75, 18.15, 18.55][i]; st(o, { y: A(t, tt, .35, 14, 0, E.outE), o: A(t, tt, .25, 0, 1) }); });
     const fr = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏";
     spin.textContent = t < 17.75 ? " " + fr[Math.floor(t * 14) % fr.length] : " ✓";
-    spin.style.color = t < 17.75 ? "#e0645a" : "#8fc9a1";
+    spin.style.color = t < 17.75 ? "#ff4d42" : "#86d4a0";
   };
 });
 
@@ -562,8 +569,8 @@ scene(19.0, 23.4, el => {
   const cards = T.minis.map(([type, pr], i) => {
     const c = h("div", "mini", el);
     c.innerHTML = `<div class="lbl">${T.typeLabel[type]}</div><div class="num">${String(i + 1).padStart(2, "0")}/10</div><div class="pr">${pr}</div>`;
-    if (type === "mcq") c.querySelector(".lbl").style.color = "#b5342b";
-    if (type === "cloze") c.querySelector(".lbl").style.color = "#356b4a";
+    if (type === "mcq") c.querySelector(".lbl").style.color = "#e0231b";
+    if (type === "cloze") c.querySelector(".lbl").style.color = "#15803d";
     return c;
   });
   // fan layout
@@ -572,7 +579,7 @@ scene(19.0, 23.4, el => {
     const row = i % 2;
     return { x: 960 + a * 172, y: 610 + row * 150 + Math.abs(a) * 22 - 40, r: a * 3.2 + (row ? 2 : -2) };
   });
-  const morph = h("div", "ctr", el); css(morph, { background: "#e9e5dc", zIndex: 30, boxShadow: "0 40px 90px rgba(60,40,20,.22)" });
+  const morph = h("div", "ctr", el); css(morph, { background: "#eceef1", zIndex: 30, boxShadow: "0 40px 90px rgba(18,20,26,.22)" });
   const file = h("div", "file ctr", el, FILE_SVG());
   cards.forEach((_, i) => cue(19.25 + i * .055, "card"));
   cue(21.2, "gather"); cue(21.9, "thump"); cue(22.45, "zoom");
@@ -615,12 +622,12 @@ scene(22.8, 39.5, el => {
   const eye3 = h("div", "", cap3);
   const fh1 = h("div", "h1", cap3); const fw1 = words(fh1, T.f_h1);
   const fh2 = h("div", "h1", cap3); const fw2 = words(fh2, T.f_h2);
-  [fh1, fh2].forEach(d => { d.style.fontSize = LANG === "ko" ? "88px" : "78px"; d.style.whiteSpace = "nowrap"; });
+  [fh1, fh2].forEach(d => { d.style.fontSize = LANG === "ko" ? "88px" : "70px"; d.style.whiteSpace = "nowrap"; });
 
   // browser window
   const win = h("div", "win ctr", el); css(win, { width: "1060px", height: "920px" });
   win.innerHTML = `<div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div>
-    <div class="addr"><svg width="18" height="22" viewBox="0 0 18 22"><path d="M2 1h9l6 6v13H2z" fill="none" stroke="#6a6357" stroke-width="2"/></svg>file:///…/study.html</div></div>`;
+    <div class="addr"><svg width="18" height="22" viewBox="0 0 18 22"><path d="M2 1h9l6 6v13H2z" fill="none" stroke="#5f636b" stroke-width="2"/></svg>file:///…/study.html</div></div>`;
   const pl = h("div", "pl", win);
   pl.innerHTML = `<div class="pl-head"><div style="width:34px;height:34px">${SEAL_SVG(false)}</div>Cram</div>
     <div class="pl-title">${T.deckTitle}</div><div class="pl-prog"><i></i></div>`;
@@ -655,7 +662,7 @@ scene(22.8, 39.5, el => {
   const res = h("div", "pc", card);
   res.innerHTML = `<div style="text-align:center;font-family:var(--serif);font-size:44px;font-weight:600;margin-top:10px">${T.done}</div>`;
   const ringWrap = h("div", "abs", res); css(ringWrap, { left: "50%", top: "110px", width: "220px", height: "220px", marginLeft: "-110px" });
-  ringWrap.innerHTML = `<svg viewBox="0 0 220 220" width="220" height="220"><circle cx="110" cy="110" r="94" fill="none" stroke="#ddd5c4" stroke-width="16"/><circle class="arc" cx="110" cy="110" r="94" fill="none" stroke="#356b4a" stroke-width="16" stroke-linecap="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" transform="rotate(-90 110 110)"/></svg><div class="sc" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:64px;font-weight:700"></div>`;
+  ringWrap.innerHTML = `<svg viewBox="0 0 220 220" width="220" height="220"><circle cx="110" cy="110" r="94" fill="none" stroke="#dcdde0" stroke-width="16"/><circle class="arc" cx="110" cy="110" r="94" fill="none" stroke="#15803d" stroke-width="16" stroke-linecap="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" transform="rotate(-90 110 110)"/></svg><div class="sc" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:64px;font-weight:700"></div>`;
   const arc = ringWrap.querySelector(".arc"), sc = ringWrap.querySelector(".sc");
   const sline = h("div", "abs", res, T.scoreLine); css(sline, { left: 0, right: 0, top: "350px", textAlign: "center", fontSize: "26px", color: "var(--ink-soft)" });
   const tabs = h("div", "abs", res); css(tabs, { left: "46px", top: "412px", display: "flex", gap: "12px" });
@@ -664,7 +671,7 @@ scene(22.8, 39.5, el => {
   const grid = h("div", "abs", res); css(grid, { left: "46px", right: "46px", top: "470px", height: "150px" });
   const miss = new Set([1, 6, 10]);
   const gcards = Array.from({ length: 15 }, (_, i) => {
-    const g = h("div", "abs", grid); css(g, { width: "164px", height: "40px", borderRadius: "8px", background: "#fff", border: "1.5px solid " + (miss.has(i) ? "#e3b3ad" : "#bfd6c6"), fontSize: "15px", display: "flex", alignItems: "center", gap: "8px", padding: "0 12px", fontWeight: 600, color: miss.has(i) ? "var(--accent)" : "var(--positive)" });
+    const g = h("div", "abs", grid); css(g, { width: "164px", height: "40px", borderRadius: "8px", background: "#fff", border: "1.5px solid " + (miss.has(i) ? "#f2b1ad" : "#b5dcc3"), fontSize: "15px", display: "flex", alignItems: "center", gap: "8px", padding: "0 12px", fontWeight: 600, color: miss.has(i) ? "var(--accent)" : "var(--positive)" });
     g.innerHTML = `<span style="font-family:var(--mono);color:var(--ink-soft);font-weight:500">${String(i + 1).padStart(2, "0")}</span>${miss.has(i) ? "✕ " + T.missedTag : "✓ " + T.correctTag}`;
     return g;
   });
@@ -730,8 +737,8 @@ scene(22.8, 39.5, el => {
       st(o, { y: (1 - E.outE(P(t, 27.2 + i * .06, 27.7 + i * .06))) * 20, o: P(t, 27.2 + i * .06, 27.5 + i * .06) });
       const dot = o.querySelector(".radio i"), mark = o.querySelector(".mark");
       if (i === 0) { dot.style.transform = `scale(${S(t, 28.42, 0, 1, 3, .4)})`; o.style.borderColor = t > 28.42 ? "var(--ink)" : ""; }
-      if (i === 0 && t > 29.35) { o.style.borderColor = "var(--accent)"; o.style.background = "#fbeeec"; dot.style.background = "var(--accent)"; mark.textContent = "✕ " + (LANG === "ko" ? "오답" : "Incorrect"); mark.style.color = "var(--accent)"; mark.style.opacity = A(t, 29.35, .2, 0, 1); }
-      if (i === 1 && t > 29.4) { o.style.borderColor = "var(--positive)"; o.style.background = "#eef5f0"; mark.textContent = "✓ " + (LANG === "ko" ? "정답" : "Correct"); mark.style.color = "var(--positive)"; mark.style.opacity = A(t, 29.4, .2, 0, 1); }
+      if (i === 0 && t > 29.35) { o.style.borderColor = "var(--accent)"; o.style.background = "#fdeceb"; dot.style.background = "var(--accent)"; mark.textContent = "✕ " + (LANG === "ko" ? "오답" : "Incorrect"); mark.style.color = "var(--accent)"; mark.style.opacity = A(t, 29.35, .2, 0, 1); }
+      if (i === 1 && t > 29.4) { o.style.borderColor = "var(--positive)"; o.style.background = "#e9f6ee"; mark.textContent = "✓ " + (LANG === "ko" ? "정답" : "Correct"); mark.style.color = "var(--positive)"; mark.style.opacity = A(t, 29.4, .2, 0, 1); }
       if (i === 0 || i === 1) { const pop = t > 29.35 ? 1 + Math.exp(-(t - 29.35) * 8) * Math.sin((t - 29.35) * 30) * .02 : 1; st(o, { y: 0, s: pop, o: 1, x: i === 0 && t > 29.35 ? Math.exp(-(t - 29.35) * 7) * Math.sin((t - 29.35) * 60) * 8 : 0 }); if (t < 27.8) st(o, { y: (1 - E.outE(P(t, 27.2 + i * .06, 27.7 + i * .06))) * 20, o: P(t, 27.2 + i * .06, 27.5 + i * .06) }); }
     });
     st(chk, { o: A(t, 28.5, .3, 0, 1) * (1 - P(t, 29.35, 29.5)), s: t > 29.3 && t < 29.42 ? .96 : 1 });
@@ -741,7 +748,7 @@ scene(22.8, 39.5, el => {
     bcaret.style.opacity = t > 31.15 && t < 32.55 ? (Math.floor(t * 2.6) % 2 ? 0 : 1) : 0;
     blank.style.borderColor = t > 31.15 ? (t > 32.6 ? "var(--positive)" : "var(--ink)") : "";
     blank.style.color = t > 32.6 ? "var(--positive)" : "var(--ink)";
-    blank.style.background = t > 32.6 ? "#eef5f0" : "transparent";
+    blank.style.background = t > 32.6 ? "#e9f6ee" : "transparent";
     st(chk3, { o: A(t, 31.9, .3, 0, 1) * (1 - P(t, 32.6, 32.75)), s: t > 32.55 && t < 32.67 ? .96 : 1 });
     st(fb3, { o: A(t, 32.7, .3, 0, 1), y: A(t, 32.7, .4, 10, 0, E.outE) });
     // results
@@ -772,25 +779,25 @@ scene(22.8, 39.5, el => {
 // ═════════════════════ SCENE G — one file (38.9 → 46.4) ═════════════════════
 const wipes = document.getElementById("wipes");
 const w1 = h("div", "wipe", wipes), w2 = h("div", "wipe", wipes), w3 = h("div", "wipe", wipes), w4 = h("div", "wipe", wipes);
-css(w1, { background: "#b5342b" }); css(w2, { background: "#161310" }); css(w3, { background: "#b5342b" }); css(w4, { background: "#f4efe4" });
+css(w1, { background: "#e0231b" }); css(w2, { background: "#0e0f11" }); css(w3, { background: "#e0231b" }); css(w4, { background: "#f6f6f4" });
 scene(38.9, 46.4, el => {
   const eye = h("div", "ctr", el);
-  const hd = h("div", "h1 ctr", el); css(hd, { color: "#f4efe4", whiteSpace: "nowrap", fontSize: LANG === "ko" ? "92px" : "100px" });
+  const hd = h("div", "h1 ctr", el); css(hd, { color: "#f6f6f4", whiteSpace: "nowrap", fontSize: LANG === "ko" ? "92px" : "100px" });
   const hw = words(hd, T.g_h);
-  hw.forEach(w => { if (w.classList.contains("acc")) w.style.color = "#e0645a"; });
-  const hd2 = h("div", "h1 ctr", el); css(hd2, { color: "#f4efe4", whiteSpace: "nowrap", fontSize: LANG === "ko" ? "92px" : "100px" });
+  hw.forEach(w => { if (w.classList.contains("acc")) w.style.color = "#ff4d42"; });
+  const hd2 = h("div", "h1 ctr", el); css(hd2, { color: "#f6f6f4", whiteSpace: "nowrap", fontSize: LANG === "ko" ? "92px" : "100px" });
   const hw2 = words(hd2, T.g_h2);
-  hw2.forEach(w => { if (w.classList.contains("acc")) w.style.color = "#e0645a"; });
+  hw2.forEach(w => { if (w.classList.contains("acc")) w.style.color = "#ff4d42"; });
   const sub2 = h("div", "ctr", el);
   const lines = h("div", "abs", el); lines.innerHTML = `<svg width="1920" height="1080" style="position:absolute;left:0;top:0"></svg>`;
   const svg = lines.firstChild;
   const file = h("div", "file ctr", el, FILE_SVG(true));
-  const glowF = h("div", "ctr", el); css(glowF, { width: "620px", height: "620px", borderRadius: "50%", background: "radial-gradient(circle, rgba(224,100,90,.28), transparent 65%)" });
+  const glowF = h("div", "ctr", el); css(glowF, { width: "620px", height: "620px", borderRadius: "50%", background: "radial-gradient(circle, rgba(255,77,66,.28), transparent 65%)" });
   el.insertBefore(glowF, file);
   const ic = [ICON.offline, ICON.nosignup, ICON.noinstall, ICON.browser];
   const pos = [[560, 470], [1360, 470], [560, 800], [1360, 800]];
   const badges = T.badges.map((b, i) => h("div", "chip ctr", el, `${ic[i]}<span>${b}</span>`));
-  const paths = pos.map(([x, y]) => { const p = document.createElementNS("http://www.w3.org/2000/svg", "path"); p.setAttribute("d", `M960 ${y < 600 ? 560 : 720} Q ${(x + 960) / 2} ${y} ${x} ${y}`); p.setAttribute("fill", "none"); p.setAttribute("stroke", "#5a5046"); p.setAttribute("stroke-width", "2.5"); p.setAttribute("stroke-dasharray", "6 10"); svg.appendChild(p); return p; });
+  const paths = pos.map(([x, y]) => { const p = document.createElementNS("http://www.w3.org/2000/svg", "path"); p.setAttribute("d", `M960 ${y < 600 ? 560 : 720} Q ${(x + 960) / 2} ${y} ${x} ${y}`); p.setAttribute("fill", "none"); p.setAttribute("stroke", "#4a4d55"); p.setAttribute("stroke-width", "2.5"); p.setAttribute("stroke-dasharray", "6 10"); svg.appendChild(p); return p; });
   // devices
   const dev = [
     { w: 330, h: 210, x: 1480, y: 470, r: 18, kind: "laptop" },
@@ -798,10 +805,10 @@ scene(38.9, 46.4, el => {
     { w: 260, h: 340, x: 1600, y: 800, r: 24, kind: "tablet" },
   ];
   const devs = dev.map(d => {
-    const e = h("div", "ctr", el); css(e, { width: d.w + "px", height: d.h + "px", borderRadius: d.r + "px", border: "5px solid #4d443a", background: "#221d18", overflow: "hidden" });
-    const scr = h("div", "", e); css(scr, { position: "absolute", inset: "8px", borderRadius: (d.r - 8) + "px", background: "#e9e5dc", opacity: 0, padding: "12%" });
-    scr.innerHTML = `<div style="height:14%;width:40%;background:#b5342b;border-radius:3px;margin-bottom:10%"></div><div style="background:#fdfbf7;border-radius:6px;height:62%;padding:10%"><div style="height:12%;width:80%;background:#d4ccbb;border-radius:3px;margin-bottom:8%"></div><div style="height:12%;width:60%;background:#d4ccbb;border-radius:3px;margin-bottom:14%"></div><div style="height:18%;width:46%;margin-left:auto;background:#1f1c18;border-radius:4px"></div></div>`;
-    if (d.kind === "laptop") { const base = h("div", "ctr", el); css(base, { width: (d.w + 80) + "px", height: "16px", borderRadius: "0 0 14px 14px", background: "#4d443a" }); d.base = base; }
+    const e = h("div", "ctr", el); css(e, { width: d.w + "px", height: d.h + "px", borderRadius: d.r + "px", border: "5px solid #3a3c43", background: "#18191c", overflow: "hidden" });
+    const scr = h("div", "", e); css(scr, { position: "absolute", inset: "8px", borderRadius: (d.r - 8) + "px", background: "#eceef1", opacity: 0, padding: "12%" });
+    scr.innerHTML = `<div style="height:14%;width:40%;background:#e0231b;border-radius:3px;margin-bottom:10%"></div><div style="background:#ffffff;border-radius:6px;height:62%;padding:10%"><div style="height:12%;width:80%;background:#d3d5da;border-radius:3px;margin-bottom:8%"></div><div style="height:12%;width:60%;background:#d3d5da;border-radius:3px;margin-bottom:14%"></div><div style="height:18%;width:46%;margin-left:auto;background:#121316;border-radius:4px"></div></div>`;
+    if (d.kind === "laptop") { const base = h("div", "ctr", el); css(base, { width: (d.w + 80) + "px", height: "16px", borderRadius: "0 0 14px 14px", background: "#3a3c43" }); d.base = base; }
     d.scr = scr; return e;
   });
   const copies = dev.map(() => h("div", "file ctr", el, FILE_SVG(true)));
@@ -849,7 +856,7 @@ scene(46.0, 51.6, el => {
   const slot = h("div", "abs", el); css(slot, { left: "1000px", top: "300px", width: "800px", height: "480px", overflow: "hidden", WebkitMaskImage: "linear-gradient(transparent, #000 30%, #000 70%, transparent)" });
   const reel = h("div", "abs", slot); css(reel, { left: 0, width: "800px" });
   const names = [...T.agents, T.agents[0]];
-  names.forEach(n => { const d = h("div", "", reel); css(d, { height: "160px", display: "flex", alignItems: "center", fontFamily: "Fraunces, serif", fontWeight: 600, fontSize: "96px", letterSpacing: "-.02em", whiteSpace: "nowrap" }); d.textContent = n; });
+  names.forEach(n => { const d = h("div", "", reel); css(d, { height: "160px", display: "flex", alignItems: "center", fontFamily: "\"Inter Tight\", sans-serif", letterSpacing: "-.06em", fontWeight: 600, fontSize: "96px", letterSpacing: "-.02em", whiteSpace: "nowrap" }); d.textContent = n; });
   const bracket = h("div", "abs", el); css(bracket, { left: "960px", top: "458px", width: "8px", height: "164px", background: "var(--accent)", borderRadius: "4px" });
   // language buttons
   const lb = h("div", "abs", el); css(lb, { left: "1060px", top: "250px", width: "700px", height: "580px" });
@@ -884,19 +891,19 @@ scene(46.0, 51.6, el => {
 // ═════════════════════ SCENE I — call to action (51.4 → 59) ═════════════════════
 const CTA = 51.9;
 scene(51.4, 59.1, el => {
-  const shadow = h("div", "ctr", el); css(shadow, { width: "360px", height: "360px", borderRadius: "50%", background: "radial-gradient(circle, rgba(40,20,10,.5) 0%, rgba(40,20,10,.2) 40%, transparent 70%)" });
+  const shadow = h("div", "ctr", el); css(shadow, { width: "360px", height: "360px", borderRadius: "50%", background: "radial-gradient(circle, rgba(10,12,16,.5) 0%, rgba(10,12,16,.2) 40%, transparent 70%)" });
   const seal = h("div", "seal ctr", el, SEAL_SVG()); css(seal, { width: "220px", height: "220px" });
-  const word = h("div", "ctr serif", el); css(word, { fontSize: "190px", fontWeight: 800, letterSpacing: "-.02em", lineHeight: 1, fontVariationSettings: '"opsz" 144, "SOFT" 0, "WONK" 1', fontFamily: 'Fraunces, serif' });
+  const word = h("div", "ctr serif", el); css(word, { fontSize: "190px", fontWeight: 800, letterSpacing: "-.02em", lineHeight: 1, fontVariationSettings: '"opsz" 144, "SOFT" 0, "WONK" 1', fontFamily: '"Inter Tight", sans-serif', letterSpacing: '-.06em' });
   word.textContent = T.wordmark;
   const tag = h("div", "ctr serif", el); css(tag, { fontSize: LANG === "ko" ? "64px" : "70px", fontWeight: LANG === "ko" ? 700 : 500, whiteSpace: "nowrap", letterSpacing: LANG === "ko" ? "-.03em" : "-.01em" });
   const tw = words(tag, T.tagline);
   const box = h("div", "term ctr", el); css(box, { width: "940px", borderRadius: "18px", padding: "28px 40px", fontFamily: "var(--mono)", fontSize: "30px", lineHeight: 1.7 });
-  box.innerHTML = `<div><span style="color:#e0645a">›</span> <span class="l1"></span></div><div><span style="color:#e0645a">›</span> <span class="l2"></span><span class="caret"></span></div>`;
+  box.innerHTML = `<div><span style="color:#ff4d42">›</span> <span class="l1"></span></div><div><span style="color:#ff4d42">›</span> <span class="l2"></span><span class="caret"></span></div>`;
   const l1 = box.querySelector(".l1"), l2 = box.querySelector(".l2"), caret = box.querySelector(".caret");
   const alt = h("div", "ctr", el); css(alt, { fontFamily: "var(--mono)", fontSize: "23px", color: "var(--ink-soft)", whiteSpace: "nowrap" });
   alt.innerHTML = `${T.i_or} <span style="color:var(--ink)">npx skills add sjquant/cram --skill cram</span>`;
   const url = h("div", "ctr", el); css(url, { fontFamily: "Inter, sans-serif", fontWeight: 700, fontSize: "46px", whiteSpace: "nowrap", letterSpacing: "-.01em" });
-  url.innerHTML = `<span style="display:inline-flex;align-items:center;gap:18px"><svg width="46" height="46" viewBox="0 0 16 16"><path fill="#1f1c18" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg><span>github.com/<span style="color:var(--accent)">sjquant/cram</span></span></span>`;
+  url.innerHTML = `<span style="display:inline-flex;align-items:center;gap:18px"><svg width="46" height="46" viewBox="0 0 16 16"><path fill="#121316" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg><span>github.com/<span style="color:var(--accent)">sjquant/cram</span></span></span>`;
   const foot = h("div", "ctr", el, T.i_foot); css(foot, { fontSize: "24px", color: "var(--ink-soft)", fontWeight: 500, whiteSpace: "nowrap", letterSpacing: ".02em" });
   const s1 = "/plugin marketplace add sjquant/cram", s2 = "/plugin install cram@cram";
   cue(CTA, "stamp-final"); cue(52.35, "swish-soft");

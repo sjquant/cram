@@ -4,7 +4,7 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 os.makedirs("fonts", exist_ok=True)
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36"
 url = ("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..900"
-       "&family=Inter:wght@400..800&family=JetBrains+Mono:wght@400..700"
+       "&family=Inter:wght@400..800&family=Inter+Tight:wght@500..900&family=JetBrains+Mono:wght@400..700"
        "&family=Caveat:wght@500..700&family=Noto+Serif+KR:wght@500;700;900"
        "&family=Noto+Sans+KR:wght@400;500;700;800&display=block")
 css = urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": UA})).read().decode()

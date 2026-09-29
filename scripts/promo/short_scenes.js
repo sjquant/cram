@@ -47,7 +47,7 @@ function headline(parent, txt, size, weight) {
 scene(0, 3.05, el => {
   const S = KO ? 132 : 150;
   const l1 = headline(el, U.h1, S), l2 = headline(el, U.h2, S), l3 = headline(el, U.h3, S, 700);
-  const shadow = h("div", "ctr", el); css(shadow, { width: "600px", height: "600px", borderRadius: "50%", background: "radial-gradient(circle, rgba(40,20,10,.55) 0%, rgba(40,20,10,.25) 40%, transparent 70%)" });
+  const shadow = h("div", "ctr", el); css(shadow, { width: "600px", height: "600px", borderRadius: "50%", background: "radial-gradient(circle, rgba(10,12,16,.55) 0%, rgba(10,12,16,.25) 40%, transparent 70%)" });
   cue(.1, "tick"); cue(.75, "tick"); cue(1.3, "hit-soft"); cue(2.05, "riser");
   return t => {
     revealWords(l1.ws, t, .1, .07, .6); revealWords(l2.ws, t, .75, .07, .6); revealWords(l3.ws, t, 1.3, .08, .65);
@@ -62,15 +62,15 @@ scene(2.45, 5.9, el => {
   const specks = [];
   for (let i = 0; i < 26; i++) {
     const d = h("div", "abs", el); const s = 7 + rnd() * 18;
-    css(d, { width: s + "px", height: s * (0.7 + rnd() * .6) + "px", borderRadius: "50%", background: "#b5342b" });
+    css(d, { width: s + "px", height: s * (0.7 + rnd() * .6) + "px", borderRadius: "50%", background: "#e0231b" });
     specks.push({ d, a: rnd() * Math.PI * 2, r: 230 + rnd() * 190, s });
   }
-  const ring = h("div", "ctr", el); css(ring, { width: "360px", height: "360px", borderRadius: "50%", border: "6px solid #b5342b" });
+  const ring = h("div", "ctr", el); css(ring, { width: "360px", height: "360px", borderRadius: "50%", border: "6px solid #e0231b" });
   const seal = h("div", "seal ctr", el, SEAL_SVG()); css(seal, { width: "360px", height: "360px" });
-  const word = h("div", "ctr", el); css(word, { fontFamily: "Fraunces, serif", fontSize: "230px", fontWeight: 800, letterSpacing: "-.02em", lineHeight: 1, fontVariationSettings: '"opsz" 144, "SOFT" 0, "WONK" 1' });
+  const word = h("div", "ctr", el); css(word, { fontFamily: "\"Inter Tight\", sans-serif", letterSpacing: "-.06em", fontSize: "230px", fontWeight: 800, letterSpacing: "-.02em", lineHeight: 1, fontVariationSettings: '"opsz" 144, "SOFT" 0, "WONK" 1' });
   const letters = [...T.wordmark].map(ch => { const s = h("span", "", word); s.textContent = ch; s.style.display = "inline-block"; return s; });
   const tg1 = headline(el, U.tag1, KO ? 104 : 110, 600), tg2 = headline(el, U.tag2, KO ? 104 : 110, 600);
-  const squig = h("div", "abs", el); squig.innerHTML = `<svg width="420" height="60" viewBox="0 0 420 60" preserveAspectRatio="none"><path d="M8 38 C60 20 90 50 140 32 S220 18 260 34 S350 46 412 22" fill="none" stroke="#f2c14e" stroke-width="12" stroke-linecap="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/></svg>`;
+  const squig = h("div", "abs", el); squig.innerHTML = `<svg width="420" height="60" viewBox="0 0 420 60" preserveAspectRatio="none"><path d="M8 38 C60 20 90 50 140 32 S220 18 260 34 S350 46 412 22" fill="none" stroke="#ffd400" stroke-width="12" stroke-linecap="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/></svg>`;
   const sqp = squig.querySelector("path");
   cue(IMPACT, "stamp"); [0, 1, 2, 3].forEach(i => cue(3.45 + i * .07, "letter")); cue(3.9, "swish-soft"); cue(4.45, "marker"); cue(5.35, "whoosh-big");
   return t => {
@@ -96,19 +96,19 @@ scene(2.45, 5.9, el => {
 scene(5.3, 10.0, el => {
   const enter = t => (1 - A(t, 5.3, .6, 0, 1, E.ioQ)) * 1920;
   const c1 = headline(el, U.c1, CAP), c2 = headline(el, U.c2, CAP);
-  const notes = h("div", "ctr", el); css(notes, { width: "300px", height: "340px", background: "#fffdf6", borderRadius: "12px", boxShadow: "0 22px 50px rgba(60,40,20,.18),0 0 0 1px rgba(60,40,20,.08)", padding: "26px 28px", backgroundImage: "repeating-linear-gradient(transparent 0 47px, #e7dfcf 47px 49px)", backgroundPosition: "0 58px" });
-  notes.innerHTML = `<div style="font-family:var(--mono);font-size:18px;color:var(--ink-soft);margin-bottom:18px">${T.notes}</div>` + T.notesHand.map((l, i) => `<div style="font-family:var(--hand);font-size:34px;line-height:48px;color:#2b2a5a;${i === 2 ? "background:linear-gradient(transparent 45%, rgba(242,193,78,.8) 45%, rgba(242,193,78,.8) 88%, transparent 88%);display:inline-block" : ""}">${l}</div>`).join("");
-  const pdf = h("div", "ctr", el); css(pdf, { width: "250px", height: "310px", background: "#fdfbf7", borderRadius: "12px", boxShadow: "0 22px 50px rgba(60,40,20,.18),0 0 0 1px rgba(60,40,20,.08)", padding: "28px 26px" });
-  pdf.innerHTML = `<div style="display:inline-block;background:#b5342b;color:#fff;font-weight:800;font-size:18px;padding:5px 12px;border-radius:6px;letter-spacing:.08em">PDF</div><div style="font-family:var(--mono);font-size:18px;color:var(--ink-soft);margin:14px 0 20px">${T.pdf}</div>` + [92, 80, 88, 60, 84, 72, 90].map(w => `<div style="height:10px;border-radius:5px;background:#e6dfd1;margin:0 0 15px;width:${w}%"></div>`).join("");
-  const link = h("div", "chip ctr", el, `${ICON.globe}<span style="font-family:var(--mono);font-size:26px;font-weight:500">${T.link}</span>`); link.style.boxShadow = "0 18px 40px rgba(60,40,20,.18),0 0 0 1px rgba(60,40,20,.08)";
+  const notes = h("div", "ctr", el); css(notes, { width: "300px", height: "340px", background: "#ffffff", borderRadius: "12px", boxShadow: "0 22px 50px rgba(18,20,26,.18),0 0 0 1px rgba(18,20,26,.08)", padding: "26px 28px", backgroundImage: "repeating-linear-gradient(transparent 0 47px, #e6e8eb 47px 49px)", backgroundPosition: "0 58px" });
+  notes.innerHTML = `<div style="font-family:var(--mono);font-size:18px;color:var(--ink-soft);margin-bottom:18px">${T.notes}</div>` + T.notesHand.map((l, i) => `<div style="font-family:var(--hand);font-size:34px;line-height:48px;color:#2b2a5a;${i === 2 ? "background:linear-gradient(transparent 45%, rgba(255,212,0,.8) 45%, rgba(255,212,0,.8) 88%, transparent 88%);display:inline-block" : ""}">${l}</div>`).join("");
+  const pdf = h("div", "ctr", el); css(pdf, { width: "250px", height: "310px", background: "#ffffff", borderRadius: "12px", boxShadow: "0 22px 50px rgba(18,20,26,.18),0 0 0 1px rgba(18,20,26,.08)", padding: "28px 26px" });
+  pdf.innerHTML = `<div style="display:inline-block;background:#e0231b;color:#fff;font-weight:800;font-size:18px;padding:5px 12px;border-radius:6px;letter-spacing:.08em">PDF</div><div style="font-family:var(--mono);font-size:18px;color:var(--ink-soft);margin:14px 0 20px">${T.pdf}</div>` + [92, 80, 88, 60, 84, 72, 90].map(w => `<div style="height:10px;border-radius:5px;background:#e4e6e9;margin:0 0 15px;width:${w}%"></div>`).join("");
+  const link = h("div", "chip ctr", el, `${ICON.globe}<span style="font-family:var(--mono);font-size:26px;font-weight:500">${T.link}</span>`); link.style.boxShadow = "0 18px 40px rgba(18,20,26,.18),0 0 0 1px rgba(18,20,26,.08)";
   const term = h("div", "term ctr", el); css(term, { width: "960px", height: "520px" });
   term.innerHTML = `<div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="ttl">${T.termTitle}</div></div><div class="tbody" style="font-size:34px"></div>`;
   const tb = term.querySelector(".tbody");
-  const pl = h("div", "", tb); pl.innerHTML = `<span style="color:#e0645a">›</span> <span class="p1" style="color:#f4efe4"></span><span class="p2" style="color:#bdb4a4"></span><span class="caret"></span>`;
+  const pl = h("div", "", tb); pl.innerHTML = `<span style="color:#ff4d42">›</span> <span class="p1" style="color:#f6f6f4"></span><span class="p2" style="color:#b8bcc3"></span><span class="caret"></span>`;
   const p1 = pl.querySelector(".p1"), p2 = pl.querySelector(".p2"), caret = pl.querySelector(".caret");
-  const outs = T.out.map((o, i) => { const d = h("div", "", tb); d.style.marginTop = i === 0 ? "22px" : "4px"; d.innerHTML = o.replace(/^✓/, '<span style="color:#8fc9a1">✓</span>').replace("study.html", '<span style="color:#e0645a">study.html</span>'); if (i === 0) d.style.color = "#98907f"; return d; });
+  const outs = T.out.map((o, i) => { const d = h("div", "", tb); d.style.marginTop = i === 0 ? "22px" : "4px"; d.innerHTML = o.replace(/^✓/, '<span style="color:#86d4a0">✓</span>').replace("study.html", '<span style="color:#ff4d42">study.html</span>'); if (i === 0) d.style.color = "#8b8f97"; return d; });
   const spin = h("span", "", outs[0]);
-  const glow = h("div", "ctr", el); css(glow, { width: "960px", height: "520px", borderRadius: "22px", boxShadow: "0 0 0 3px #e0645a, 0 0 60px rgba(224,100,90,.5)" });
+  const glow = h("div", "ctr", el); css(glow, { width: "960px", height: "520px", borderRadius: "22px", boxShadow: "0 0 0 3px #ff4d42, 0 0 60px rgba(255,77,66,.5)" });
   const T1 = 6.25, cps = KO ? 28 : 32, T2 = T1 + T.prompt1.length / cps + .08, TE = T2 + T.prompt2.length / cps, ENTER = Math.max(TE + .15, 8.0);
   for (let i = 0; i < T.prompt1.length; i += 1) cue(T1 + i / cps, "key");
   for (let i = 0; i < T.prompt2.length; i += 1) cue(T2 + i / cps, "key");
@@ -134,7 +134,7 @@ scene(5.3, 10.0, el => {
     caret.style.opacity = t < 6.1 || t > ENTER ? 0 : (t < TE ? 1 : (Math.floor(t * 2.4) % 2 ? 0 : 1));
     outs.forEach((o, i) => st(o, { y: A(t, OT[i], .3, 14, 0, E.outE), o: A(t, OT[i], .2, 0, 1) }));
     const fr = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏";
-    spin.textContent = t < OT[1] ? " " + fr[Math.floor(t * 14) % fr.length] : " ✓"; spin.style.color = t < OT[1] ? "#e0645a" : "#8fc9a1";
+    spin.textContent = t < OT[1] ? " " + fr[Math.floor(t * 14) % fr.length] : " ✓"; spin.style.color = t < OT[1] ? "#ff4d42" : "#86d4a0";
   };
 });
 
@@ -144,11 +144,11 @@ scene(9.55, 12.6, el => {
   const L = T.minis.slice(0, 9).map(([type, pr], i) => {
     const c = h("div", "mini", el);
     c.innerHTML = `<div class="lbl">${T.typeLabel[type]}</div><div class="num">${String(i + 1).padStart(2, "0")}/10</div><div class="pr">${pr}</div>`;
-    if (type === "mcq") c.querySelector(".lbl").style.color = "#b5342b"; if (type === "cloze") c.querySelector(".lbl").style.color = "#356b4a";
+    if (type === "mcq") c.querySelector(".lbl").style.color = "#e0231b"; if (type === "cloze") c.querySelector(".lbl").style.color = "#15803d";
     const col = i % 3, row = Math.floor(i / 3);
     return { c, x: 200 + col * 340 + (row % 2 ? 18 : -18), y: 790 + row * 240, r: (rnd() - .5) * 9, t0: 9.7 + i * .05 };
   });
-  const morph = h("div", "ctr", el); css(morph, { background: "#e9e5dc", zIndex: 30, boxShadow: "0 40px 90px rgba(60,40,20,.22)" });
+  const morph = h("div", "ctr", el); css(morph, { background: "#eceef1", zIndex: 30, boxShadow: "0 40px 90px rgba(18,20,26,.22)" });
   const file = h("div", "file ctr", el, FILE_SVG()); file.style.zIndex = 20;
   L.forEach(l => cue(l.t0, "card")); cue(11.05, "gather"); cue(11.6, "thump"); cue(11.9, "zoom");
   return t => {
@@ -177,7 +177,7 @@ scene(12.3, 20.7, el => {
   const f1 = headline(el, U.f1, CAP), f2 = headline(el, U.f2, CAP);
   const WW = 1060, WH = 920, SC = .92, WX = CX, WY = 1010;
   const win = h("div", "win ctr", el); css(win, { width: WW + "px", height: WH + "px" });
-  win.innerHTML = `<div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="addr"><svg width="18" height="22" viewBox="0 0 18 22"><path d="M2 1h9l6 6v13H2z" fill="none" stroke="#6a6357" stroke-width="2"/></svg>file:///…/study.html</div></div>`;
+  win.innerHTML = `<div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="addr"><svg width="18" height="22" viewBox="0 0 18 22"><path d="M2 1h9l6 6v13H2z" fill="none" stroke="#5f636b" stroke-width="2"/></svg>file:///…/study.html</div></div>`;
   const pl = h("div", "pl", win);
   pl.innerHTML = `<div class="pl-head"><div style="width:34px;height:34px">${SEAL_SVG(false)}</div>Cram</div><div class="pl-title">${T.deckTitle}</div><div class="pl-prog"><i></i></div>`;
   const prog = pl.querySelector(".pl-prog i");
@@ -201,7 +201,7 @@ scene(12.3, 20.7, el => {
   const res = h("div", "pc", card);
   res.innerHTML = `<div style="text-align:center;font-family:var(--serif);font-size:46px;font-weight:600;margin-top:6px">${T.done}</div>`;
   const ringWrap = h("div", "abs", res); css(ringWrap, { left: "50%", top: "96px", width: "220px", height: "220px", marginLeft: "-110px" });
-  ringWrap.innerHTML = `<svg viewBox="0 0 220 220" width="220" height="220"><circle cx="110" cy="110" r="94" fill="none" stroke="#ddd5c4" stroke-width="16"/><circle class="arc" cx="110" cy="110" r="94" fill="none" stroke="#356b4a" stroke-width="16" stroke-linecap="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" transform="rotate(-90 110 110)"/></svg><div class="sc" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:64px;font-weight:700"></div>`;
+  ringWrap.innerHTML = `<svg viewBox="0 0 220 220" width="220" height="220"><circle cx="110" cy="110" r="94" fill="none" stroke="#dcdde0" stroke-width="16"/><circle class="arc" cx="110" cy="110" r="94" fill="none" stroke="#15803d" stroke-width="16" stroke-linecap="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" transform="rotate(-90 110 110)"/></svg><div class="sc" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:64px;font-weight:700"></div>`;
   const arc = ringWrap.querySelector(".arc"), sc = ringWrap.querySelector(".sc");
   const sline = h("div", "abs", res, T.scoreLine); css(sline, { left: 0, right: 0, top: "324px", textAlign: "center", fontSize: "28px", color: "var(--ink-soft)" });
   const tabs = h("div", "abs", res); css(tabs, { left: "46px", top: "370px", display: "flex", gap: "12px" });
@@ -209,7 +209,7 @@ scene(12.3, 20.7, el => {
   [tAll, tMiss].forEach(d => css(d, { padding: "8px 22px", borderRadius: "999px", fontSize: "22px", fontWeight: 600, border: "1.5px solid var(--rule-strong)" }));
   const grid = h("div", "abs", res); css(grid, { left: "46px", right: "46px", top: "428px", height: "150px" });
   const miss = new Set([1, 6, 10]);
-  const gcards = Array.from({ length: 15 }, (_, i) => { const g = h("div", "abs", grid); css(g, { width: "164px", height: "40px", borderRadius: "8px", background: "#fff", border: "1.5px solid " + (miss.has(i) ? "#e3b3ad" : "#bfd6c6"), fontSize: "15px", display: "flex", alignItems: "center", gap: "8px", padding: "0 12px", fontWeight: 600, color: miss.has(i) ? "var(--accent)" : "var(--positive)" }); g.innerHTML = `<span style="font-family:var(--mono);color:var(--ink-soft);font-weight:500">${String(i + 1).padStart(2, "0")}</span>${miss.has(i) ? "✕ " + T.missedTag : "✓ " + T.correctTag}`; return g; });
+  const gcards = Array.from({ length: 15 }, (_, i) => { const g = h("div", "abs", grid); css(g, { width: "164px", height: "40px", borderRadius: "8px", background: "#fff", border: "1.5px solid " + (miss.has(i) ? "#f2b1ad" : "#b5dcc3"), fontSize: "15px", display: "flex", alignItems: "center", gap: "8px", padding: "0 12px", fontWeight: 600, color: miss.has(i) ? "var(--accent)" : "var(--positive)" }); g.innerHTML = `<span style="font-family:var(--mono);color:var(--ink-soft);font-weight:500">${String(i + 1).padStart(2, "0")}</span>${miss.has(i) ? "✕ " + T.missedTag : "✓ " + T.correctTag}`; return g; });
   const retry = h("div", "btn dark", res, T.retry); css(retry, { left: "50%", marginLeft: KO ? "-200px" : "-190px", top: "500px", width: KO ? "400px" : "380px", height: "70px", fontSize: "25px" });
   const cursor = makeCursor(el);
   // map window-local coords to screen
@@ -250,8 +250,8 @@ scene(12.3, 20.7, el => {
       const ap = P(t, 15.15 + i * .05, 15.45 + i * .05);
       let x = 0, s = 1;
       if (i === 0) { dot.style.transform = `scale(${S(t, 16.02, 0, 1, 3, .4)})`; o.style.borderColor = t > 16.02 ? "var(--ink)" : ""; }
-      if (i === 0 && t > 16.65) { o.style.borderColor = "var(--accent)"; o.style.background = "#fbeeec"; dot.style.background = "var(--accent)"; mark.textContent = "✕ " + (KO ? "오답" : "Incorrect"); mark.style.color = "var(--accent)"; mark.style.opacity = A(t, 16.65, .2, 0, 1); x = Math.exp(-(t - 16.65) * 7) * Math.sin((t - 16.65) * 60) * 8; }
-      if (i === 1 && t > 16.7) { o.style.borderColor = "var(--positive)"; o.style.background = "#eef5f0"; mark.textContent = "✓ " + (KO ? "정답" : "Correct"); mark.style.color = "var(--positive)"; mark.style.opacity = A(t, 16.7, .2, 0, 1); s = 1 + Math.exp(-(t - 16.7) * 8) * Math.sin((t - 16.7) * 30) * .02; }
+      if (i === 0 && t > 16.65) { o.style.borderColor = "var(--accent)"; o.style.background = "#fdeceb"; dot.style.background = "var(--accent)"; mark.textContent = "✕ " + (KO ? "오답" : "Incorrect"); mark.style.color = "var(--accent)"; mark.style.opacity = A(t, 16.65, .2, 0, 1); x = Math.exp(-(t - 16.65) * 7) * Math.sin((t - 16.65) * 60) * 8; }
+      if (i === 1 && t > 16.7) { o.style.borderColor = "var(--positive)"; o.style.background = "#e9f6ee"; mark.textContent = "✓ " + (KO ? "정답" : "Correct"); mark.style.color = "var(--positive)"; mark.style.opacity = A(t, 16.7, .2, 0, 1); s = 1 + Math.exp(-(t - 16.7) * 8) * Math.sin((t - 16.7) * 30) * .02; }
       st(o, { x, s, y: (1 - E.outE(ap)) * 20, o: ap });
     });
     st(chk, { o: A(t, 16.1, .25, 0, 1) * (1 - P(t, 16.65, 16.8)), s: t > 16.6 && t < 16.72 ? .96 : 1 });
@@ -275,7 +275,7 @@ scene(12.3, 20.7, el => {
 const wipes = document.getElementById("wipes");
 const w1 = h("div", "wipe", wipes), w2 = h("div", "wipe", wipes), w3 = h("div", "wipe", wipes), w4 = h("div", "wipe", wipes);
 [w1, w2, w3, w4].forEach(w => css(w, { width: "1400px", height: "2200px", top: "-140px" }));
-css(w1, { background: "#b5342b" }); css(w2, { background: "#161310" }); css(w3, { background: "#b5342b" }); css(w4, { background: "#f4efe4" });
+css(w1, { background: "#e0231b" }); css(w2, { background: "#0e0f11" }); css(w3, { background: "#e0231b" }); css(w4, { background: "#f6f6f4" });
 function wipesAt(t) {
   const a = E.ioQ(P(t, 20.2, 20.65)), b = E.ioQ(P(t, 20.32, 20.8));
   st(w1, { y: lerp(2200, -140, a) }); st(w2, { y: lerp(2200, -140, b) });
@@ -287,8 +287,8 @@ function wipesAt(t) {
 }
 scene(20.7, 23.95, el => {
   const g1 = headline(el, U.g1, CAP), g2 = headline(el, U.g2, CAP);
-  [g1, g2].forEach(g => { g.el.style.color = "#f4efe4"; g.ws.forEach(w => { if (w.classList.contains("acc")) w.style.color = "#e0645a"; }); });
-  const glowF = h("div", "ctr", el); css(glowF, { width: "700px", height: "700px", borderRadius: "50%", background: "radial-gradient(circle, rgba(224,100,90,.3), transparent 65%)" });
+  [g1, g2].forEach(g => { g.el.style.color = "#f6f6f4"; g.ws.forEach(w => { if (w.classList.contains("acc")) w.style.color = "#ff4d42"; }); });
+  const glowF = h("div", "ctr", el); css(glowF, { width: "700px", height: "700px", borderRadius: "50%", background: "radial-gradient(circle, rgba(255,77,66,.3), transparent 65%)" });
   const file = h("div", "file ctr", el, FILE_SVG(true));
   const ic = [ICON.offline, ICON.nosignup, ICON.noinstall];
   const badges = U.badges.map((b, i) => { const c = h("div", "chip ctr", el, `${ic[i]}<span>${b}</span>`); css(c, { fontSize: "40px", padding: "22px 40px 22px 28px" }); c.querySelector("svg").style.cssText = "width:48px;height:48px"; return c; });
@@ -306,12 +306,12 @@ scene(20.7, 23.95, el => {
 
 // ── I — call to action (23.5 → 28)
 scene(23.5, 28.1, el => {
-  const shadow = h("div", "ctr", el); css(shadow, { width: "440px", height: "440px", borderRadius: "50%", background: "radial-gradient(circle, rgba(40,20,10,.5) 0%, rgba(40,20,10,.2) 40%, transparent 70%)" });
+  const shadow = h("div", "ctr", el); css(shadow, { width: "440px", height: "440px", borderRadius: "50%", background: "radial-gradient(circle, rgba(10,12,16,.5) 0%, rgba(10,12,16,.2) 40%, transparent 70%)" });
   const seal = h("div", "seal ctr", el, SEAL_SVG()); css(seal, { width: "300px", height: "300px" });
-  const word = h("div", "ctr", el); css(word, { fontFamily: "Fraunces, serif", fontSize: "210px", fontWeight: 800, letterSpacing: "-.02em", lineHeight: 1, fontVariationSettings: '"opsz" 144, "SOFT" 0, "WONK" 1' }); word.textContent = T.wordmark;
+  const word = h("div", "ctr", el); css(word, { fontFamily: "\"Inter Tight\", sans-serif", letterSpacing: "-.06em", fontSize: "210px", fontWeight: 800, letterSpacing: "-.02em", lineHeight: 1, fontVariationSettings: '"opsz" 144, "SOFT" 0, "WONK" 1' }); word.textContent = T.wordmark;
   const tg1 = headline(el, U.tag1, KO ? 96 : 96, 600), tg2 = headline(el, U.tag2, KO ? 96 : 96, 600);
-  const url = h("div", "ctr", el); css(url, { fontFamily: "Inter, sans-serif", fontWeight: 700, fontSize: "50px", whiteSpace: "nowrap", background: "#1f1c18", color: "#f4efe4", borderRadius: "999px", padding: "26px 46px" });
-  url.innerHTML = `<span style="display:inline-flex;align-items:center;gap:20px"><svg width="50" height="50" viewBox="0 0 16 16"><path fill="#f4efe4" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg><span>github.com/<span style="color:#e0645a">sjquant/cram</span></span></span>`;
+  const url = h("div", "ctr", el); css(url, { fontFamily: "Inter, sans-serif", fontWeight: 700, fontSize: "50px", whiteSpace: "nowrap", background: "#121316", color: "#f6f6f4", borderRadius: "999px", padding: "26px 46px" });
+  url.innerHTML = `<span style="display:inline-flex;align-items:center;gap:20px"><svg width="50" height="50" viewBox="0 0 16 16"><path fill="#f6f6f4" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg><span>github.com/<span style="color:#ff4d42">sjquant/cram</span></span></span>`;
   const foot = h("div", "ctr", el, U.foot); css(foot, { fontSize: "34px", color: "var(--ink-soft)", fontWeight: 500, whiteSpace: "nowrap" });
   cue(CTA, "stamp-final"); cue(24.4, "letter"); cue(24.6, "swish-soft"); cue(25.2, "ding"); cue(26.0, "end");
   return t => {
