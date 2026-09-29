@@ -73,6 +73,9 @@ npx skills add sjquant/cram --skill cram
 카드와 플레이어는 한국어로 만들고, 퀴즈를 study.html로 저장해줘.
 ```
 
+Claude Code는 플러그인 스킬 이름 앞에 플러그인 이름을 붙이기 때문에 `/cram:cram`으로 불러요.
+`npx skills`로 설치했다면 `/cram`이에요.
+
 다른 에이전트에서는 “cram 스킬로 ./notes.md를 읽고 핵심 개념을 확인할 수 있는
 플래시카드 10개를 만들어줘. 카드와 플레이어는 한국어로 만들고, 퀴즈를 study.html로
 저장해줘.”라고 요청하면 돼요.

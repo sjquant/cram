@@ -68,6 +68,9 @@ Save your notes as `notes.md` in your working directory, then ask Claude Code:
 Save the quiz as study.html.
 ```
 
+Claude Code prefixes plugin skills with the plugin name, so the command is
+`/cram:cram`. If you installed with `npx skills` instead, it's `/cram`.
+
 In another agent, ask: “Use the cram skill to read ./notes.md and create
 10 flashcards to test the key concepts. Save the quiz as study.html.”
 You can also paste material, attach a document, or provide a web URL your

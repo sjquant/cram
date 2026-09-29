@@ -20,11 +20,14 @@ Save the JSON as a deck file (for example, `deck.json`) before rendering.
 
 ## Render the deck
 
-From the plugin/repository root, run:
+Run the renderer in this skill's `scripts/` directory:
 
 ```sh
-python3 skills/cram/scripts/render.py <deck.json> -o <output.html>
+python3 <skill-dir>/scripts/render.py <deck.json> -o <output.html>
 ```
+
+`<skill-dir>` is the directory that contains this `SKILL.md` (`skills/cram` in a
+repository checkout).
 
 Use `--language <code>` for the requested player UI language; it does not
 translate card content. See `--help` for supported codes and options.
