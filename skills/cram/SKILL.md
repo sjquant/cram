@@ -1,9 +1,18 @@
 ---
 name: cram
-description: Creates validated, self-contained flashcard quiz decks from pasted, attached, local, or web source material. Use when the user asks for flashcards, study cards, a quiz, or an interactive deck; not for general summaries or rewrites without a deck request.
+description: Creates validated, self-contained flashcard quiz decks from pasted, attached, local, or web source material, with an optional guided interview to choose deck settings first. Use when the user asks for flashcards, study cards, a quiz, an interactive deck, or to be interviewed or guided in setting one up; not for general summaries or rewrites without a deck request.
 ---
 
 # Cram
+
+## Guided interview (opt-in)
+
+Only when the user explicitly asks for an interview or for help choosing the
+deck setup, follow
+[`references/guided-interview.md`](references/guided-interview.md) first and
+use its resulting profile in the steps below. Otherwise skip straight to
+"Create the deck JSON" — a normal request is never interrupted with
+questions.
 
 ## Create the deck JSON
 
