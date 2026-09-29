@@ -81,41 +81,58 @@ def bell(m, d=1.4, vel=1.0):
     x = np.sin(2 * np.pi * f * t + 2.2 * np.exp(-t * 6) * np.sin(2 * np.pi * f * 3.5 * t))
     return x * np.exp(-t * 3.2) * adsr(d, .002, .1) * vel
 
-# ───────── music: minimal modern groove, 120 BPM, A minor (Am9 – Fmaj9 – Cadd9 – G6) ─────────
+# ───────── music: money-chord pop house, 120 BPM, C major ─────────
+# Canon-style "money chord" progression with a descending bass line, two chords per bar:
+#   C(add9) – G/B – Am7 – Em7/G | Fmaj7 – C/E – Dm7 – G
 BPM = 120
 STEP = 60 / BPM / 4          # 16th note = .125 s
 BAR = STEP * 16              # 2 s
+SWING = .018                 # push off-beat 16ths late for a modern shuffle
 MC = data.get("music", {})
 DROP = MC.get("drop", 7.0)
-SEC_B = MC.get("dense", 23.0)            # groove A → groove B (adds a little motion)
+SEC_B = MC.get("dense", 23.0)            # groove A → groove B
 BREAK_A, BREAK_B = MC.get("breakA", 39.0), MC.get("breakB", 47.0)
 BUILD_END = MC.get("buildEnd", 51.4)
 CTA = MC.get("cta", 51.9)
 END = data["dur"] - 1.1
 
 def sat(x, k=2.0): return np.tanh(x * k) / np.tanh(k)
+def sw(s): return s * STEP + (SWING if s % 2 else 0)
 
 def kick_tight(g=1.0):
-    d = .32; t = tt(d); f = 50 + 150 * np.exp(-t * 45)
-    body = np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t * 11)
-    click = hp(noise(d), 3000) * np.exp(-t * 600) * .35
-    return sat(body * 1.2 + click, 1.4) * g
+    d = .3; t = tt(d); f = 52 + 160 * np.exp(-t * 50)
+    body = np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t * 12)
+    click = hp(noise(d), 3500) * np.exp(-t * 700) * .3
+    return sat(body * 1.25 + click, 1.5) * g
 
-def snap(g=1.0):
-    d = .25; t = tt(d)
-    x = bp(noise(d), 1800, 7000) * (np.exp(-t * 45) + .5 * np.exp(-np.maximum(t - .008, 0) * 60) * (t > .008))
-    x += np.sin(2 * np.pi * 1200 * t) * np.exp(-t * 90) * .15
-    return x * g * .8
+def clap_snap(g=1.0):
+    d = .3; t = tt(d)
+    burst = sum(np.where((t >= o) & (t < o + .01), 1.0, 0) * np.exp(-(t - o) * 300) for o in (0, .009, .018))
+    clap = bp(noise(d), 1100, 5200) * (burst + .7 * np.exp(-t * 22))
+    snap = bp(noise(d), 2500, 9000) * np.exp(-t * 70) * .6
+    return (clap * .8 + snap) * g
 
 HAT_F = [205.3, 304.4, 369.6, 522.7, 540.0, 800.0]
-def hat_soft(open_=False, g=1.0):
-    d = .22 if open_ else .045; t = tt(d)
+def hat(open_=False, g=1.0):
+    d = .2 if open_ else .04; t = tt(d)
     x = sum(signal.square(2 * np.pi * f * 1.9 * t) for f in HAT_F)
-    return hp(bp(x, 7000, 16000), 8000) * np.exp(-t * (16 if open_ else 95)) * .16 * g
+    return hp(bp(x, 7000, 16000), 8000) * np.exp(-t * (18 if open_ else 110)) * .15 * g
 
-def sub(m, d):
-    t = tt(d); x = np.sin(2 * np.pi * midi(m) * t) + .12 * np.sin(2 * np.pi * 2 * midi(m) * t)
-    return sat(x, 1.2) * adsr(d, .004, .06)
+def shaker(g=1.0):
+    d = .05; t = tt(d); e = (1 - np.exp(-t * 400)) * np.exp(-t * 90)
+    return hp(noise(d), 6000) * e * .12 * g
+
+def rim(g=1.0):
+    d = .06; t = tt(d)
+    return (np.sin(2 * np.pi * 1700 * t) * .5 + bp(noise(d), 1500, 5000)) * np.exp(-t * 90) * .35 * g
+
+def bass(m, d, g=1.0):
+    t = tt(d); f = midi(m)
+    x = np.sin(2 * np.pi * f * t) + .25 * np.sin(2 * np.pi * 2 * f * t) * np.exp(-t * 6)
+    return sat(x, 1.4) * adsr(d, .003, .03) * g
+
+def keys(ms, d, vel=1.0):  # FM e-piano chord stab
+    return sum(epiano(m, d, vel) for m in ms) / len(ms)
 
 def pluck(m, d=.6, vel=1.0):
     t = tt(d); f = midi(m); x = np.zeros_like(t)
@@ -129,9 +146,8 @@ def warm_pad(ms, d, cutoff=1500):
         for i, det in enumerate((-.07, .07)):
             v = signal.sawtooth(2 * np.pi * midi(m) * 2 ** (det / 12) * t + rng.random() * 6)
             (L if i == 0 else R)[:] += v
-    n = len(ms)
     e = adsr(d, .08, .25)
-    return lp(L / n, cutoff) * e, lp(R / n, cutoff) * e
+    return lp(L / len(ms), cutoff) * e, lp(R / len(ms), cutoff) * e
 
 def sub_drop(d=1.4):
     t = tt(d); f = 32 + 60 * np.exp(-t * 3.5)
@@ -153,13 +169,26 @@ class Stereo:
 
 drums, synths, low, dly = Bus(), Stereo(), Bus(), Bus()
 sidechain = np.ones(N + SR * 4)
-def duck(t0, depth=.6, rel=.32):
+def duck(t0, depth=.6, rel=.3):
     i = int(t0 * SR); n = int(rel * SR)
     sidechain[i:i + n] = np.minimum(sidechain[i:i + n], 1 - depth * (1 - np.linspace(0, 1, n)) ** 2)
 
-PROG = [(33, [57, 60, 64, 67, 71]), (29, [53, 57, 60, 64, 67]), (36, [55, 60, 62, 64]), (31, [55, 59, 62, 64])]
-MOTIF = [(0, 76), (3, 79), (6, 74)]          # E5 G5 D5 — three notes, then space
-MOTIF_B = [(0, 76), (3, 81), (6, 79), (10, 74)]
+# (bass note, chord voicing) — two per bar
+PROG = [
+    (36, [60, 64, 67, 74]),  # C(add9)
+    (35, [59, 62, 67, 74]),  # G/B
+    (33, [57, 60, 64, 67]),  # Am7
+    (31, [55, 59, 62, 67]),  # Em7/G
+    (29, [57, 60, 64, 65]),  # Fmaj7
+    (28, [55, 60, 64, 67]),  # C/E
+    (26, [57, 60, 62, 65]),  # Dm7
+    (31, [55, 59, 62, 67]),  # G
+]
+STAB = [0, 3, 6]                         # per half-bar chord: on the beat, then two syncopated hits
+BASS = [(0, 2, 0), (3, 1, 12), (6, 2, 0)]  # (step, length, octave offset) per half bar
+# topline: a singable hook over the first bar of each two-bar phrase (step, midi)
+HOOK = [(0, 76), (2, 79), (4, 81), (7, 79), (10, 76), (12, 74)]
+HOOK_B = [(0, 79), (2, 81), (4, 84), (7, 83), (10, 81), (12, 79)]
 
 def section(t):
     if t < DROP: return "intro"
@@ -169,7 +198,7 @@ def section(t):
     if t < BUILD_END: return "build"
     return "outro"
 
-# intro: felt piano phrases over a low pad, rising into a breath of silence
+# intro: felt piano phrases over a soft pad, rising into a breath of silence
 INTRO = MC.get("intro", [(.35, 69, .7), (1.75, 72, .6), (2.3, 76, .5), (3.45, 74, .65), (4.2, 71, .45), (5.35, 69, .7), (5.37, 57, .5), (5.4, 64, .45)])
 for t0, m, v in INTRO:
     music.add(t0, felt(m, 2.4, v), .45, pan=(m - 66) / 30); verb_send.add(t0, felt(m, 2.4, v), .3)
@@ -184,55 +213,69 @@ impact(DROP)
 
 bar_t, bi = DROP, 0
 while bar_t < BUILD_END - 1e-6:
-    root, tones = PROG[bi % 4]
     sec = section(bar_t)
     d = min(BAR, BUILD_END - bar_t)
     nsteps = int(round(d / STEP))
+    # drums
     for s in range(nsteps):
-        ts = bar_t + s * STEP
+        ts = bar_t + sw(s)
         if sec in ("A", "B"):
-            if s in (0, 8) or (sec == "B" and s == 11):
-                drums.add(ts, kick_tight(1 if s != 11 else .6), .9); duck(ts, .6 if s != 11 else .35)
+            if s % 4 == 0:
+                drums.add(ts, kick_tight(), .9); duck(ts, .6)
             if s in (4, 12):
-                drums.add(ts, snap(), .5); verb_send.add(ts, snap(), .22)
+                drums.add(ts, clap_snap(), .5); verb_send.add(ts, clap_snap(), .18)
             if s % 4 == 2:
-                drums.add(ts, hat_soft(open_=(s == 14 and bi % 2 == 1)), .5, pan=.2)
+                drums.add(ts, hat(open_=(sec == "B")), .5, pan=.2)
+            if sec == "B":
+                drums.add(ts, shaker(.6 + .4 * (s % 2 == 0)), .6, pan=-.25)
+                if s in (3, 11): drums.add(ts, rim(), .35, pan=.3)
         elif sec == "break":
-            if s == 0: drums.add(ts, kick_tight(.8), .6); duck(ts, .35)
-            if s == 12: drums.add(ts, snap(.7), .3); verb_send.add(ts, snap(.7), .4)
+            if s == 0: drums.add(ts, kick_tight(.7), .55); duck(ts, .3)
+            if s == 12: drums.add(ts, clap_snap(.6), .25); verb_send.add(ts, clap_snap(.6), .4)
         elif sec == "build":
             prog = (ts - BREAK_B) / max(.01, BUILD_END - BREAK_B)
-            if s % 4 == 0: drums.add(ts, kick_tight(.9), .8); duck(ts, .5)
-            if s in (4, 12): drums.add(ts, snap(), .45); verb_send.add(ts, snap(), .2)
-            if s % 4 == 2: drums.add(ts, hat_soft(), .45, pan=.2)
-            if prog > .6 and s >= 12:   # one short fill, not a roll
-                drums.add(ts, snap(.4 + .15 * (s - 12)), .3)
-    # sub bass: root held, one re-hit
-    if sec in ("A", "B", "build"):
-        low.add(bar_t, sub(root, 6 * STEP), .55)
-        if nsteps > 10: low.add(bar_t + 10 * STEP, sub(root, 4 * STEP), .45)
-    elif sec == "break":
-        low.add(bar_t, sub(root, d), .4)
-    # pumping chord pad
-    cut = {"A": 1600, "B": 2200, "break": 800}.get(sec, 800 + 2400 * min(1, (bar_t + d - BREAK_B) / max(.01, BUILD_END - BREAK_B)))
-    l, r = warm_pad(tones, d + .15, cut); synths.add(bar_t, l, r, .26)
-    # sparse motif with ping-pong delay
-    if sec in ("A", "B", "break") and (bi % 2 == 0 or sec == "B"):
-        mot = MOTIF_B if (sec == "B" and bi % 2 == 1) else MOTIF
-        for s, m in mot:
+            if s % 4 == 0: drums.add(ts, kick_tight(.9), .85); duck(ts, .55)
+            if s in (4, 12): drums.add(ts, clap_snap(), .45); verb_send.add(ts, clap_snap(), .2)
+            if s % 2 == 0: drums.add(ts, hat(), .35 + .25 * prog, pan=.2)
+    # harmony: two chords per bar
+    for half in range(2):
+        hs = half * 8
+        if hs >= nsteps: break
+        root, tones = PROG[(bi * 2 + half) % len(PROG)]
+        th = bar_t + hs * STEP
+        hd = min(8, nsteps - hs) * STEP
+        if sec in ("A", "B", "build"):
+            for s, ln, octv in BASS:
+                if hs + s < nsteps:
+                    low.add(bar_t + sw(hs + s), bass(root + octv, ln * STEP * .9), .5 if octv == 0 else .32)
+            for s in STAB:
+                if hs + s < nsteps:
+                    x = keys(tones, .32, 1.0 if s == 0 else .75)
+                    music.add(bar_t + sw(hs + s), x, .45 if sec != "build" else .38, pan=-.1)
+                    verb_send.add(bar_t + sw(hs + s), x, .1)
+        elif sec == "break":
+            low.add(th, bass(root, hd), .35)
+            x = keys(tones, hd, .7); music.add(th, x, .35); verb_send.add(th, x, .25)
+        cut = {"A": 1300, "B": 1800, "break": 900}.get(sec, 900 + 2600 * min(1, (bar_t + d - BREAK_B) / max(.01, BUILD_END - BREAK_B)))
+        l, r = warm_pad(tones, hd + .1, cut); synths.add(th, l, r, .16)
+    # topline hook on the first bar of each two-bar phrase
+    if sec in ("A", "B", "break") and bi % 2 == 0:
+        hook = HOOK_B if sec == "B" and bi % 4 == 2 else HOOK
+        for s, m in hook:
             if s < nsteps:
-                x = pluck(m, .7, .9 if sec != "break" else .6)
-                music.add(bar_t + s * STEP, x, .3, pan=-.15); dly.add(bar_t + s * STEP, x, .5); verb_send.add(bar_t + s * STEP, x, .12)
+                x = pluck(m, .7, .85 if sec != "break" else .55)
+                music.add(bar_t + sw(s), x, .26, pan=.15); dly.add(bar_t + sw(s), x, .45); verb_send.add(bar_t + sw(s), x, .12)
     bar_t += BAR; bi += 1
 
-# breath, then the final hit and a clean outro
+# breath, then the final hit resolving to C
 music.add(BUILD_END - .9, reverse_swell(.9), .5)
 impact(CTA, .85)
-l, r = warm_pad([57, 60, 64, 67, 71], END - CTA + 1.2, 2000)
+l, r = warm_pad([60, 64, 67, 71, 74], END - CTA + 1.2, 2000)
 fade = np.exp(-tt(len(l) / SR) * .45); synths.add(CTA, l * fade, r * fade, .3)
-x = sub(33, 5.0) * np.exp(-tt(5.0) * 1.1); low.add(CTA, x, .5)
-for s, m in [(0, 76), (3, 79), (6, 74), (10, 81)]:
-    x = pluck(m, .9, .8); music.add(CTA + .5 + s * STEP, x, .28); dly.add(CTA + .5 + s * STEP, x, .5)
+x = keys([60, 64, 67, 71, 74], 3.5, .9); music.add(CTA, x, .4); verb_send.add(CTA, x, .35)
+x = bass(36, 5.0) * np.exp(-tt(5.0) * 1.1); low.add(CTA, x, .5)
+for s, m in [(0, 76), (2, 79), (4, 84), (8, 83), (12, 84)]:
+    x = pluck(m, 1.0, .75); music.add(CTA + .5 + s * STEP, x, .26); dly.add(CTA + .5 + s * STEP, x, .45)
 for kq in range(3):
     tb = CTA + 2 + kq * 1.0
     if tb < END - .5: drums.add(tb, kick_tight(.5), .45 * (1 - kq / 4)); duck(tb, .3)
@@ -240,7 +283,7 @@ for kq in range(3):
 # ping-pong dotted-eighth delay
 D = int(STEP * 3 * SR); src = lp(dly.L + dly.R, 5000) * .5
 for k in range(1, 7):
-    g = .42 ** k; seg = src[:len(src) - k * D] * g
+    g = .38 ** k; seg = src[:len(src) - k * D] * g
     (synths.L if k % 2 else synths.R)[k * D:] += seg
 
 # ───────── SFX ─────────
