@@ -88,7 +88,7 @@ scene(2.45, 5.9, el => {
     revealWords(tg1.ws, t, 3.9, .08, .7); revealWords(tg2.ws, t, 4.05, .08, .7);
     st(tg1.el, { x: CX, y: 1110 + ex }); st(tg2.el, { x: CX, y: 1270 + ex });
     const acc = tg1.ws.find(w => w.classList.contains("acc"));
-    if (acc) { const r = acc.getBoundingClientRect(); css(squig, { left: (r.left - 8) + "px", top: (r.bottom - 26) + "px" }); squig.firstChild.setAttribute("width", r.width + 20); sqp.style.strokeDashoffset = 1 - A(t, 4.45, .5, 0, 1, E.ioC); squig.style.opacity = t > 4.4 ? 1 : 0; }
+    if (acc) { if (squig.parentElement !== tg1.el) tg1.el.appendChild(squig); css(squig, { left: (acc.offsetLeft - 8) + "px", top: (acc.offsetTop + acc.offsetHeight - 26) + "px" }); squig.firstChild.setAttribute("width", acc.offsetWidth + 20); sqp.style.strokeDashoffset = 1 - A(t, 4.45, .5, 0, 1, E.ioC); squig.style.opacity = t > 4.4 ? 1 : 0; }
   };
 });
 
@@ -249,6 +249,7 @@ scene(12.3, 20.7, el => {
       const dot = o.querySelector(".radio i"), mark = o.querySelector(".mark");
       const ap = P(t, 15.15 + i * .05, 15.45 + i * .05);
       let x = 0, s = 1;
+      o.style.borderColor = ""; o.style.background = ""; dot.style.background = ""; mark.textContent = ""; mark.style.opacity = 0;
       if (i === 0) { dot.style.transform = `scale(${S(t, 16.02, 0, 1, 3, .4)})`; o.style.borderColor = t > 16.02 ? "var(--ink)" : ""; }
       if (i === 0 && t > 16.65) { o.style.borderColor = "var(--accent)"; o.style.background = "#fbeeec"; dot.style.background = "var(--accent)"; mark.textContent = "✕ " + (KO ? "오답" : "Incorrect"); mark.style.color = "var(--accent)"; mark.style.opacity = A(t, 16.65, .2, 0, 1); x = Math.exp(-(t - 16.65) * 7) * Math.sin((t - 16.65) * 60) * 8; }
       if (i === 1 && t > 16.7) { o.style.borderColor = "var(--positive)"; o.style.background = "#eef5f0"; mark.textContent = "✓ " + (KO ? "정답" : "Correct"); mark.style.color = "var(--positive)"; mark.style.opacity = A(t, 16.7, .2, 0, 1); s = 1 + Math.exp(-(t - 16.7) * 8) * Math.sin((t - 16.7) * 30) * .02; }
