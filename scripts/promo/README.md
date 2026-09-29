@@ -77,6 +77,10 @@ The palette is "red pen on white paper":
 Headlines use Inter Tight in English and Pretendard in Korean. Keep the red
 for the stamp and the emphasized words only.
 
+The Cram player shown inside the browser window keeps the product's own look
+(cream paper, brick red, serif titles). Its tokens are scoped to `.win` in
+`stage.html`, so the promo palette never leaks into the product UI.
+
 ## Editing copy
 
 - Change the text in `STR` (long cut) or `SS` (short cut), then check the

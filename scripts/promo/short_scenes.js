@@ -27,7 +27,7 @@ const SS = {
 };
 const U = SS[LANG];
 const KO = LANG === "ko";
-const CAP = KO ? 100 : 100;
+const CAP = KO ? 100 : 94;
 const IMPACT = 3.0, CTA = 24.0;
 const CX = 540;
 window.MUSIC = {
@@ -201,7 +201,7 @@ scene(12.3, 20.7, el => {
   const res = h("div", "pc", card);
   res.innerHTML = `<div style="text-align:center;font-family:var(--serif);font-size:46px;font-weight:600;margin-top:6px">${T.done}</div>`;
   const ringWrap = h("div", "abs", res); css(ringWrap, { left: "50%", top: "96px", width: "220px", height: "220px", marginLeft: "-110px" });
-  ringWrap.innerHTML = `<svg viewBox="0 0 220 220" width="220" height="220"><circle cx="110" cy="110" r="94" fill="none" stroke="#dcdde0" stroke-width="16"/><circle class="arc" cx="110" cy="110" r="94" fill="none" stroke="#15803d" stroke-width="16" stroke-linecap="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" transform="rotate(-90 110 110)"/></svg><div class="sc" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:64px;font-weight:700"></div>`;
+  ringWrap.innerHTML = `<svg viewBox="0 0 220 220" width="220" height="220"><circle cx="110" cy="110" r="94" fill="none" stroke="#ddd5c4" stroke-width="16"/><circle class="arc" cx="110" cy="110" r="94" fill="none" stroke="#356b4a" stroke-width="16" stroke-linecap="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" transform="rotate(-90 110 110)"/></svg><div class="sc" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:64px;font-weight:700"></div>`;
   const arc = ringWrap.querySelector(".arc"), sc = ringWrap.querySelector(".sc");
   const sline = h("div", "abs", res, T.scoreLine); css(sline, { left: 0, right: 0, top: "324px", textAlign: "center", fontSize: "28px", color: "var(--ink-soft)" });
   const tabs = h("div", "abs", res); css(tabs, { left: "46px", top: "370px", display: "flex", gap: "12px" });
@@ -209,7 +209,7 @@ scene(12.3, 20.7, el => {
   [tAll, tMiss].forEach(d => css(d, { padding: "8px 22px", borderRadius: "999px", fontSize: "22px", fontWeight: 600, border: "1.5px solid var(--rule-strong)" }));
   const grid = h("div", "abs", res); css(grid, { left: "46px", right: "46px", top: "428px", height: "150px" });
   const miss = new Set([1, 6, 10]);
-  const gcards = Array.from({ length: 15 }, (_, i) => { const g = h("div", "abs", grid); css(g, { width: "164px", height: "40px", borderRadius: "8px", background: "#fff", border: "1.5px solid " + (miss.has(i) ? "#f2b1ad" : "#b5dcc3"), fontSize: "15px", display: "flex", alignItems: "center", gap: "8px", padding: "0 12px", fontWeight: 600, color: miss.has(i) ? "var(--accent)" : "var(--positive)" }); g.innerHTML = `<span style="font-family:var(--mono);color:var(--ink-soft);font-weight:500">${String(i + 1).padStart(2, "0")}</span>${miss.has(i) ? "✕ " + T.missedTag : "✓ " + T.correctTag}`; return g; });
+  const gcards = Array.from({ length: 15 }, (_, i) => { const g = h("div", "abs", grid); css(g, { width: "164px", height: "40px", borderRadius: "8px", background: "#fff", border: "1.5px solid " + (miss.has(i) ? "#e3b3ad" : "#bfd6c6"), fontSize: "15px", display: "flex", alignItems: "center", gap: "8px", padding: "0 12px", fontWeight: 600, color: miss.has(i) ? "var(--accent)" : "var(--positive)" }); g.innerHTML = `<span style="font-family:var(--mono);color:var(--ink-soft);font-weight:500">${String(i + 1).padStart(2, "0")}</span>${miss.has(i) ? "✕ " + T.missedTag : "✓ " + T.correctTag}`; return g; });
   const retry = h("div", "btn dark", res, T.retry); css(retry, { left: "50%", marginLeft: KO ? "-200px" : "-190px", top: "500px", width: KO ? "400px" : "380px", height: "70px", fontSize: "25px" });
   const cursor = makeCursor(el);
   // map window-local coords to screen
@@ -250,8 +250,8 @@ scene(12.3, 20.7, el => {
       const ap = P(t, 15.15 + i * .05, 15.45 + i * .05);
       let x = 0, s = 1;
       if (i === 0) { dot.style.transform = `scale(${S(t, 16.02, 0, 1, 3, .4)})`; o.style.borderColor = t > 16.02 ? "var(--ink)" : ""; }
-      if (i === 0 && t > 16.65) { o.style.borderColor = "var(--accent)"; o.style.background = "#fdeceb"; dot.style.background = "var(--accent)"; mark.textContent = "✕ " + (KO ? "오답" : "Incorrect"); mark.style.color = "var(--accent)"; mark.style.opacity = A(t, 16.65, .2, 0, 1); x = Math.exp(-(t - 16.65) * 7) * Math.sin((t - 16.65) * 60) * 8; }
-      if (i === 1 && t > 16.7) { o.style.borderColor = "var(--positive)"; o.style.background = "#e9f6ee"; mark.textContent = "✓ " + (KO ? "정답" : "Correct"); mark.style.color = "var(--positive)"; mark.style.opacity = A(t, 16.7, .2, 0, 1); s = 1 + Math.exp(-(t - 16.7) * 8) * Math.sin((t - 16.7) * 30) * .02; }
+      if (i === 0 && t > 16.65) { o.style.borderColor = "var(--accent)"; o.style.background = "#fbeeec"; dot.style.background = "var(--accent)"; mark.textContent = "✕ " + (KO ? "오답" : "Incorrect"); mark.style.color = "var(--accent)"; mark.style.opacity = A(t, 16.65, .2, 0, 1); x = Math.exp(-(t - 16.65) * 7) * Math.sin((t - 16.65) * 60) * 8; }
+      if (i === 1 && t > 16.7) { o.style.borderColor = "var(--positive)"; o.style.background = "#eef5f0"; mark.textContent = "✓ " + (KO ? "정답" : "Correct"); mark.style.color = "var(--positive)"; mark.style.opacity = A(t, 16.7, .2, 0, 1); s = 1 + Math.exp(-(t - 16.7) * 8) * Math.sin((t - 16.7) * 30) * .02; }
       st(o, { x, s, y: (1 - E.outE(ap)) * 20, o: ap });
     });
     st(chk, { o: A(t, 16.1, .25, 0, 1) * (1 - P(t, 16.65, 16.8)), s: t > 16.6 && t < 16.72 ? .96 : 1 });

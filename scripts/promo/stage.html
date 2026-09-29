@@ -106,7 +106,11 @@ body{font-family:var(--sans);color:var(--ink);-webkit-font-smoothing:antialiased
 :root{ --serif:"Inter Tight","Pretendard",sans-serif; }
 .h1{font-family:"Inter Tight","Pretendard",sans-serif;font-weight:700;letter-spacing:-.035em;word-spacing:.16em;font-variation-settings:normal}
 :lang(ko) .h1{font-family:"Pretendard",sans-serif;word-spacing:0}
-.pl-head,.pl-title{font-family:"Inter Tight","Pretendard",sans-serif !important;font-weight:700}
+/* The Cram player inside the browser window keeps the product's own look. */
+.win{--paper:#f4efe4;--ink:#1f1c18;--ink-soft:#6a6357;--rule:#ddd5c4;--rule-strong:#c4baa4;--accent:#b5342b;--positive:#356b4a;--surface:#fdfbf7;--canvas:#e9e5dc;--serif:"Fraunces","Noto Serif KR",serif;color:#1f1c18;box-shadow:0 40px 90px rgba(60,40,20,.22),0 10px 24px rgba(60,40,20,.12),0 0 0 1px rgba(60,40,20,.08)}
+:lang(ko) .win{--serif:"Pretendard","Fraunces",sans-serif}
+.win .chrome{background:#e2dccf;border-bottom-color:#d4ccbb} .win .dot{background:#c9c0ad} .win .addr{background:#f4efe4;color:#6a6357} .win .kbd{background:#ece5d8;color:#1f1c18}
+.win .pl-card{box-shadow:0 8px 26px rgba(0,0,0,.07),0 0 0 1px #ddd5c4}
 #grain{display:none} #vig{background:radial-gradient(ellipse at center, transparent 60%, rgba(10,12,16,.10) 100%)}
 #bg{background:#f6f6f4}
 </style>
@@ -342,8 +346,8 @@ const T = STR[LANG];
 
 // ───────────────────────────── assets ─────────────────────────────
 const SEAL_SVG = (filter = true) => `<svg viewBox="0 0 128 128"><g ${filter ? 'filter="url(#inky)"' : ""} transform="rotate(-4 64 64)">
-  <path fill="#e0231b" d="M20,17 L64,13 L108,18 L112,63 L109,110 L64,114 L19,109 L16,64 Z"/>
-  <path fill="#f6f6f4" d="M38,40 H92 V56 H54 V72 H92 V88 H38 Z"/></g></svg>`;
+  <path fill="${filter ? "#e0231b" : "#b5342b"}" d="M20,17 L64,13 L108,18 L112,63 L109,110 L64,114 L19,109 L16,64 Z"/>
+  <path fill="${filter ? "#f6f6f4" : "#f4efe4"}" d="M38,40 H92 V56 H54 V72 H92 V88 H38 Z"/></g></svg>`;
 const FILE_SVG = (dark) => `<svg viewBox="0 0 300 380">
   <defs><linearGradient id="fg${dark ? 1 : 0}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#f1f2f4"/></linearGradient></defs>
   <path d="M18 0 H214 L300 86 V362 Q300 380 282 380 H18 Q0 380 0 362 V18 Q0 0 18 0Z" fill="url(#fg${dark ? 1 : 0})" stroke="${dark ? "none" : "#d6d8dc"}" stroke-width="2"/>
@@ -502,7 +506,7 @@ scene(12.2, 19.6, el => {
   const enter = t => (1 - A(t, 12.15, .7, 0, 1, E.ioQ)) * 1080;
   const cap = h("div", "cap-l", el); css(cap, { top: "190px", width: "760px" });
   const eye = h("div", "", cap); const sub = h("div", "", cap);
-  const hd = h("div", "h1", cap); const hw = words(hd, T.c_h);
+  const hd = h("div", "h1", cap); if (LANG !== "ko") hd.style.fontSize = "92px"; const hw = words(hd, T.c_h);
   // sources
   const notes = h("div", "ctr", el); css(notes, { width: "300px", height: "360px", background: "#ffffff", borderRadius: "10px", boxShadow: "0 22px 50px rgba(18,20,26,.18),0 0 0 1px rgba(18,20,26,.08)", padding: "26px 28px", backgroundImage: "repeating-linear-gradient(transparent 0 47px, #e6e8eb 47px 49px)", backgroundPosition: "0 58px" });
   notes.innerHTML = `<div style="font-family:var(--mono);font-size:18px;color:var(--ink-soft);margin-bottom:18px">${T.notes}</div>` +
@@ -615,7 +619,7 @@ scene(22.8, 39.5, el => {
   const rrg = T.rrg.map(s => { const d = h("div", "h1", cap); d.textContent = s; d.style.fontSize = LANG === "ko" ? "92px" : "112px"; return d; });
   const sub = h("div", "", cap);
   const cap2 = h("div", "cap-l", el); css(cap2, { top: "290px", width: "640px" });
-  const kh = h("div", "h1", cap2, T.kinds_h); kh.style.fontSize = LANG === "ko" ? "80px" : "92px";
+  const kh = h("div", "h1", cap2, T.kinds_h); kh.style.fontSize = LANG === "ko" ? "80px" : "78px";
   const chipsBox = h("div", "", cap2); chipsBox.style.marginTop = "44px";
   const kchips = T.kinds.map(k => { const d = h("div", "", chipsBox); css(d, { display: "flex", alignItems: "center", gap: "18px", fontSize: "38px", fontWeight: 600, margin: "0 0 22px", color: "var(--ink)" }); d.innerHTML = `<span style="width:16px;height:16px;border-radius:50%;background:var(--accent);display:inline-block"></span>${k}`; return d; });
   const cap3 = h("div", "cap-l", el); css(cap3, { top: "380px", width: "660px" });
@@ -662,7 +666,7 @@ scene(22.8, 39.5, el => {
   const res = h("div", "pc", card);
   res.innerHTML = `<div style="text-align:center;font-family:var(--serif);font-size:44px;font-weight:600;margin-top:10px">${T.done}</div>`;
   const ringWrap = h("div", "abs", res); css(ringWrap, { left: "50%", top: "110px", width: "220px", height: "220px", marginLeft: "-110px" });
-  ringWrap.innerHTML = `<svg viewBox="0 0 220 220" width="220" height="220"><circle cx="110" cy="110" r="94" fill="none" stroke="#dcdde0" stroke-width="16"/><circle class="arc" cx="110" cy="110" r="94" fill="none" stroke="#15803d" stroke-width="16" stroke-linecap="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" transform="rotate(-90 110 110)"/></svg><div class="sc" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:64px;font-weight:700"></div>`;
+  ringWrap.innerHTML = `<svg viewBox="0 0 220 220" width="220" height="220"><circle cx="110" cy="110" r="94" fill="none" stroke="#ddd5c4" stroke-width="16"/><circle class="arc" cx="110" cy="110" r="94" fill="none" stroke="#356b4a" stroke-width="16" stroke-linecap="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" transform="rotate(-90 110 110)"/></svg><div class="sc" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:64px;font-weight:700"></div>`;
   const arc = ringWrap.querySelector(".arc"), sc = ringWrap.querySelector(".sc");
   const sline = h("div", "abs", res, T.scoreLine); css(sline, { left: 0, right: 0, top: "350px", textAlign: "center", fontSize: "26px", color: "var(--ink-soft)" });
   const tabs = h("div", "abs", res); css(tabs, { left: "46px", top: "412px", display: "flex", gap: "12px" });
@@ -671,7 +675,7 @@ scene(22.8, 39.5, el => {
   const grid = h("div", "abs", res); css(grid, { left: "46px", right: "46px", top: "470px", height: "150px" });
   const miss = new Set([1, 6, 10]);
   const gcards = Array.from({ length: 15 }, (_, i) => {
-    const g = h("div", "abs", grid); css(g, { width: "164px", height: "40px", borderRadius: "8px", background: "#fff", border: "1.5px solid " + (miss.has(i) ? "#f2b1ad" : "#b5dcc3"), fontSize: "15px", display: "flex", alignItems: "center", gap: "8px", padding: "0 12px", fontWeight: 600, color: miss.has(i) ? "var(--accent)" : "var(--positive)" });
+    const g = h("div", "abs", grid); css(g, { width: "164px", height: "40px", borderRadius: "8px", background: "#fff", border: "1.5px solid " + (miss.has(i) ? "#e3b3ad" : "#bfd6c6"), fontSize: "15px", display: "flex", alignItems: "center", gap: "8px", padding: "0 12px", fontWeight: 600, color: miss.has(i) ? "var(--accent)" : "var(--positive)" });
     g.innerHTML = `<span style="font-family:var(--mono);color:var(--ink-soft);font-weight:500">${String(i + 1).padStart(2, "0")}</span>${miss.has(i) ? "✕ " + T.missedTag : "✓ " + T.correctTag}`;
     return g;
   });
@@ -737,8 +741,8 @@ scene(22.8, 39.5, el => {
       st(o, { y: (1 - E.outE(P(t, 27.2 + i * .06, 27.7 + i * .06))) * 20, o: P(t, 27.2 + i * .06, 27.5 + i * .06) });
       const dot = o.querySelector(".radio i"), mark = o.querySelector(".mark");
       if (i === 0) { dot.style.transform = `scale(${S(t, 28.42, 0, 1, 3, .4)})`; o.style.borderColor = t > 28.42 ? "var(--ink)" : ""; }
-      if (i === 0 && t > 29.35) { o.style.borderColor = "var(--accent)"; o.style.background = "#fdeceb"; dot.style.background = "var(--accent)"; mark.textContent = "✕ " + (LANG === "ko" ? "오답" : "Incorrect"); mark.style.color = "var(--accent)"; mark.style.opacity = A(t, 29.35, .2, 0, 1); }
-      if (i === 1 && t > 29.4) { o.style.borderColor = "var(--positive)"; o.style.background = "#e9f6ee"; mark.textContent = "✓ " + (LANG === "ko" ? "정답" : "Correct"); mark.style.color = "var(--positive)"; mark.style.opacity = A(t, 29.4, .2, 0, 1); }
+      if (i === 0 && t > 29.35) { o.style.borderColor = "var(--accent)"; o.style.background = "#fbeeec"; dot.style.background = "var(--accent)"; mark.textContent = "✕ " + (LANG === "ko" ? "오답" : "Incorrect"); mark.style.color = "var(--accent)"; mark.style.opacity = A(t, 29.35, .2, 0, 1); }
+      if (i === 1 && t > 29.4) { o.style.borderColor = "var(--positive)"; o.style.background = "#eef5f0"; mark.textContent = "✓ " + (LANG === "ko" ? "정답" : "Correct"); mark.style.color = "var(--positive)"; mark.style.opacity = A(t, 29.4, .2, 0, 1); }
       if (i === 0 || i === 1) { const pop = t > 29.35 ? 1 + Math.exp(-(t - 29.35) * 8) * Math.sin((t - 29.35) * 30) * .02 : 1; st(o, { y: 0, s: pop, o: 1, x: i === 0 && t > 29.35 ? Math.exp(-(t - 29.35) * 7) * Math.sin((t - 29.35) * 60) * 8 : 0 }); if (t < 27.8) st(o, { y: (1 - E.outE(P(t, 27.2 + i * .06, 27.7 + i * .06))) * 20, o: P(t, 27.2 + i * .06, 27.5 + i * .06) }); }
     });
     st(chk, { o: A(t, 28.5, .3, 0, 1) * (1 - P(t, 29.35, 29.5)), s: t > 29.3 && t < 29.42 ? .96 : 1 });
@@ -748,7 +752,7 @@ scene(22.8, 39.5, el => {
     bcaret.style.opacity = t > 31.15 && t < 32.55 ? (Math.floor(t * 2.6) % 2 ? 0 : 1) : 0;
     blank.style.borderColor = t > 31.15 ? (t > 32.6 ? "var(--positive)" : "var(--ink)") : "";
     blank.style.color = t > 32.6 ? "var(--positive)" : "var(--ink)";
-    blank.style.background = t > 32.6 ? "#e9f6ee" : "transparent";
+    blank.style.background = t > 32.6 ? "#eef5f0" : "transparent";
     st(chk3, { o: A(t, 31.9, .3, 0, 1) * (1 - P(t, 32.6, 32.75)), s: t > 32.55 && t < 32.67 ? .96 : 1 });
     st(fb3, { o: A(t, 32.7, .3, 0, 1), y: A(t, 32.7, .4, 10, 0, E.outE) });
     // results
