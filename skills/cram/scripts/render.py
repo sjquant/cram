@@ -2,7 +2,7 @@
 """Render a cram deck into a self-contained HTML player.
 
 Validates the deck with the sibling ``validator`` module, then inlines the
-deck JSON into a copy of ``skills/cram/template/player.html``. The template
+deck JSON into a copy of the skill's ``template/player.html``. The template
 supplies all card markup and behavior; this module only injects data, so the
 output never depends on anything outside the single HTML file it writes.
 """
@@ -28,9 +28,25 @@ from typing import Sequence
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from validator import DeckValidationError, load_deck  # noqa: E402
 
-PLUGIN_ROOT = Path(os.environ.get("CLAUDE_PLUGIN_ROOT") or str(Path(__file__).resolve().parents[3]))
-TEMPLATE_PATH = PLUGIN_ROOT / "skills" / "cram" / "template" / "player.html"
-LOCALES_PATH = PLUGIN_ROOT / "skills" / "cram" / "locales"
+def _skill_dir() -> Path:
+    """Locate the skill directory that holds ``template/`` and ``locales/``.
+
+    ``CLAUDE_PLUGIN_ROOT`` may point at a repository checkout (skill under
+    ``skills/cram``) or at the skill directory itself, which is what installers
+    copy. Without it, this script's own skill directory is used.
+    """
+
+    plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT")
+    if plugin_root:
+        for candidate in (Path(plugin_root) / "skills" / "cram", Path(plugin_root)):
+            if (candidate / "template" / "player.html").is_file():
+                return candidate
+    return Path(__file__).resolve().parents[1]
+
+
+SKILL_DIR = _skill_dir()
+TEMPLATE_PATH = SKILL_DIR / "template" / "player.html"
+LOCALES_PATH = SKILL_DIR / "locales"
 LANGUAGES = ("en", "ko", "ja", "zh-CN", "es", "fr")
 
 
