@@ -144,9 +144,12 @@ def grid_origin(t):
 
 def chord_at(t):
     """Chord tones sounding at time t, for tuning pitched sound effects."""
-    if t < DROP:   # follow the intro arpeggio's chords
-        k = int((t - (DROP - len(INTRO_PROG) * BAR / 2)) / (BAR / 2))
-        return INTRO_PROG[min(max(k, 0), len(INTRO_PROG) - 1)]
+    if t < DROP:   # the intro chord sounding at t
+        if t >= PULSE_FROM - 1e-6: return CHORDS["G"][1]
+        name = INTRO_HITS[0][1]
+        for t0, n in INTRO_HITS:
+            if t0 <= t + 1e-6: name = n
+        return CHORDS[name][1]
     if t >= CTA or t >= BUILD_END: return [60, 64, 67]
     return PROG[int((t - DROP) / (BAR / 2)) % len(PROG)][1]
 
@@ -169,18 +172,25 @@ def shaker(g=1.0):
     d = .07; t = tt(d); e = (1 - np.exp(-t * 300)) * np.exp(-t * 60)
     return hp(noise(d), 5500) * e * .16 * g
 
-# ── intro: a quiet piano arpeggio on the same tempo, climbing Am7 → G so the stamp lands on C ──
-INTRO_PROG = [[57, 60, 64, 67], [55, 59, 64, 67], [57, 60, 64, 65], [55, 60, 64, 67], [57, 60, 62, 65], [55, 57, 60, 65], [55, 59, 62, 67]]
-#               Am7               Em7               Fmaj7             C/E               Dm7               Fmaj7/C           G
-ARP = [0, 1, 2, 3, 2, 1, 3, 2]            # 8th notes through the chord
-for k, tones in enumerate(INTRO_PROG):
-    th = DROP - (len(INTRO_PROG) - k) * BAR / 2
-    for i, j in enumerate(ARP):
-        ts = th + i * 2 * STEP
-        if ts < .25 or ts > DROP - .3: continue
-        grow = .35 + .45 * (ts / DROP)
-        x = piano(tones[j] + 12, .9, grow); music.add(ts, x, .5, pan=(j - 1.5) / 6); verb_send.add(ts, x, .25)
-    if th >= .25: low.add(th, ebass(tones[0] - 24, BAR / 2 * .95), .1 + .12 * (th / DROP))
+# ── intro: the music answers the motion. Each line of text lands on a beat with a piano chord
+# (Am7 → Fmaj7 → Dm7 → Gsus4); then, while the stamp comes down, a G pulse counts in to the C drop.
+CHORDS = {"Am7": (33, [57, 60, 64, 67]), "Fmaj7": (29, [57, 60, 64, 65]), "Dm7": (38, [57, 60, 62, 65]),
+          "Gsus4": (31, [55, 60, 62, 67]), "G": (31, [55, 59, 62, 67])}
+INTRO_HITS = [(t, n) for t, n in MC.get("introHits", [[.5, "Am7"], [2.0, "Fmaj7"], [3.5, "Dm7"], [5.5, "Gsus4"]])]
+PULSE_FROM = MC.get("pulseFrom", DROP - 1.0)
+for k, (t0, name) in enumerate(INTRO_HITS):
+    root, tones = CHORDS[name]
+    until = INTRO_HITS[k + 1][0] if k + 1 < len(INTRO_HITS) else PULSE_FROM
+    ring = max(.6, until - t0 + .4)
+    vel = .6 + .25 * k / max(1, len(INTRO_HITS) - 1)
+    x = piano_chord(tones, ring, vel); music.add(t0, x, .55); verb_send.add(t0, x, .35)
+    low.add(t0, ebass(root, max(.5, until - t0) * .95), .16)
+music.add(INTRO_HITS[0][0], pad([45, 52, 57, 60], DROP - INTRO_HITS[0][0], 650), .06)
+# count-in: G + D eighth notes, growing into the drop, stopping for the breath before the stamp
+n_pulse = int(round((DROP - .25 - PULSE_FROM) / (2 * STEP)))
+for i in range(n_pulse):
+    ts = PULSE_FROM + i * 2 * STEP
+    x = piano_chord([67, 74], .18, .45 + .4 * i / max(1, n_pulse - 1)); music.add(ts, x, .5, pan=.1); verb_send.add(ts, x, .1)
 music.add(DROP - .9, reverse_swell(.9), .3)
 
 def downbeat(t0, g=1.0):   # the stamp carries the impact; the music just starts cleanly

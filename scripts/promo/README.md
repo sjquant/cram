@@ -29,8 +29,9 @@ and synced to cue points the page exports.
 - `audio.py` synthesizes the soundtrack into a WAV file:
   - a light 120 BPM indie-pop track on the Canon-style "money chord"
     progression in C (C–G/B–Am7–Em7/G–Fmaj7–C/E–Dm7–G, two chords per bar,
-    descending bass): a quiet piano arpeggio on the same tempo climbs from Am7
-    to G so the first stamp lands on C, then airy off-beat piano, a soft kick,
+    descending bass). In the intro each line of text lands on a beat with a
+    piano chord (Am7, Fmaj7, Dm7, Gsus4), and a G pulse counts in while the
+    stamp comes down, so the first stamp lands on C. Then airy off-beat piano, a soft kick,
     finger snaps on 2 and 4, a shaker, a simple bass, and a sparse
     glockenspiel hook, with a short outro under the call to action,
   - the sound effects. They snap to the music's 16th-note

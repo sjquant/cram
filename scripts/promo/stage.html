@@ -213,7 +213,7 @@ function words(parent, text, cls = "") {
   }
   return out;
 }
-function revealWords(ws, t, t0, stagger = .07, d = .75, dy = 1.05) {
+function revealWords(ws, t, t0, stagger = .07, d = .75, dy = 1.35) {
   ws.forEach((w, i) => {
     const p = E.outE(P(t, t0 + i * stagger, t0 + i * stagger + d));
     w.style.transform = `translateY(${(1 - p) * dy * 100}%) rotate(${(1 - p) * 4}deg)`;
@@ -421,21 +421,21 @@ scene(0, 7.05, el => {
   const big = h("div", "h1 serif ctr", el); css(big, { fontSize: LANG === "ko" ? "128px" : "156px", whiteSpace: "nowrap", fontWeight: LANG === "ko" ? 800 : 700 });
   const bw = words(big, T.a4.replace(T.a4acc, "**" + T.a4acc + "**"));
   const shadow = h("div", "ctr", el); css(shadow, { width: "520px", height: "520px", borderRadius: "50%", background: "radial-gradient(circle, rgba(10,12,16,.55) 0%, rgba(10,12,16,.25) 40%, transparent 70%)" });
-  cue(.35, "tick"); cue(1.8, "tick"); cue(2.3, "marker"); cue(3.5, "tick"); cue(4.95, "whoosh"); cue(5.35, "hit-soft"); cue(6.0, "riser");
+  cue(.5, "tick"); cue(2.0, "tick"); cue(2.5, "marker"); cue(3.5, "tick"); cue(5.05, "whoosh"); cue(5.5, "hit-soft"); cue(6.0, "riser");
   return t => {
-    revealWords(l1.ws, t, .35); revealWords(l2.ws, t, 1.8); revealWords(l3.ws, t, 3.5);
+    revealWords(l1.ws, t, .5); revealWords(l2.ws, t, 2.0); revealWords(l3.ws, t, 3.5);
     // stack pushes upward
-    const up2 = A(t, 1.62, .6, 0, 1, E.outQ), up3 = A(t, 3.32, .6, 0, 1, E.outQ);
-    const ex = A(t, 4.9, .5, 0, 1, E.inC);
+    const up2 = A(t, 1.82, .6, 0, 1, E.outQ), up3 = A(t, 3.32, .6, 0, 1, E.outQ);
+    const ex = A(t, 5.0, .45, 0, 1, E.inC);
     st(l1.d, { y: -150 * up2 - 150 * up3 - 300 * ex, o: lerp(1, .28, up2) * (1 - ex), blur: ex * 10 });
     st(l2.d, { y: -150 * up3 - 300 * ex, o: lerp(1, .5, up3) * (1 - ex), blur: ex * 10 });
     st(l3.d, { y: -300 * ex, o: 1 - ex, blur: ex * 10 });
-    l2.d.style.visibility = t < 1.78 ? "hidden" : "visible"; l3.d.style.visibility = t < 3.48 ? "hidden" : "visible";
-    st(hl, { sx: A(t, 2.3, .45, 0, 1, E.ioC) });
+    l2.d.style.visibility = t < 1.98 ? "hidden" : "visible"; l3.d.style.visibility = t < 3.48 ? "hidden" : "visible";
+    st(hl, { sx: A(t, 2.5, .45, 0, 1, E.ioC) });
     // big statement
-    revealWords(bw, t, 5.35, .09, .8);
+    revealWords(bw, t, 5.5, .09, .8);
     const ant = A(t, 6.2, .8, 0, 1, E.inC);
-    st(big, { x: 960, y: 540, s: 1 - ant * .06, o: t < 5.3 ? 0 : 1 - A(t, 6.95, .08, 0, 1) });
+    st(big, { x: 960, y: 540, s: 1 - ant * .06, o: t < 5.45 ? 0 : 1 - A(t, 6.95, .08, 0, 1) });
     st(shadow, { x: 960, y: 560, s: lerp(2.4, .7, E.inC(P(t, 6.1, 7.0))), o: A(t, 6.1, .9, 0, .55, E.inC) });
   };
 });

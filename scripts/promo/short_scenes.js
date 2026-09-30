@@ -31,7 +31,7 @@ const CAP = KO ? 100 : 94;
 const IMPACT = 3.0, CTA = 24.0;
 const CX = 540;
 window.MUSIC = {
-  intro: [[0.1, 69, .7], [0.75, 72, .6], [1.3, 76, .6], [1.33, 64, .45], [1.36, 57, .4]],
+  introHits: [[0, "Am7"], [.75, "Fmaj7"], [1.5, "Gsus4"]], pulseFrom: 2.0,
   drop: IMPACT, liftEnd: 5.3, dense: 11, breakA: 20.5, breakB: 22.5, buildEnd: 23.5, cta: CTA,
 };
 // big centered headline: returns {el, ws}
@@ -48,11 +48,11 @@ scene(0, 3.05, el => {
   const S = KO ? 132 : 150;
   const l1 = headline(el, U.h1, S), l2 = headline(el, U.h2, S), l3 = headline(el, U.h3, S, 700);
   const shadow = h("div", "ctr", el); css(shadow, { width: "600px", height: "600px", borderRadius: "50%", background: "radial-gradient(circle, rgba(10,12,16,.55) 0%, rgba(10,12,16,.25) 40%, transparent 70%)" });
-  cue(.1, "tick"); cue(.75, "tick"); cue(1.3, "hit-soft"); cue(2.05, "riser");
+  cue(0, "tick"); cue(.75, "tick"); cue(1.5, "hit-soft"); cue(2.05, "riser");
   return t => {
-    revealWords(l1.ws, t, .1, .07, .6); revealWords(l2.ws, t, .75, .07, .6); revealWords(l3.ws, t, 1.3, .08, .65);
+    revealWords(l1.ws, t, 0, .07, .6); revealWords(l2.ws, t, .75, .07, .6); revealWords(l3.ws, t, 1.5, .08, .65);
     const ant = A(t, 2.2, .8, 0, 1, E.inC), gone = t > 2.97 ? 0 : 1;
-    [l1, l2, l3].forEach((l, i) => st(l.el, { x: CX, y: 720 + i * (KO ? 168 : 200) - ant * 20 * (1 - i), s: 1 - ant * .05, o: gone * (i < 2 ? lerp(1, .35, A(t, 1.3, .4, 0, 1)) : 1) }));
+    [l1, l2, l3].forEach((l, i) => st(l.el, { x: CX, y: 720 + i * (KO ? 168 : 200) - ant * 20 * (1 - i), s: 1 - ant * .05, o: gone * (i < 2 ? lerp(1, .35, A(t, 1.5, .4, 0, 1)) : 1) }));
     st(shadow, { x: CX, y: 900, s: lerp(2.4, .7, E.inC(P(t, 2.2, 3.0))), o: A(t, 2.2, .8, 0, .55, E.inC) });
   };
 });
