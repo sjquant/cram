@@ -27,13 +27,17 @@ and synced to cue points the page exports.
   - save stills (`--stills=1.5,7.0`),
   - pipe a frame range into ffmpeg (`--video`, `--f0`, `--f1`).
 - `audio.py` synthesizes the soundtrack into a WAV file:
-  - a 120 BPM pop-house groove on the Canon-style "money chord" progression in
-    C (C–G/B–Am7–Em7/G–Fmaj7–C/E–Dm7–G, two chords per bar, descending bass),
-    programmed on a swung 16-step grid: four-on-the-floor kick, clap with snap,
-    off-beat hats, shaker and rim, an octave-bounce bass, sidechained e-piano
-    stabs, and a pluck hook with ping-pong delay,
+  - a bright 120 BPM indie-pop track on the Canon-style "money chord"
+    progression in C (C–G/B–Am7–Em7/G–Fmaj7–C/E–Dm7–G, two chords per bar,
+    descending bass): bouncy upright piano on the off-beats, ensemble
+    handclaps on 2 and 4, tambourine, a round electric bass, a glockenspiel
+    hook, whistling and ukulele strums in the second half, and a short outro
+    under the call to action,
   - impacts on the stamp hits,
-  - the cue-synced sound effects.
+  - the sound effects. Once the beat is running they snap to the 16th-note
+    grid (at most 30 ms early, otherwise up to one 16th late), pitched ones use
+    the chord playing at that moment, and busy ones such as typing are thinned
+    out.
 - `render.sh` runs the whole pipeline. It renders frame ranges in parallel
   workers, concatenates them, and muxes in the audio.
 

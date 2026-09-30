@@ -1,5 +1,5 @@
 """Synthesize the Cram promo soundtrack: music bed + cue-synced SFX."""
-import json, sys
+import json, os, sys
 import numpy as np
 from scipy import signal
 from scipy.io import wavfile
@@ -34,34 +34,6 @@ class Bus:
 music, sfx, verb_send = Bus(), Bus(), Bus()
 
 # ───────── instruments ─────────
-def kick(g=1.0):
-    d = .45; t = tt(d); f = 45 + 110 * np.exp(-t * 28)
-    ph = 2 * np.pi * np.cumsum(f) / SR
-    x = np.sin(ph) * np.exp(-t * 7.5) + .25 * hp(noise(d), 3000) * np.exp(-t * 180)
-    return x * g
-
-def clap():
-    d = .35; t = tt(d); n = bp(noise(d), 900, 3500)
-    e = np.exp(-t * 16) + sum(np.where((t > o) & (t < o + .012), np.exp(-(t - o) * 300), 0) for o in (0, .012, .024))
-    return n * e * .6
-
-def hat(open_=False):
-    d = .18 if open_ else .05; t = tt(d)
-    return hp(noise(d), 7000) * np.exp(-t * (22 if open_ else 90)) * .35
-
-def epiano(m, d=1.2, vel=1.0):
-    t = tt(d); f = midi(m)
-    idx = 1.6 * np.exp(-t * 5)
-    x = np.sin(2 * np.pi * f * t + idx * np.sin(2 * np.pi * f * t)) * np.exp(-t * 2.2)
-    x += .25 * np.sin(2 * np.pi * 2 * f * t) * np.exp(-t * 4)
-    return x * adsr(d, .004, .08) * vel
-
-def felt(m, d=2.2, vel=1.0):
-    t = tt(d); f = midi(m)
-    x = sum(a * np.sin(2 * np.pi * f * k * t + k) for k, a in ((1, 1), (2, .35), (3, .12), (4, .05)))
-    x = lp(x * np.exp(-t * 1.6), 2400)
-    return x * adsr(d, .012, .2) * vel
-
 def pad(ms, d, cutoff=1500):
     t = tt(d); x = np.zeros_like(t)
     for m in ms:
@@ -71,93 +43,106 @@ def pad(ms, d, cutoff=1500):
     x = lp(x / (len(ms) * 3), cutoff, 2)
     return x * adsr(d, .35, .5)
 
-def bass(m, d):
-    t = tt(d); f = midi(m)
-    x = np.sin(2 * np.pi * f * t) + .3 * lp(signal.sawtooth(2 * np.pi * f * t), 500)
-    return x * adsr(d, .005, .04) * np.exp(-t * 1.5)
-
-def bell(m, d=1.4, vel=1.0):
-    t = tt(d); f = midi(m)
-    x = np.sin(2 * np.pi * f * t + 2.2 * np.exp(-t * 6) * np.sin(2 * np.pi * f * 3.5 * t))
-    return x * np.exp(-t * 3.2) * adsr(d, .002, .1) * vel
-
-# ───────── music: money-chord pop house, 120 BPM, C major ─────────
-# Canon-style "money chord" progression with a descending bass line, two chords per bar:
-#   C(add9) – G/B – Am7 – Em7/G | Fmaj7 – C/E – Dm7 – G
+# ───────── music: bright indie pop in the spirit of 2000s product ads, 120 BPM, C major ─────────
+# Canon-style "money chord" progression, two chords per bar, descending bass:
+#   C – G/B – Am7 – Em7/G | Fmaj7 – C/E – Dm7 – G
+# Bouncy upright piano on the off-beats, ensemble handclaps on 2 and 4, tambourine,
+# a round electric bass, a glockenspiel hook, whistling in the second half, and
+# ukulele strums: an acoustic, feel-good groove with no sidechain pumping.
 BPM = 120
 STEP = 60 / BPM / 4          # 16th note = .125 s
 BAR = STEP * 16              # 2 s
-SWING = .018                 # push off-beat 16ths late for a modern shuffle
 MC = data.get("music", {})
 DROP = MC.get("drop", 7.0)
-SEC_B = MC.get("dense", 23.0)            # groove A → groove B
+SEC_B = MC.get("dense", 23.0)
 BREAK_A, BREAK_B = MC.get("breakA", 39.0), MC.get("breakB", 47.0)
 BUILD_END = MC.get("buildEnd", 51.4)
 CTA = MC.get("cta", 51.9)
 END = data["dur"] - 1.1
 
 def sat(x, k=2.0): return np.tanh(x * k) / np.tanh(k)
-def sw(s): return s * STEP + (SWING if s % 2 else 0)
 
-def kick_tight(g=1.0):
-    d = .3; t = tt(d); f = 52 + 160 * np.exp(-t * 50)
-    body = np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t * 12)
-    click = hp(noise(d), 3500) * np.exp(-t * 700) * .3
-    return sat(body * 1.25 + click, 1.5) * g
+# ── instruments ──
+def piano(m, d, vel=1.0):
+    """Upright piano: slightly inharmonic partials, two detuned strings, hammer thump."""
+    t = tt(d); f0 = midi(m); x = np.zeros_like(t)
+    for det in (-2.5, 2.5):                               # cents; a touch of honky-tonk width
+        f = f0 * 2 ** (det / 1200)
+        for k in range(1, 9):
+            fk = k * f * np.sqrt(1 + .0004 * k * k)
+            if fk > 15000: break
+            x += (1 / k ** 1.15) * np.sin(2 * np.pi * fk * t) * np.exp(-t * (2.2 + k * 1.6))
+    x = x / 2 + lp(noise(d), 2500) * np.exp(-t * 90) * .15
+    return x * adsr(d, .002, .06) * vel * .55
 
-def clap_snap(g=1.0):
-    d = .3; t = tt(d)
-    burst = sum(np.where((t >= o) & (t < o + .01), 1.0, 0) * np.exp(-(t - o) * 300) for o in (0, .009, .018))
-    clap = bp(noise(d), 1100, 5200) * (burst + .7 * np.exp(-t * 22))
-    snap = bp(noise(d), 2500, 9000) * np.exp(-t * 70) * .6
-    return (clap * .8 + snap) * g
+def piano_chord(ms, d, vel=1.0, spread=.004):
+    out = np.zeros(int(d * SR))
+    for i, m in enumerate(ms):
+        x = piano(m, d - i * spread, vel * (1 - .06 * i)); i0 = int(i * spread * SR); out[i0:i0 + len(x)] += x
+    return out / len(ms) * 1.8
 
-HAT_F = [205.3, 304.4, 369.6, 522.7, 540.0, 800.0]
-def hat(open_=False, g=1.0):
-    d = .2 if open_ else .04; t = tt(d)
-    x = sum(signal.square(2 * np.pi * f * 1.9 * t) for f in HAT_F)
-    return hp(bp(x, 7000, 16000), 8000) * np.exp(-t * (18 if open_ else 110)) * .15 * g
-
-def shaker(g=1.0):
-    d = .05; t = tt(d); e = (1 - np.exp(-t * 400)) * np.exp(-t * 90)
-    return hp(noise(d), 6000) * e * .12 * g
-
-def rim(g=1.0):
-    d = .06; t = tt(d)
-    return (np.sin(2 * np.pi * 1700 * t) * .5 + bp(noise(d), 1500, 5000)) * np.exp(-t * 90) * .35 * g
-
-def bass(m, d, g=1.0):
+def glock(m, d=1.2, vel=1.0):
     t = tt(d); f = midi(m)
-    x = np.sin(2 * np.pi * f * t) + .25 * np.sin(2 * np.pi * 2 * f * t) * np.exp(-t * 6)
-    return sat(x, 1.4) * adsr(d, .003, .03) * g
+    x = np.sin(2 * np.pi * f * t) * np.exp(-t * 3) + .3 * np.sin(2 * np.pi * f * 2.76 * t) * np.exp(-t * 9) \
+        + .1 * np.sin(2 * np.pi * f * 5.4 * t) * np.exp(-t * 20)
+    return x * adsr(d, .001, .05) * vel * .7
 
-def keys(ms, d, vel=1.0):  # FM e-piano chord stab
-    return sum(epiano(m, d, vel) for m in ms) / len(ms)
+def whistle(m, d=.4, vel=1.0):
+    t = tt(d); vib = 1 + .008 * np.sin(2 * np.pi * 5.8 * t) * np.clip(t * 5, 0, 1)
+    ph = 2 * np.pi * np.cumsum(midi(m) * vib) / SR
+    x = np.sin(ph) + .04 * np.sin(2 * ph) + .05 * bp(noise(d), midi(m) * .9, midi(m) * 1.3)
+    return x * adsr(d, .025, .08) * vel * .55
 
-def pluck(m, d=.6, vel=1.0):
-    t = tt(d); f = midi(m); x = np.zeros_like(t)
-    for k in range(1, 9):
-        x += (1 / k ** 1.3) * np.sin(2 * np.pi * f * k * t) * np.exp(-t * (5 + k * 4))
-    return x * adsr(d, .002, .08) * vel * .8
+_ks = {}
+def string(m, d, bright=4000):   # Karplus-Strong plucked nylon string
+    key = (m, round(d, 3), bright)
+    if key not in _ks:
+        n = int(d * SR); p = max(2, int(round(SR / midi(m)))); y = np.zeros(n + p + 1)
+        y[:p + 1] = lp(np.random.default_rng(m).uniform(-1, 1, p + 1), bright)
+        for a in range(p + 1, n + p + 1, p):
+            b = min(a + p, n + p + 1)
+            y[a:b] = .995 * .5 * (y[a - p:b - p] + y[a - p - 1:b - p - 1])
+        _ks[key] = y[p + 1:p + 1 + n] * adsr(d, .001, .04)
+    return _ks[key]
 
-def warm_pad(ms, d, cutoff=1500):
-    t = tt(d); L = np.zeros_like(t); R = np.zeros_like(t)
-    for m in ms:
-        for i, det in enumerate((-.07, .07)):
-            v = signal.sawtooth(2 * np.pi * midi(m) * 2 ** (det / 12) * t + rng.random() * 6)
-            (L if i == 0 else R)[:] += v
-    e = adsr(d, .08, .25)
-    return lp(L / len(ms), cutoff) * e, lp(R / len(ms), cutoff) * e
+def uke_strum(tones, d, up=False, vel=1.0):
+    # re-entrant ukulele voicing: chord tones folded into G4..A5
+    notes = sorted({67 + ((m - 67) % 12) for m in tones})[:4]
+    if up: notes = notes[::-1]
+    out = np.zeros(int(d * SR))
+    for i, m in enumerate(notes):
+        x = string(m, d - i * .011) * (vel * (1 - .08 * i)); i0 = int(i * .011 * SR); out[i0:i0 + len(x)] += x
+    return out / len(notes) * 1.5
 
-def sub_drop(d=1.4):
-    t = tt(d); f = 32 + 60 * np.exp(-t * 3.5)
-    return sat(np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t * 2.8), 1.3)
+def kick_soft(g=1.0):
+    d = .35; t = tt(d); f = 55 + 70 * np.exp(-t * 30)
+    return (np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t * 9) + lp(noise(d), 600) * np.exp(-t * 60) * .2) * g
 
-def air_hit(d=1.0):
-    t = tt(d); return hp(noise(d), 7000) * np.exp(-t * 5) * .35
+def handclap(g=1.0, seed=0):
+    """Several people clapping: a few slightly offset, differently filtered bursts."""
+    d = .28; t = tt(d); x = np.zeros_like(t); r = np.random.default_rng(seed)
+    for k in range(4):
+        o = r.uniform(0, .014); lo = r.uniform(900, 1400); hi = lo * r.uniform(3.2, 4.2)
+        e = np.where(t >= o, np.exp(-(t - o) * r.uniform(28, 40)), 0)
+        x += bp(noise(d), lo, hi) * e * r.uniform(.7, 1.0)
+    return x * g * .55
+
+def tambourine(g=1.0):
+    d = .12; t = tt(d)
+    jingle = hp(noise(d), 7000) * (np.exp(-t * 40) + .4 * np.exp(-np.maximum(t - .015, 0) * 30) * (t > .015))
+    return jingle * .22 * g
+
+def ebass(m, d, g=1.0):   # round finger bass
+    t = tt(d); f = midi(m)
+    x = np.sin(2 * np.pi * f * t) + .3 * np.sin(2 * np.pi * 2 * f * t) * np.exp(-t * 8) + .1 * np.sin(2 * np.pi * 3 * f * t) * np.exp(-t * 12)
+    return sat(x * np.exp(-t * 2.5), 1.2) * adsr(d, .004, .04) * g
+
+def sub_drop(d=1.2):
+    t = tt(d); f = 34 + 50 * np.exp(-t * 4)
+    return np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t * 3.2)
 
 def reverse_swell(d=.9):
-    t = tt(d); x = hp(noise(d), 1500) * (t / d) ** 3 * .5
+    t = tt(d); x = hp(noise(d), 1500) * (t / d) ** 3 * .4
     x[-int(.02 * SR):] *= np.linspace(1, 0, int(.02 * SR))
     return lp(x, 9000)
 
@@ -167,16 +152,11 @@ class Stereo:
         r = l if r is None else r; i = int(t * SR); n = len(l)
         self.L[i:i + n] += l * g; self.R[i:i + n] += r * g
 
-drums, synths, low, dly = Bus(), Stereo(), Bus(), Bus()
-sidechain = np.ones(N + SR * 4)
-def duck(t0, depth=.6, rel=.3):
-    i = int(t0 * SR); n = int(rel * SR)
-    sidechain[i:i + n] = np.minimum(sidechain[i:i + n], 1 - depth * (1 - np.linspace(0, 1, n)) ** 2)
+drums, synths, low = Bus(), Stereo(), Bus()
 
-# (bass note, chord voicing) — two per bar
 PROG = [
-    (36, [60, 64, 67, 74]),  # C(add9)
-    (35, [59, 62, 67, 74]),  # G/B
+    (36, [60, 64, 67]),      # C
+    (35, [59, 62, 67]),      # G/B
     (33, [57, 60, 64, 67]),  # Am7
     (31, [55, 59, 62, 67]),  # Em7/G
     (29, [57, 60, 64, 65]),  # Fmaj7
@@ -184,11 +164,8 @@ PROG = [
     (26, [57, 60, 62, 65]),  # Dm7
     (31, [55, 59, 62, 67]),  # G
 ]
-STAB = [0, 3, 6]                         # per half-bar chord: on the beat, then two syncopated hits
-BASS = [(0, 2, 0), (3, 1, 12), (6, 2, 0)]  # (step, length, octave offset) per half bar
-# topline: a singable hook over the first bar of each two-bar phrase (step, midi)
-HOOK = [(0, 76), (2, 79), (4, 81), (7, 79), (10, 76), (12, 74)]
-HOOK_B = [(0, 79), (2, 81), (4, 84), (7, 83), (10, 81), (12, 79)]
+HOOK = [(0, 76), (2, 79), (4, 81), (6, 79), (8, 76), (11, 74), (12, 72)]
+HOOK_B = [(0, 79), (2, 81), (4, 84), (6, 83), (8, 81), (11, 79), (12, 76)]
 
 def section(t):
     if t < DROP: return "intro"
@@ -198,46 +175,61 @@ def section(t):
     if t < BUILD_END: return "build"
     return "outro"
 
-# intro: felt piano phrases over a soft pad, rising into a breath of silence
+def grid_origin(t):
+    return CTA if t >= CTA else DROP
+
+def chord_at(t):
+    """Chord tones sounding at time t, for tuning pitched sound effects."""
+    if t < DROP: return [57, 60, 64]
+    if t >= CTA or t >= BUILD_END: return [60, 64, 67]
+    return PROG[int((t - DROP) / (BAR / 2)) % len(PROG)][1]
+
+def on_grid(t):
+    """Snap a cue onto the 16th-note grid once the beat is running.
+
+    Sound that arrives before its picture is easy to notice, so a cue moves at most
+    30 ms earlier; otherwise it waits for the next 16th (at most ~95 ms later).
+    """
+    if t < DROP - .03 or BUILD_END <= t < CTA - .03: return t
+    o = CTA if t >= CTA - .03 else DROP
+    prev = o + np.floor((t - o) / STEP + 1e-9) * STEP
+    return prev if t - prev <= .03 else prev + STEP
+
+# ── intro: solo piano phrases (the felt-piano notes) over a soft Am pad ──
 INTRO = MC.get("intro", [(.35, 69, .7), (1.75, 72, .6), (2.3, 76, .5), (3.45, 74, .65), (4.2, 71, .45), (5.35, 69, .7), (5.37, 57, .5), (5.4, 64, .45)])
 for t0, m, v in INTRO:
-    music.add(t0, felt(m, 2.4, v), .45, pan=(m - 66) / 30); verb_send.add(t0, felt(m, 2.4, v), .3)
-l, r = warm_pad([45, 52, 57, 60, 64], DROP, 700); synths.add(0, l, r, .18)
-music.add(DROP - .9, reverse_swell(.9), .5)
+    x = piano(m, 2.4, v); music.add(t0, x, 1.3, pan=(m - 66) / 30); verb_send.add(t0, x, .5)
+music.add(0, pad([45, 52, 57, 60], DROP, 700), .16)
+music.add(DROP - .9, reverse_swell(.9), .45)
 
 def impact(t0, g=1.0):
-    low.add(t0, sub_drop(), .8 * g)
-    drums.add(t0, kick_tight(1.1), .9 * g)
-    x = air_hit(); synths.add(t0, x, np.roll(x, 120), .5 * g); verb_send.add(t0, air_hit(), .2 * g)
+    low.add(t0, sub_drop(), .6 * g)
+    drums.add(t0, kick_soft(1.2), .9 * g)
+    x = handclap(1.2, 99); drums.add(t0, x, .6 * g); verb_send.add(t0, x, .35 * g)
 impact(DROP)
 
-bar_t, bi = DROP, 0
+bar_t, bi, clap_seed = DROP, 0, 1
 while bar_t < BUILD_END - 1e-6:
     sec = section(bar_t)
     d = min(BAR, BUILD_END - bar_t)
     nsteps = int(round(d / STEP))
-    # drums
     for s in range(nsteps):
-        ts = bar_t + sw(s)
+        ts = bar_t + s * STEP
         if sec in ("A", "B"):
-            if s % 4 == 0:
-                drums.add(ts, kick_tight(), .9); duck(ts, .6)
+            if s in (0, 8) or (sec == "B" and s == 10):
+                drums.add(ts, kick_soft(1 if s != 10 else .6), .8)
             if s in (4, 12):
-                drums.add(ts, clap_snap(), .5); verb_send.add(ts, clap_snap(), .18)
-            if s % 4 == 2:
-                drums.add(ts, hat(open_=(sec == "B")), .5, pan=.2)
-            if sec == "B":
-                drums.add(ts, shaker(.6 + .4 * (s % 2 == 0)), .6, pan=-.25)
-                if s in (3, 11): drums.add(ts, rim(), .35, pan=.3)
+                clap_seed += 1; x = handclap(1, clap_seed); drums.add(ts, x, .75); verb_send.add(ts, x, .22)
+            if s % 2 == 0 or sec == "B":
+                drums.add(ts, tambourine(1 if s % 4 == 2 else .55), .9, pan=.35)
         elif sec == "break":
-            if s == 0: drums.add(ts, kick_tight(.7), .55); duck(ts, .3)
-            if s == 12: drums.add(ts, clap_snap(.6), .25); verb_send.add(ts, clap_snap(.6), .4)
+            if s == 0 and bi % 2 == 0: drums.add(ts, kick_soft(.6), .5)
         elif sec == "build":
             prog = (ts - BREAK_B) / max(.01, BUILD_END - BREAK_B)
-            if s % 4 == 0: drums.add(ts, kick_tight(.9), .85); duck(ts, .55)
-            if s in (4, 12): drums.add(ts, clap_snap(), .45); verb_send.add(ts, clap_snap(), .2)
-            if s % 2 == 0: drums.add(ts, hat(), .35 + .25 * prog, pan=.2)
-    # harmony: two chords per bar
+            if s % 4 == 0:
+                drums.add(ts, kick_soft(.9), .85)
+                clap_seed += 1; x = handclap(.6 + .5 * prog, clap_seed); drums.add(ts, x, .7); verb_send.add(ts, x, .2)
+            drums.add(ts, tambourine(.5 + .5 * prog), .9, pan=.35)
     for half in range(2):
         hs = half * 8
         if hs >= nsteps: break
@@ -245,46 +237,57 @@ while bar_t < BUILD_END - 1e-6:
         th = bar_t + hs * STEP
         hd = min(8, nsteps - hs) * STEP
         if sec in ("A", "B", "build"):
-            for s, ln, octv in BASS:
+            # bass: dum . . dum . dum . .
+            for s, ln in ((0, 3), (3, 2), (6, 2)):
+                if hs + s < nsteps: low.add(th + s * STEP, ebass(root, ln * STEP * .95), .55)
+            # piano: bouncy off-beat chords (right hand an octave up)
+            for s in (2, 6):
                 if hs + s < nsteps:
-                    low.add(bar_t + sw(hs + s), bass(root + octv, ln * STEP * .9), .5 if octv == 0 else .32)
-            for s in STAB:
-                if hs + s < nsteps:
-                    x = keys(tones, .32, 1.0 if s == 0 else .75)
-                    music.add(bar_t + sw(hs + s), x, .45 if sec != "build" else .38, pan=-.1)
-                    verb_send.add(bar_t + sw(hs + s), x, .1)
+                    x = piano_chord([m + 12 for m in tones], .22, .9); music.add(th + s * STEP, x, .5, pan=-.15); verb_send.add(th + s * STEP, x, .12)
+            if sec == "B":   # ukulele down-up strums on the beat
+                for s in (0, 4):
+                    if hs + s < nsteps:
+                        synths.add(th + s * STEP, uke_strum(tones, .35), None, .5)
+                        synths.add(th + (s + 2) * STEP, uke_strum(tones, .25, up=True, vel=.6), None, .45)
         elif sec == "break":
-            low.add(th, bass(root, hd), .35)
-            x = keys(tones, hd, .7); music.add(th, x, .35); verb_send.add(th, x, .25)
-        cut = {"A": 1300, "B": 1800, "break": 900}.get(sec, 900 + 2600 * min(1, (bar_t + d - BREAK_B) / max(.01, BUILD_END - BREAK_B)))
-        l, r = warm_pad(tones, hd + .1, cut); synths.add(th, l, r, .16)
-    # topline hook on the first bar of each two-bar phrase
+            low.add(th, ebass(root, hd), .35)
+            x = piano_chord(tones, hd, .7); music.add(th, x, .5); verb_send.add(th, x, .3)
+    # topline: glockenspiel hook on the first bar of each phrase; whistle joins in the second half
     if sec in ("A", "B", "break") and bi % 2 == 0:
         hook = HOOK_B if sec == "B" and bi % 4 == 2 else HOOK
         for s, m in hook:
             if s < nsteps:
-                x = pluck(m, .7, .85 if sec != "break" else .55)
-                music.add(bar_t + sw(s), x, .26, pan=.15); dly.add(bar_t + sw(s), x, .45); verb_send.add(bar_t + sw(s), x, .12)
+                ts = bar_t + s * STEP
+                if sec == "break":
+                    x = whistle(m, .45, .6); music.add(ts, x, .45, pan=.1); verb_send.add(ts, x, .3)
+                    continue
+                x = glock(m + (12 if sec == "B" else 0), 1.0, .8); music.add(ts, x, .3, pan=.2); verb_send.add(ts, x, .15)
+                if sec == "B":
+                    x = whistle(m, .32, .7); music.add(ts, x, .4, pan=-.1); verb_send.add(ts, x, .2)
     bar_t += BAR; bi += 1
 
-# breath, then the final hit resolving to C
-music.add(BUILD_END - .9, reverse_swell(.9), .5)
+# breath, then the final hit, two light bars under the call to action, and a last C that rings out
+music.add(BUILD_END - .9, reverse_swell(.9), .45)
 impact(CTA, .85)
-l, r = warm_pad([60, 64, 67, 71, 74], END - CTA + 1.2, 2000)
-fade = np.exp(-tt(len(l) / SR) * .45); synths.add(CTA, l * fade, r * fade, .3)
-x = keys([60, 64, 67, 71, 74], 3.5, .9); music.add(CTA, x, .4); verb_send.add(CTA, x, .35)
-x = bass(36, 5.0) * np.exp(-tt(5.0) * 1.1); low.add(CTA, x, .5)
-for s, m in [(0, 76), (2, 79), (4, 84), (8, 83), (12, 84)]:
-    x = pluck(m, 1.0, .75); music.add(CTA + .5 + s * STEP, x, .26); dly.add(CTA + .5 + s * STEP, x, .45)
-for kq in range(3):
-    tb = CTA + 2 + kq * 1.0
-    if tb < END - .5: drums.add(tb, kick_tight(.5), .45 * (1 - kq / 4)); duck(tb, .3)
-
-# ping-pong dotted-eighth delay
-D = int(STEP * 3 * SR); src = lp(dly.L + dly.R, 5000) * .5
-for k in range(1, 7):
-    g = .38 ** k; seg = src[:len(src) - k * D] * g
-    (synths.L if k % 2 else synths.R)[k * D:] += seg
+synths.add(CTA, uke_strum([60, 64, 67], 1.2), None, .55)
+OUTRO = [(36, [60, 64, 67]), (35, [59, 62, 67]), (33, [57, 60, 64, 67]), (29, [57, 60, 64, 65])]  # C G/B Am7 Fmaj7
+N_OUT = min(len(OUTRO), int(max(0.0, END - CTA - 1.8) / (BAR / 2)))   # leave ~2 s for the last chord to ring
+for k, (root, tones) in enumerate(OUTRO[:N_OUT]):
+    th = CTA + k * BAR / 2
+    for s_, ln in ((0, 3), (3, 2), (6, 2)): low.add(th + s_ * STEP, ebass(root, ln * STEP * .95), .45)
+    for s_ in (2, 6):
+        x = piano_chord([m + 12 for m in tones], .22, .75); music.add(th + s_ * STEP, x, .45, pan=-.15); verb_send.add(th + s_ * STEP, x, .15)
+    if k % 2 == 1:
+        x = handclap(.7, 300 + k); drums.add(th, x, .55); verb_send.add(th, x, .25)
+    drums.add(th + 4 * STEP, tambourine(.6), .8, pan=.35)
+for s_, m in (HOOK if N_OUT >= 2 else []):
+    x = glock(m + 12, 1.0, .65); music.add(CTA + s_ * STEP, x, .26, pan=.2); verb_send.add(CTA + s_ * STEP, x, .2)
+FIN = CTA + N_OUT * BAR / 2
+x = piano_chord([48, 55, 60, 64, 67, 72], END - FIN + 1.0, 1.0); music.add(FIN, x, .6); verb_send.add(FIN, x, .45)
+low.add(FIN, ebass(36, END - FIN + .8), .45)
+drums.add(FIN, kick_soft(.7), .6)
+for s_, m in [(0, 84), (2, 88), (4, 91), (6, 96)]:
+    x = glock(m, 1.6, .55); music.add(FIN + s_ * STEP, x, .22); verb_send.add(FIN + s_ * STEP, x, .3)
 
 # ───────── SFX ─────────
 def sweep_noise(d, f0, f1, q=1.0, shape="up"):
@@ -321,65 +324,79 @@ def pop(f0=380, f1=950):
 def paper(d=.08, lo=2000):
     t = tt(d); return hp(noise(d), lo) * np.exp(-t * 55) * (1 - np.exp(-t * 900))
 
-bell_cycle = [84, 88, 91, 96]
-bc = 0
+# Sound effects sit on the beat: once the groove runs, cues snap to the nearest 16th note,
+# pitched ones (pops, bells) use tones of the chord playing at that moment, and the
+# busy ones (typing, ticks) are thinned out and kept low.
+SFX_GAIN = .7
+def top(tones, octave=84):   # chord tones folded into one bright octave
+    return sorted({octave + ((m - octave) % 12) for m in tones})
+
+key_n = 0
 for c in data["cues"]:
-    t0, ty = c["t"], c["type"]
+    t0, ty = on_grid(c["t"]), c["type"]
     pan = (rng.random() - .5) * .4
-    if ty == "key": sfx.add(t0, keyclick(), .35, pan)
-    elif ty == "enter": sfx.add(t0, keyclick(), .6); sfx.add(t0, thump(140, 70, .15, 30), .35)
-    elif ty == "tick": sfx.add(t0, tick(), .3, pan); verb_send.add(t0, tick(), .1)
-    elif ty == "tick-soft": sfx.add(t0, tick(2600, .04), .12, pan)
-    elif ty == "marker": sfx.add(t0, sweep_noise(.45, 2500, 5000, .6) * adsr(.45, .05, .12), .35, .2)
+    tones = chord_at(t0)
+    G = SFX_GAIN
+    if ty == "key":
+        key_n += 1
+        if key_n % 2: sfx.add(t0, keyclick(), .16 * G, pan)
+    elif ty == "enter": sfx.add(t0, keyclick(), .35 * G); sfx.add(t0, thump(140, 70, .15, 30), .25 * G)
+    elif ty == "tick": x = glock(top(tones)[0], .5, .6); sfx.add(t0, x, .14 * G, pan); verb_send.add(t0, x, .08)
+    elif ty == "tick-soft": sfx.add(t0, tick(2600, .03), .05 * G, pan)
+    elif ty == "marker": sfx.add(t0, sweep_noise(.45, 2500, 5000, .6) * adsr(.45, .05, .12), .2 * G, .2)
     elif ty in ("whoosh", "swoosh-in", "slide", "swish-soft", "zoom", "whoosh-rev"):
-        d = {"whoosh": .55, "swoosh-in": .45, "slide": .35, "swish-soft": .6, "zoom": .7, "whoosh-rev": .45}[ty]
-        g = {"whoosh": .4, "swoosh-in": .3, "slide": .18, "swish-soft": .2, "zoom": .4, "whoosh-rev": .3}[ty]
-        x = whoosh(d, 400, 4000 if ty != "whoosh-rev" else 800, .7 if ty != "whoosh-rev" else .2)
-        sfx.add(t0 - d * .5, x, g, pan); verb_send.add(t0 - d * .5, x, g * .3)
+        d = {"whoosh": .5, "swoosh-in": .4, "slide": .3, "swish-soft": .5, "zoom": .6, "whoosh-rev": .4}[ty]
+        g = {"whoosh": .22, "swoosh-in": .16, "slide": .08, "swish-soft": .1, "zoom": .22, "whoosh-rev": .16}[ty]
+        x = whoosh(d, 500, 3500 if ty != "whoosh-rev" else 900, .7 if ty != "whoosh-rev" else .2)
+        sfx.add(t0 - d * .5, x, g * G, pan); verb_send.add(t0 - d * .5, x, g * .2)
     elif ty in ("whoosh-big", "wipe"):
-        x = whoosh(.9, 200, 5000, .55); sfx.add(t0 - .45, x, .55); verb_send.add(t0 - .45, x, .2)
-    elif ty == "hit-soft": sfx.add(t0, thump(80, 45, .9, 5), .5); verb_send.add(t0, thump(80, 45, .9, 5), .2)
+        x = whoosh(.8, 250, 4500, .55); sfx.add(t0 - .4, x, .3 * G); verb_send.add(t0 - .4, x, .1)
+    elif ty == "hit-soft": sfx.add(t0, thump(80, 45, .9, 5), .35 * G); verb_send.add(t0, thump(80, 45, .9, 5), .15)
     elif ty in ("riser", "riser-short"):
         d = .95 if ty == "riser" else .72
-        t = tt(d); e = (t / d) ** 2.2
-        x = sweep_noise(d, 300, 7000, .8) * e + .25 * np.sin(2 * np.pi * np.cumsum(180 + 700 * (t / d) ** 2) / SR) * e
+        t = tt(d); e = (t / d) ** 2.4
+        x = sweep_noise(d, 400, 6000, .8) * e
         x[-int(.05 * SR):] *= np.linspace(1, 0, int(.05 * SR))
-        sfx.add(t0, x, .5); verb_send.add(t0, x, .25)
+        sfx.add(t0, x, .3 * G); verb_send.add(t0, x, .15)
     elif ty in ("stamp", "stamp-final"):
         g = 1.0 if ty == "stamp" else .85
-        x = thump(110, 38, 1.2, 4.2) * 1.1
-        x[:int(.25 * SR)] += lp(noise(.25), 1800) * env_exp(.25, 22) * .8
-        x[:int(.06 * SR)] += hp(noise(.06), 2500) * env_exp(.06, 80) * .5
-        sfx.add(t0, x, g); verb_send.add(t0, x, .45 * g)
-        sfx.add(t0 + .02, paper(.12, 900), .4 * g)
-    elif ty == "letter": sfx.add(t0, thump(150, 70, .18, 22), .4); sfx.add(t0, paper(.04, 3000), .2)
-    elif ty == "pop": sfx.add(t0, pop(), .28, pan)
-    elif ty == "pop-soft": sfx.add(t0, pop(500, 1100), .14, pan)
-    elif ty == "card": sfx.add(t0, paper(.07, 1800 + rng.random() * 2000), .3, (rng.random() - .5) * 1.2)
+        x = thump(110, 38, 1.0, 5) * 1.0
+        x[:int(.25 * SR)] += lp(noise(.25), 1800) * env_exp(.25, 24) * .7
+        x[:int(.06 * SR)] += hp(noise(.06), 2500) * env_exp(.06, 80) * .4
+        sfx.add(t0, x, .85 * g); verb_send.add(t0, x, .35 * g)
+        sfx.add(t0 + .02, paper(.12, 900), .3 * g)
+    elif ty == "letter": sfx.add(t0, thump(150, 70, .15, 24), .22 * G); sfx.add(t0, paper(.04, 3000), .1 * G)
+    elif ty in ("pop", "pop-soft"):
+        m = top(tones, 72)[rng.integers(0, 3)]
+        x = pop(midi(m) * .5, midi(m)); sfx.add(t0, x, (.2 if ty == "pop" else .1) * G, pan)
+    elif ty == "card": sfx.add(t0, paper(.06, 2200 + rng.random() * 1500), .14 * G, (rng.random() - .5) * 1.2)
     elif ty == "gather":
-        d = .7; x = sweep_noise(d, 5000, 600, .8) * np.linspace(0, 1, int(d * SR)) ** 2; sfx.add(t0, x, .3)
-    elif ty == "thump": sfx.add(t0, thump(100, 50, .5, 9), .6); verb_send.add(t0, thump(100, 50, .5, 9), .15)
-    elif ty == "click": sfx.add(t0, tick(3200, .02), .35); sfx.add(t0 + .05, tick(2600, .02), .2)
+        d = .6; x = sweep_noise(d, 5000, 700, .8) * np.linspace(0, 1, int(d * SR)) ** 2; sfx.add(t0, x, .18 * G)
+    elif ty == "thump": sfx.add(t0, thump(100, 50, .45, 10), .35 * G)
+    elif ty == "click": sfx.add(t0, tick(3200, .02), .2 * G); sfx.add(t0 + .04, tick(2600, .02), .1 * G)
     elif ty == "correct":
-        for i, m in enumerate((84, 91)): x = bell(m, 1.2, .8); sfx.add(t0 + i * .085, x, .22); verb_send.add(t0 + i * .085, x, .15)
+        up = top(tones)
+        for i, m in enumerate((up[0], up[-1] + 12 if up[-1] < 90 else up[-1])):
+            x = glock(m, 1.0, .8); sfx.add(t0 + i * STEP, x, .2 * G); verb_send.add(t0 + i * STEP, x, .12)
     elif ty == "wrong":
-        for i, m in enumerate((55, 51)):
-            t = tt(.22); x = lp(signal.square(2 * np.pi * midi(m) * t), 900) * np.exp(-t * 12)
-            sfx.add(t0 + i * .11, x, .16)
+        low_t = sorted(tones)[:2]
+        for i, m in enumerate((low_t[-1] - 12, low_t[0] - 12)):
+            t = tt(.2); x = lp(signal.square(2 * np.pi * midi(m) * t), 700) * np.exp(-t * 14)
+            sfx.add(t0 + i * STEP, x, .1 * G)
     elif ty in ("ding", "ding-soft"):
-        m = bell_cycle[bc % 4]; bc += 1; x = bell(m, 1.3, 1)
-        sfx.add(t0, x, .2 if ty == "ding" else .11, pan); verb_send.add(t0, x, .12)
+        x = glock(top(tones)[-1], 1.1, 1); sfx.add(t0, x, (.16 if ty == "ding" else .08) * G, pan); verb_send.add(t0, x, .1)
     elif ty == "chime":
-        for i, m in enumerate((84, 88, 91, 96)): x = bell(m, 1.5, .8); sfx.add(t0 + i * .07, x, .16, (i - 1.5) / 4); verb_send.add(t0 + i * .07, x, .15)
+        for i, m in enumerate(top(tones)):
+            x = glock(m, 1.2, .7); sfx.add(t0 + i * STEP, x, .14 * G, (i - 1) / 3); verb_send.add(t0 + i * STEP, x, .12)
     elif ty == "count":
-        for k in range(12):
-            tk = t0 + 1.2 * (1 - (1 - (k + 1) / 12) ** (1 / 3)) * .98
-            sfx.add(tk, tick(1500 + k * 90, .04), .16)
+        for k in range(8):                     # 16th-note ticks rising through the chord
+            m = top(tones)[k % len(top(tones))] + 12 * (k // len(top(tones)))
+            x = glock(m, .3, .5); sfx.add(t0 + k * STEP, x, .07 * G)
+
 
 # ───────── mix ─────────
-sc = sidechain
-L = music.L * sc + synths.L * sc + low.L * (.45 + .55 * sc) + drums.L
-R = music.R * sc + synths.R * sc + low.R * (.45 + .55 * sc) + drums.R
+L = music.L + synths.L + low.L + drums.L
+R = music.R + synths.R + low.R + drums.R
 # pre-drop silence: the beat cuts out for a breath before each stamp lands
 g = np.ones_like(L)
 for tgap in (DROP, CTA):
@@ -391,8 +408,8 @@ irL = noise(ir_d) * np.exp(-ti * 3.0); irR = noise(ir_d) * np.exp(-ti * 3.0)
 irL = lp(irL, 5000); irR = lp(irR, 5000)
 irL /= np.sqrt((irL ** 2).sum()); irR /= np.sqrt((irR ** 2).sum())
 vL = signal.fftconvolve(verb_send.L, irL)[:len(L)]; vR = signal.fftconvolve(verb_send.R, irR)[:len(R)]
-mixL = sat(L, 1.1) * .9 + sfx.L * .9 + vL * .5
-mixR = sat(R, 1.1) * .9 + sfx.R * .9 + vR * .5
+mixL = sat(L, 1.0) * .9 + sfx.L * .9 + vL * .5
+mixR = sat(R, 1.0) * .9 + sfx.R * .9 + vR * .5
 mix = np.stack([mixL, mixR], 1)[:N]
 mix = hp(mix.T, 28).T
 # fade out
