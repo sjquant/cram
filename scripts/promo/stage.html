@@ -778,7 +778,10 @@ scene(22.8, 39.5, el => {
       st(g, { x: isM ? lerp(x0, x1, filt) : x0, y: (isM ? lerp(y0, y1, filt) : y0) + (1 - appear) * 14, o: appear * (isM ? 1 : 1 - filt), s: isM ? 1 + Math.sin(filt * Math.PI) * .06 : 1 - filt * .2 });
     });
     st(retry, { o: A(t, 37.5, .4, 0, 1), y: A(t, 37.5, .5, 14, 0, E.outE), s: t > 38.2 && t < 38.33 ? .96 : 1 });
-    cursor(t, keys, clicks, [23.6, 38.5]);
+    // the blank flows with the prompt text, so aim at its laid-out position (independent of transforms)
+    const bx = cardOX + blank.offsetLeft + blank.offsetWidth * .5, by = cardOY + blank.offsetTop + blank.offsetHeight * .55;
+    const ck = keys.map(k => k[0] === 31.1 ? [31.1, bx, by] : k[0] === 32.1 ? [32.1, bx + 30, by + 26] : k);
+    cursor(t, ck, clicks, [23.6, 38.5]);
   };
 });
 
