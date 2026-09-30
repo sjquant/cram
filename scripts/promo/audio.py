@@ -55,9 +55,9 @@ BAR = STEP * 16              # 2 s
 MC = data.get("music", {})
 DROP = MC.get("drop", 7.0)
 SEC_B = MC.get("dense", 23.0)
-BREAK_A, BREAK_B = MC.get("breakA", 39.0), MC.get("breakB", 47.0)
-BUILD_END = MC.get("buildEnd", 51.4)
-CTA = MC.get("cta", 51.9)
+BREAK_A, BREAK_B = MC.get("breakA", 39.0), MC.get("breakB", 45.0)
+BUILD_END = MC.get("buildEnd", 51.75)
+CTA = MC.get("cta", 52.0)
 END = data["dur"] - 1.1
 
 def sat(x, k=2.0): return np.tanh(x * k) / np.tanh(k)
@@ -118,18 +118,42 @@ class Stereo:
 
 drums, synths, low = Bus(), Stereo(), Bus()
 
-PROG = [
-    (36, [60, 64, 67]),      # C
-    (35, [59, 62, 67]),      # G/B
-    (33, [57, 60, 64, 67]),  # Am7
-    (31, [55, 59, 62, 67]),  # Em7/G
-    (29, [57, 60, 64, 65]),  # Fmaj7
-    (28, [55, 60, 64, 67]),  # C/E
-    (26, [57, 60, 62, 65]),  # Dm7
-    (31, [55, 59, 62, 67]),  # G
-]
+# ── harmony: one progression per part of the story (기승전결), so the song goes somewhere ──
+C_ = {  # name: (bass note, voicing)
+    "C": (36, [60, 64, 67]), "Cadd9": (36, [60, 62, 64, 67]), "G/B": (35, [59, 62, 67]), "Am7": (33, [57, 60, 64, 67]),
+    "Em7/G": (31, [55, 59, 62, 67]), "Em7": (28, [55, 59, 62, 64]), "Fmaj7": (29, [57, 60, 64, 65]), "C/E": (28, [55, 60, 64, 67]),
+    "Dm7": (38, [57, 60, 62, 65]), "G": (31, [55, 59, 62, 67]), "G7": (31, [55, 59, 62, 65]), "Gsus4": (31, [55, 60, 62, 67]),
+    "E7": (28, [56, 59, 62, 64]), "Fm": (29, [56, 60, 65]),
+}
+CANON = ["C", "G/B", "Am7", "Em7/G", "Fmaj7", "C/E", "Dm7", "G"]        # 승: the money chord
+ROYAL = ["Fmaj7", "G", "Em7", "Am7", "Dm7", "G7", "C", "Cadd9"]          # 승↑: 4-5-3-6, then ii-V-I lands home
+TURN = ["Am7", "Fmaj7"]                                                   # 전: minor colour, ending on E7
+BUILD_SEQ = ["Fmaj7", "Fm", "Gsus4", "G7"]                                # borrowed iv, then the dominant
+OUTRO = ["Cadd9", "Am7", "Fmaj7", "G7"]                                   # 결: a last turn into the final C
 HOOK = [(0, 76), (2, 79), (4, 81), (6, 79), (8, 76), (11, 74), (12, 72)]
 HOOK_B = [(0, 79), (2, 81), (4, 84), (6, 83), (8, 81), (11, 79), (12, 76)]
+FINAL_MELODY = [(0, 76), (2, 79), (4, 84), (8, 81), (10, 79), (12, 76), (16, 77), (18, 76), (20, 74), (24, 74), (26, 76), (28, 74)]
+
+def _halves(t0, t1):
+    return int(round((t1 - t0) / (BAR / 2) + .49))
+
+def section_chords(name, n):
+    if name == "A": return [CANON[i % 8] for i in range(n)]
+    if name == "B": return [ROYAL[i % 8] for i in range(n)]
+    if name == "break":
+        if n <= 2: return ["Am7", "E7"][-n:]
+        return [TURN[i % 2] for i in range(n - 2)] + ["Dm7", "E7"]
+    if name == "build":
+        return BUILD_SEQ[-n:] if n < 4 else [BUILD_SEQ[min(3, i * 4 // n)] for i in range(n)]
+    return []
+
+# chord timeline: (start, end, section, name)
+TIMELINE = []
+for name, t0, t1 in (("A", DROP, SEC_B), ("B", SEC_B, BREAK_A), ("break", BREAK_A, BREAK_B), ("build", BREAK_B, BUILD_END)):
+    if t1 <= t0: continue
+    n = _halves(t0, t1)
+    for i, ch in enumerate(section_chords(name, n)):
+        TIMELINE.append((t0 + i * BAR / 2, min(t1, t0 + (i + 1) * BAR / 2), name, ch))
 
 def section(t):
     if t < DROP: return "intro"
@@ -150,8 +174,12 @@ def chord_at(t):
         for t0, n in INTRO_HITS:
             if t0 <= t + 1e-6: name = n
         return CHORDS[name][1]
-    if t >= CTA or t >= BUILD_END: return [60, 64, 67]
-    return PROG[int((t - DROP) / (BAR / 2)) % len(PROG)][1]
+    if t >= CTA:
+        k = int((t - CTA) / (BAR / 2))
+        return C_[OUTRO[k]][1] if k < N_OUT else C_["C"][1]
+    for t0, t1, _, ch in TIMELINE:
+        if t0 <= t < t1: return C_[ch][1]
+    return C_["G7"][1]
 
 def on_grid(t):
     """Snap a cue onto the 16th-note grid (the intro shares the groove's grid).
@@ -202,60 +230,72 @@ while bar_t < BUILD_END - 1e-6:
     sec = section(bar_t)
     d = min(BAR, BUILD_END - bar_t)
     nsteps = int(round(d / STEP))
+    last_bar = bar_t + BAR >= BUILD_END - 1e-6
     for s in range(nsteps):
         ts = bar_t + s * STEP
         if sec in ("A", "B", "build"):
             if s in (0, 8) or (sec == "build" and s in (4, 12)):
-                drums.add(ts, kick_soft(.8), .7)
-            if s in (4, 12):
-                drums.add(ts, snap(), .6, pan=-.1); verb_send.add(ts, snap(), .15)
-                if sec == "B":
+                drums.add(ts, kick_soft(.8), .6 if sec == "A" else .7)
+            if s in (4, 12) or (sec == "build" and last_bar and s % 2 == 0):
+                g = .45 if sec == "A" else .6   # the first groove stays light; it opens up later
+                drums.add(ts, snap(.7 + .3 * (s / 16 if sec == "build" else 1)), g, pan=-.1); verb_send.add(ts, snap(), .15)
+                if sec in ("B", "build") and s in (4, 12):
                     x = handclap(.5, bi * 16 + s); drums.add(ts, x, .3); verb_send.add(ts, x, .1)
-            if s % 4 == 2:
-                drums.add(ts, shaker(), .8, pan=.3)
+            if s % 4 == 2 or (sec == "B" and s % 2 == 1 and s % 4 == 3):
+                drums.add(ts, shaker(1 if s % 4 == 2 else .5), .8, pan=.3)
         elif sec == "break":
-            if s == 0 and bi % 2 == 0: drums.add(ts, kick_soft(.5), .45)
-    for half in range(2):
-        hs = half * 8
-        if hs >= nsteps: break
-        root, tones = PROG[(bi * 2 + half) % len(PROG)]
-        th = bar_t + hs * STEP
-        hd = min(8, nsteps - hs) * STEP
-        if sec in ("A", "B", "build"):
-            low.add(th, ebass(root, 5 * STEP), .45)
-            if hs + 6 < nsteps: low.add(th + 6 * STEP, ebass(root, 2 * STEP * .9), .3)
-            for s in (2, 6):   # light off-beat piano, high and airy
-                if hs + s < nsteps:
-                    x = piano_chord([m + 12 for m in tones], .2, .7); music.add(th + s * STEP, x, .38, pan=-.15); verb_send.add(th + s * STEP, x, .14)
-        elif sec == "break":
-            low.add(th, ebass(root, hd), .25)
-            x = piano_chord(tones, hd, .6); music.add(th, x, .42); verb_send.add(th, x, .3)
-    # glockenspiel hook: every other phrase at first, every phrase in the second half
-    if (sec == "A" and bi % 4 == 0) or (sec in ("B", "break") and bi % 2 == 0):
-        hook = HOOK_B if sec == "B" and bi % 4 == 2 else HOOK
-        for s, m in hook:
-            if s < nsteps:
-                x = glock(m, 1.0, .7 if sec != "break" else .5); music.add(bar_t + s * STEP, x, .26, pan=.2); verb_send.add(bar_t + s * STEP, x, .18)
+            if s == 0: drums.add(ts, kick_soft(.5), .4)
     bar_t += BAR; bi += 1
 
-# a breath, then the last stamp: two light bars under the call to action and a C that rings out
+for t0, t1, sec, ch in TIMELINE:
+    root, tones = C_[ch]
+    n8 = int(round((t1 - t0) / STEP))
+    if sec in ("A", "B", "build"):
+        low.add(t0, ebass(root, min(5, n8) * STEP), .45)
+        if n8 > 6: low.add(t0 + 6 * STEP, ebass(root, 2 * STEP * .9), .3)
+        lift = sec in ("B", "build")   # the second half opens up: brighter piano and a soft pad under it
+        for s in (2, 6):   # light off-beat piano, high and airy
+            if s < n8:
+                x = piano_chord([m + 12 for m in tones], .2, .8 if lift else .7); music.add(t0 + s * STEP, x, .45 if lift else .38, pan=-.15); verb_send.add(t0 + s * STEP, x, .14)
+        if lift: music.add(t0, pad(tones, t1 - t0 + .05, 1400), .07)
+    else:   # the turn: held chords, a slow bell line on the top chord tones
+        low.add(t0, ebass(root, (t1 - t0) * .95), .28)
+        x = piano_chord(tones, t1 - t0 + .3, .6); music.add(t0, x, .45); verb_send.add(t0, x, .32)
+        for s, m in ((0, sorted(tones)[-1] + 12), (4, sorted(tones)[-2] + 12)):
+            if s < n8: x = glock(m, 1.2, .5); music.add(t0 + s * STEP, x, .22, pan=.2); verb_send.add(t0 + s * STEP, x, .25)
+
+# glockenspiel hook: every other phrase first, every phrase once the song lifts
+bar_t, bi = DROP, 0
+while bar_t < BREAK_A - 1e-6:
+    sec = section(bar_t)
+    if (sec == "A" and bi % 4 == 0) or (sec == "B" and bi % 2 == 0):
+        hook = HOOK_B if sec == "B" and bi % 4 == 2 else HOOK
+        for s, m in hook:
+            if bar_t + s * STEP < BREAK_A:
+                x = glock(m, 1.0, .7); music.add(bar_t + s * STEP, x, .26, pan=.2); verb_send.add(bar_t + s * STEP, x, .18)
+    bar_t += BAR; bi += 1
+
+# 결: a breath, the last stamp on C, a final turn (Cadd9 Am7 Fmaj7 G7) and home to C
 music.add(BUILD_END - .9, reverse_swell(.9), .3)
 downbeat(CTA, .9)
-OUTRO = [(36, [60, 64, 67]), (35, [59, 62, 67]), (33, [57, 60, 64, 67]), (29, [57, 60, 64, 65])]  # C G/B Am7 Fmaj7
 N_OUT = min(len(OUTRO), int(max(0.0, END - CTA - 1.8) / (BAR / 2)))   # leave ~2 s for the last chord to ring
-for k, (root, tones) in enumerate(OUTRO[:N_OUT]):
+for k, ch in enumerate(OUTRO[:N_OUT]):
+    root, tones = C_[ch]
     th = CTA + k * BAR / 2
-    low.add(th, ebass(root, 5 * STEP), .38)
+    low.add(th, ebass(root, 5 * STEP), .4)
     for s_ in (2, 6):
-        x = piano_chord([m + 12 for m in tones], .2, .65); music.add(th + s_ * STEP, x, .36, pan=-.15); verb_send.add(th + s_ * STEP, x, .15)
+        x = piano_chord([m + 12 for m in tones], .2, .7); music.add(th + s_ * STEP, x, .38, pan=-.15); verb_send.add(th + s_ * STEP, x, .15)
     drums.add(th + 4 * STEP, snap(.8), .5); verb_send.add(th + 4 * STEP, snap(.8), .15)
-for s_, m in (HOOK if N_OUT >= 2 else []):
-    x = glock(m, 1.0, .6); music.add(CTA + s_ * STEP, x, .24, pan=.2); verb_send.add(CTA + s_ * STEP, x, .2)
+    if k % 2 == 0: drums.add(th, kick_soft(.6), .5)
+if N_OUT >= 4:
+    for s_, m in FINAL_MELODY:
+        x = glock(m, 1.1, .7); music.add(CTA + s_ * STEP, x, .27, pan=.15); verb_send.add(CTA + s_ * STEP, x, .2)
 FIN = CTA + N_OUT * BAR / 2
-x = piano_chord([48, 55, 60, 64, 67, 72], END - FIN + 1.0, .9); music.add(FIN, x, .55); verb_send.add(FIN, x, .45)
-low.add(FIN, ebass(36, END - FIN + .8), .35)
-for s_, m in [(0, 84), (2, 88), (4, 91)]:
-    x = glock(m, 1.6, .5); music.add(FIN + s_ * STEP, x, .18); verb_send.add(FIN + s_ * STEP, x, .3)
+x = piano_chord([48, 55, 60, 64, 67, 72], END - FIN + 1.0, .9); music.add(FIN, x, .58); verb_send.add(FIN, x, .45)
+low.add(FIN, ebass(36, END - FIN + .8), .38)
+drums.add(FIN, kick_soft(.7), .55)
+for s_, m in [(0, 72), (0, 84), (4, 88), (8, 91)]:
+    x = glock(m, 1.8, .55); music.add(FIN + s_ * STEP, x, .2); verb_send.add(FIN + s_ * STEP, x, .3)
 
 # ───────── SFX ─────────
 def sweep_noise(d, f0, f1, q=1.0, shape="up"):
@@ -295,7 +335,7 @@ def paper(d=.08, lo=2000):
 # Sound effects sit on the beat: once the groove runs, cues snap to the nearest 16th note,
 # pitched ones (pops, bells) use tones of the chord playing at that moment, and the
 # busy ones (typing, ticks) are thinned out and kept low.
-SFX_GAIN = .7
+SFX_GAIN = 1.0
 def top(tones, octave=84):   # chord tones folded into one bright octave
     return sorted({octave + ((m - octave) % 12) for m in tones})
 

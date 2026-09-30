@@ -821,8 +821,8 @@ scene(38.9, 46.4, el => {
     d.scr = scr; return e;
   });
   const copies = dev.map(() => h("div", "file ctr", el, FILE_SVG(true)));
-  cue(38.95, "wipe"); cue(39.8, "thump"); badges.forEach((_, i) => cue(40.7 + i * .22, "pop"));
-  cue(43.0, "whoosh"); dev.forEach((_, i) => cue(43.45 + i * .18, "swoosh-in")); dev.forEach((_, i) => cue(44.0 + i * .18, "ding-soft"));
+  cue(38.95, "wipe"); cue(39.8, "thump"); badges.forEach((_, i) => cue(40.75 + i * .25, "pop"));
+  cue(43.0, "whoosh"); dev.forEach((_, i) => cue(43.5 + i * .25, "swoosh-in")); dev.forEach((_, i) => cue(44.0 + i * .25, "ding-soft"));
   cue(45.75, "wipe");
   return t => {
     const on = t > 39.5;
@@ -841,16 +841,16 @@ scene(38.9, 46.4, el => {
     st(file, { x: fx, y: fy, s: fIn * lerp(1, .9, fMove), r: (1 - fIn) * -10 + noise1(t * .6) * 1.2, o: P(t, 39.8, 39.95) });
     st(glowF, { x: fx, y: fy, s: .9 + Math.sin(t * 2.4) * .04, o: P(t, 39.9, 40.5) });
     // badges
-    badges.forEach((bd, i) => { const bt = 40.7 + i * .22; const sp = S(t, bt, 0, 1, 2, .45); const out = E.inB(P(t, 42.6 + i * .04, 43.0 + i * .04)); st(bd, { x: lerp(960, pos[i][0], sp) + noise1(t * .5, i) * 6, y: lerp(640, pos[i][1], sp) + noise1(t * .5, i + 9) * 6, s: sp * (1 - out), o: t < bt ? 0 : 1 - out }); });
-    paths.forEach((p, i) => { const len = p.getTotalLength(); p.setAttribute("stroke-dashoffset", 0); p.style.opacity = A(t, 40.8 + i * .22, .4, 0, 1) * (1 - A(t, 42.6, .4, 0, 1)); });
+    badges.forEach((bd, i) => { const bt = 40.75 + i * .25; const sp = S(t, bt, 0, 1, 2, .45); const out = E.inB(P(t, 42.6 + i * .04, 43.0 + i * .04)); st(bd, { x: lerp(960, pos[i][0], sp) + noise1(t * .5, i) * 6, y: lerp(640, pos[i][1], sp) + noise1(t * .5, i + 9) * 6, s: sp * (1 - out), o: t < bt ? 0 : 1 - out }); });
+    paths.forEach((p, i) => { const len = p.getTotalLength(); p.setAttribute("stroke-dashoffset", 0); p.style.opacity = A(t, 40.85 + i * .25, .4, 0, 1) * (1 - A(t, 42.6, .4, 0, 1)); });
     // devices and copies
     dev.forEach((d, i) => {
       const din = S(t, 43.1 + i * .12, 0, 1, 1.8, .55);
       st(devs[i], { x: d.x, y: d.y + (1 - din) * 60, o: P(t, 43.1 + i * .12, 43.4 + i * .12) });
       if (d.base) st(d.base, { x: d.x, y: d.y + d.h / 2 + 8 + (1 - din) * 60, o: P(t, 43.1, 43.4) });
-      const ft = P(t, 43.45 + i * .18, 44.0 + i * .18), fe = E.ioC(ft);
+      const ft = P(t, 43.5 + i * .25, 44.0 + i * .25), fe = E.ioC(ft);
       st(copies[i], { x: lerp(fx, d.x, fe), y: lerp(fy, d.y, fe) - Math.sin(fe * Math.PI) * 220, s: lerp(.8, .22, fe), r: fe * 20 - 10, o: ft > 0 && ft < 1 ? 1 : 0 });
-      d.scr.style.opacity = A(t, 44.0 + i * .18, .3, 0, 1);
+      d.scr.style.opacity = A(t, 44.0 + i * .25, .3, 0, 1);
     });
   };
 });
@@ -874,11 +874,11 @@ scene(46.0, 51.6, el => {
     r.innerHTML = `<span style="width:180px;font-family:var(--mono);font-size:22px;color:var(--ink-soft);text-align:right">${ln}</span><span style="background:var(--ink);color:var(--paper);border-radius:12px;padding:14px 30px;font-size:30px;font-weight:600;font-family:Inter,'Noto Sans KR','Noto Sans KR',sans-serif">${s}</span>`;
     return r;
   });
-  const step = .3;
+  const step = .25;
   T.agents.forEach((_, i) => cue(46.5 + i * step, "tick"));
   cue(46.5 + T.agents.length * step, "tick");
   cue(48.85, "whoosh"); T.langs.forEach((_, i) => cue(49.0 + i * .12, "pop-soft"));
-  cue(51.15, "riser-short");
+  cue(51.25, "riser-short");
   return t => {
     const inP = E.outE(P(t, 46.05, 46.8));
     st(cap, { x: (1 - inP) * -40, o: inP * (1 - A(t, 51.2, .35, 0, 1)) });
@@ -898,7 +898,7 @@ scene(46.0, 51.6, el => {
 });
 
 // ═════════════════════ SCENE I — call to action (51.4 → 59) ═════════════════════
-const CTA = 51.9;
+const CTA = 52.0;
 scene(51.4, 59.1, el => {
   const shadow = h("div", "ctr", el); css(shadow, { width: "360px", height: "360px", borderRadius: "50%", background: "radial-gradient(circle, rgba(10,12,16,.5) 0%, rgba(10,12,16,.2) 40%, transparent 70%)" });
   const seal = h("div", "seal ctr", el, SEAL_SVG()); css(seal, { width: "220px", height: "220px" });
@@ -915,26 +915,26 @@ scene(51.4, 59.1, el => {
   url.innerHTML = `<span style="display:inline-flex;align-items:center;gap:18px"><svg width="46" height="46" viewBox="0 0 16 16"><path fill="#121316" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg><span>github.com/<span style="color:var(--accent)">sjquant/cram</span></span></span>`;
   const foot = h("div", "ctr", el, T.i_foot); css(foot, { fontSize: "24px", color: "var(--ink-soft)", fontWeight: 500, whiteSpace: "nowrap", letterSpacing: ".02em" });
   const s1 = "/plugin marketplace add sjquant/cram", s2 = "/plugin install cram@cram";
-  cue(CTA, "stamp-final"); cue(52.35, "swish-soft");
-  for (let i = 0; i < s1.length; i += 2) cue(53.1 + i / 44, "key");
-  for (let i = 0; i < s2.length; i += 2) cue(53.1 + s1.length / 44 + .1 + i / 44, "key");
-  cue(54.9, "ding"); cue(58.2, "end");
+  cue(CTA, "stamp-final"); cue(52.45, "swish-soft");
+  for (let i = 0; i < s1.length; i += 2) cue(53.6 + i / 44, "key");
+  for (let i = 0; i < s2.length; i += 2) cue(53.6 + s1.length / 44 + .1 + i / 44, "key");
+  cue(55.0, "ding"); cue(58.2, "end");
   return t => {
     const d = P(t, 51.45, CTA), hit = t >= CTA;
     const sq = hit ? Math.exp(-(t - CTA) * 9) * Math.cos((t - CTA) * 38) : 0;
     const fade = 1 - A(t, 58.25, .75, 0, 1, E.ioC);
-    const lift = A(t, 52.9, .8, 0, 1, E.ioQ);
+    const lift = A(t, 53.0, .8, 0, 1, E.ioQ);
     const sealX = lerp(640, 745, lift), wordX = lerp(1080, 1050, lift);
     st(seal, { x: sealX, y: lerp(360, 250, lift), s: hit ? (1 + sq * .06) * lerp(1, .8, lift) : lerp(2.8, 1, E.inC(d)), sy: hit ? (1 - sq * .06) * lerp(1, .8, lift) : undefined, o: (hit ? 1 : E.outC(P(t, 51.45, 51.7))) * fade, blur: hit ? 0 : (1 - d) * 14, r: hit ? 0 : (1 - d) * 8 });
     st(shadow, { x: sealX, y: 370, s: lerp(2.2, .7, E.inC(d)), o: hit ? 0 : A(t, 51.45, .45, 0, .5, E.inC) });
-    st(word, { x: lerp(wordX + 30, wordX, E.outE(P(t, 52.05, 52.6))) , y: lerp(360, 250, lift) + 6, s: lerp(1, .8, lift), o: A(t, 52.05, .3, 0, 1) * fade });
-    revealWords(tw, t, 52.35, .07); st(tag, { x: 960, y: lerp(545, 420, lift), o: fade });
-    st(box, { x: 960, y: 610 + A(t, 52.9, .7, 30, 0, E.outE), o: A(t, 52.9, .5, 0, 1) * fade });
-    typeText(l1, s1, t, 53.1, 44); typeText(l2, s2, t, 53.1 + s1.length / 44 + .1, 44);
-    caret.style.opacity = t < 53.1 ? 0 : (Math.floor(t * 2.2) % 2 ? 0 : 1);
+    st(word, { x: lerp(wordX + 30, wordX, E.outE(P(t, 52.15, 52.7))) , y: lerp(360, 250, lift) + 6, s: lerp(1, .8, lift), o: A(t, 52.15, .3, 0, 1) * fade });
+    revealWords(tw, t, 52.45, .07); st(tag, { x: 960, y: lerp(545, 420, lift), o: fade });
+    st(box, { x: 960, y: 610 + A(t, 53.4, .6, 30, 0, E.outE), o: A(t, 53.4, .4, 0, 1) * fade });
+    typeText(l1, s1, t, 53.6, 44); typeText(l2, s2, t, 53.6 + s1.length / 44 + .1, 44);
+    caret.style.opacity = t < 53.6 ? 0 : (Math.floor(t * 2.2) % 2 ? 0 : 1);
     alt.style.display = "none";
-    st(url, { x: 960, y: 820 + A(t, 54.8, .7, 24, 0, E.outE), o: A(t, 54.8, .5, 0, 1) * fade });
-    st(foot, { x: 960, y: 900, o: A(t, 55.2, .5, 0, 1) * fade });
+    st(url, { x: 960, y: 820 + A(t, 54.9, .7, 24, 0, E.outE), o: A(t, 54.9, .5, 0, 1) * fade });
+    st(foot, { x: 960, y: 900, o: A(t, 55.3, .5, 0, 1) * fade });
   };
 });
 
@@ -952,6 +952,8 @@ function camera(t) {
   }
   // gentle scale settle after impact
   if (t >= IMPACT && t < IMPACT + 1) s *= 1 + .025 * Math.exp(-(t - IMPACT) * 5);
+  // breathe with the music: a tiny push on each bar's downbeat while the groove plays
+  if (t >= IMPACT + 2 && t < 38.9) s *= 1 + .004 * Math.exp(-(((t - IMPACT) % 2) * 9));
   cam.style.transform = `translate(${x}px,${y}px) rotate(${r}deg) scale(${s})`;
   flash.style.opacity = Math.max(t >= IMPACT ? .55 * Math.exp(-(t - IMPACT) * 14) : 0, t >= CTA ? .35 * Math.exp(-(t - CTA) * 14) : 0);
 }

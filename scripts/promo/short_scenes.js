@@ -32,7 +32,7 @@ const IMPACT = 3.0, CTA = 24.0;
 const CX = 540;
 window.MUSIC = {
   introHits: [[0, "Am7"], [.75, "Fmaj7"], [1.5, "Gsus4"]], pulseFrom: 2.0,
-  drop: IMPACT, liftEnd: 5.3, dense: 11, breakA: 20.5, breakB: 22.5, buildEnd: 23.5, cta: CTA,
+  drop: IMPACT, liftEnd: 5.3, dense: 11, breakA: 21, breakB: 23, buildEnd: 23.75, cta: CTA,
 };
 // big centered headline: returns {el, ws}
 function headline(parent, txt, size, weight) {
@@ -293,7 +293,7 @@ scene(20.7, 23.95, el => {
   const file = h("div", "file ctr", el, FILE_SVG(true));
   const ic = [ICON.offline, ICON.nosignup, ICON.noinstall];
   const badges = U.badges.map((b, i) => { const c = h("div", "chip ctr", el, `${ic[i]}<span>${b}</span>`); css(c, { fontSize: "40px", padding: "22px 40px 22px 28px" }); c.querySelector("svg").style.cssText = "width:48px;height:48px"; return c; });
-  cue(20.25, "wipe"); cue(20.9, "thump"); badges.forEach((_, i) => cue(21.75 + i * .2, "pop")); cue(23.5, "wipe");
+  cue(20.25, "wipe"); cue(20.9, "thump"); badges.forEach((_, i) => cue(21.75 + i * .25, "pop")); cue(23.5, "wipe");
   return t => {
     el.style.visibility = t > 20.75 ? "visible" : "hidden";
     revealWords(g1.ws, t, 20.85, .07, .6); revealWords(g2.ws, t, 21.0, .07, .6);
@@ -301,7 +301,7 @@ scene(20.7, 23.95, el => {
     const fIn = S(t, 20.9, 0, 1, 1.6, .45);
     st(file, { x: CX, y: 850, s: fIn * .95, r: (1 - fIn) * -10 + noise1(t * .6) * 1.2, o: P(t, 20.9, 21.0) });
     st(glowF, { x: CX, y: 850, s: .9 + Math.sin(t * 2.4) * .04, o: P(t, 21.0, 21.5) });
-    badges.forEach((b, i) => { const bt = 21.75 + i * .2, sp = S(t, bt, 0, 1, 2, .45); st(b, { x: CX + noise1(t * .5, i) * 5, y: 1170 + i * 125 + (1 - sp) * 40, s: .6 + .4 * sp, o: t < bt ? 0 : Math.min(1, (t - bt) * 6) }); });
+    badges.forEach((b, i) => { const bt = 21.75 + i * .25, sp = S(t, bt, 0, 1, 2, .45); st(b, { x: CX + noise1(t * .5, i) * 5, y: 1170 + i * 125 + (1 - sp) * 40, s: .6 + .4 * sp, o: t < bt ? 0 : Math.min(1, (t - bt) * 6) }); });
   };
 });
 
@@ -335,6 +335,7 @@ function camera(t) {
   let x = noise1(t * .25, 1) * 4, y = noise1(t * .25, 2) * 4, r = noise1(t * .2, 3) * .1, s = 1 + A(t, 1.3, 1.7, 0, .04, E.inC) - (t >= IMPACT ? .04 : 0);
   for (const [ti, amp] of [[IMPACT, 30], [CTA, 18], [11.6, 5], [20.9, 5]]) if (t >= ti && t < ti + .6) { const k = Math.exp(-(t - ti) * 9); x += noise1(t * 60, ti) * amp * k; y += noise1(t * 60, ti + 5) * amp * k; r += noise1(t * 40, ti + 9) * amp * .02 * k; }
   if (t >= IMPACT && t < IMPACT + 1) s *= 1 + .025 * Math.exp(-(t - IMPACT) * 5);
+  if (t >= IMPACT + 2 && t < 20.2) s *= 1 + .004 * Math.exp(-(((t - IMPACT) % 2) * 9));   // breathe on each bar
   cam.style.transform = `translate(${x}px,${y}px) rotate(${r}deg) scale(${s})`;
   flash.style.opacity = Math.max(t >= IMPACT ? .55 * Math.exp(-(t - IMPACT) * 14) : 0, t >= CTA ? .35 * Math.exp(-(t - CTA) * 14) : 0);
 }

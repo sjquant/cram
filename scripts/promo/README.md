@@ -27,13 +27,15 @@ and synced to cue points the page exports.
   - save stills (`--stills=1.5,7.0`),
   - pipe a frame range into ffmpeg (`--video`, `--f0`, `--f1`).
 - `audio.py` synthesizes the soundtrack into a WAV file:
-  - a light 120 BPM indie-pop track on the Canon-style "money chord"
-    progression in C (C–G/B–Am7–Em7/G–Fmaj7–C/E–Dm7–G, two chords per bar,
-    descending bass). In the intro each line of text lands on a beat with a
-    piano chord (Am7, Fmaj7, Dm7, Gsus4), and a G pulse counts in while the
-    stamp comes down, so the first stamp lands on C. Then airy off-beat piano, a soft kick,
-    finger snaps on 2 and 4, a shaker, a simple bass, and a sparse
-    glockenspiel hook, with a short outro under the call to action,
+  - a light 120 BPM indie-pop track in C that follows the story's arc
+    (기승전결): in the intro each line of text lands on a beat with a piano
+    chord and a G pulse counts in to the first stamp; the money-chord
+    progression (C–G/B–Am7–Em7/G–Fmaj7–C/E–Dm7–G) carries the first groove;
+    the second half lifts to 4–5–3–6 with a ii–V–I cadence; the dark "share"
+    scene turns to minor colour ending on E7; the build climbs F–Fm–Gsus4–G7;
+    and the call to action resolves to C with a closing melody that ends on
+    the tonic. Instruments stay light: off-beat piano, soft kick, finger
+    snaps, shaker, simple bass, and a glockenspiel hook,
   - the sound effects. They snap to the music's 16th-note
     grid (at most 30 ms early, otherwise up to one 16th late), pitched ones use
     the chord playing at that moment, and busy ones such as typing are thinned
