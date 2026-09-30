@@ -1,0 +1,992 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Cram — promo</title>
+<link rel="stylesheet" href="fonts.css">
+<style>
+:root{
+  --paper:#f6f6f4; --paper-2:#f0f1f3; --ink:#121316; --ink-soft:#5f636b; --rule:#dcdde0; --rule-strong:#c3c5ca;
+  --accent:#e0231b; --accent-2:#ff4d42; --positive:#15803d; --surface:#ffffff; --canvas:#eceef1;
+  --hl:#ffd400; --night:#0e0f11;
+  --serif:"Fraunces","Noto Serif KR",serif;
+  --sans:"Inter","Noto Sans KR",sans-serif;
+  --mono:"JetBrains Mono","Noto Sans KR",monospace;
+  --hand:"Caveat","Noto Sans KR",cursive;
+}
+:lang(ko){ --serif:"Pretendard","Fraunces",sans-serif; --sans:"Pretendard","Inter",sans-serif; --mono:"JetBrains Mono","Pretendard",monospace; }
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:var(--paper)}
+body{font-family:var(--sans);color:var(--ink);-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
+#stage{position:absolute;inset:0;overflow:hidden;background:var(--paper)}
+#bg{position:absolute;inset:-40px;background:
+  radial-gradient(1200px 700px at 30% 20%, #fafafa 0%, transparent 60%),
+  radial-gradient(900px 600px at 85% 90%, #eceef1 0%, transparent 65%),
+  var(--paper)}
+#night{position:absolute;inset:0;background:radial-gradient(1400px 900px at 50% 40%, #18191c 0%, var(--night) 70%);opacity:0}
+#cam{position:absolute;inset:0;transform-origin:960px 540px}
+.scene{position:absolute;inset:0;display:none;z-index:0}
+.abs{position:absolute;left:0;top:0}
+.ctr{position:absolute;left:0;top:0;will-change:transform}
+#grain{position:absolute;inset:-200px;pointer-events:none;opacity:.055;mix-blend-mode:multiply;background-size:420px 420px}
+#vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center, transparent 55%, rgba(18,20,26,.16) 100%)}
+#flash{position:absolute;inset:0;background:#ffffff;opacity:0;pointer-events:none}
+.wipe{position:absolute;top:-100px;height:1280px;width:2400px;left:0}
+
+/* type */
+.serif{font-family:var(--serif);font-variation-settings:"opsz" 144, "SOFT" 30, "WONK" 0}
+.w{display:inline-block;overflow:hidden;vertical-align:top;padding:0 .04em .12em;margin:0 -.04em -.12em}
+.w>i{display:inline-block;font-style:inherit;will-change:transform}
+.it{font-style:italic}
+.acc{color:var(--accent)}
+.eyebrow{font-family:var(--mono);font-size:22px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.h1{word-spacing:.1em;font-family:var(--serif);font-weight:600;font-size:104px;line-height:1.02;letter-spacing:-.02em;font-variation-settings:"opsz" 144,"SOFT" 30}
+.sub{font-family:var(--sans);font-size:34px;line-height:1.35;color:var(--ink-soft);font-weight:450}
+:lang(ko) .h1{word-spacing:0;font-weight:700;letter-spacing:-.035em;font-size:96px;line-height:1.22}
+:lang(ko) .sub{letter-spacing:-.02em}
+:lang(ko) .w{padding:0 .02em .14em;margin:0 -.02em -.14em}
+
+/* seal */
+.seal{width:300px;height:300px}
+.seal svg{width:100%;height:100%;overflow:visible}
+
+/* cards / ui */
+.win{background:var(--canvas);border-radius:22px;box-shadow:0 40px 90px rgba(18,20,26,.22),0 10px 24px rgba(18,20,26,.12),0 0 0 1px rgba(18,20,26,.08);overflow:hidden}
+.chrome{height:64px;background:#e3e5e8;display:flex;align-items:center;padding:0 24px;gap:10px;border-bottom:1px solid #d3d5da}
+.dot{width:15px;height:15px;border-radius:50%;background:#c5c8cd}
+.addr{margin-left:28px;height:38px;border-radius:10px;background:#f6f6f4;display:flex;align-items:center;padding:0 18px;gap:10px;font-family:var(--mono);font-size:19px;color:var(--ink-soft);min-width:420px}
+.term{background:#121316;border-radius:22px;box-shadow:0 40px 90px rgba(10,12,16,.3),0 0 0 1px rgba(0,0,0,.2);overflow:hidden;color:#eaebee}
+.term .chrome{background:#1b1c20;border-bottom:1px solid #26282d}
+.term .dot{background:#3a3c43}
+.term .ttl{margin-left:auto;margin-right:auto;font-family:var(--mono);font-size:18px;color:#858991;transform:translateX(-30px)}
+.tbody{padding:34px 40px;font-family:var(--mono);font-size:30px;line-height:1.55}
+.caret{display:inline-block;width:.55em;height:1.1em;background:var(--accent-2);vertical-align:-.18em;margin-left:2px}
+
+.mini{position:absolute;width:300px;height:196px;background:var(--surface);border-radius:16px;box-shadow:0 18px 40px rgba(18,20,26,.16),0 0 0 1px rgba(18,20,26,.08);padding:22px 24px;left:0;top:0}
+.mini .lbl{font-family:var(--sans);font-weight:700;font-size:14px;letter-spacing:.14em;color:var(--ink-soft);text-transform:uppercase}
+.mini .pr{margin-top:14px;font-size:21px;line-height:1.35;color:var(--ink);font-weight:500}
+.mini .num{position:absolute;right:22px;top:20px;font-family:var(--mono);font-size:15px;color:var(--ink-soft)}
+.code{font-family:var(--mono);font-size:.9em;background:rgba(31,28,24,.06);padding:.02em .25em;border-radius:.2em}
+
+/* player */
+.pl{position:absolute;inset:64px 0 0 0;background:var(--canvas)}
+.pl-head{position:absolute;left:70px;right:70px;top:34px;display:flex;align-items:center;gap:14px;font-family:"Fraunces",serif;font-weight:700;font-size:30px}
+.pl-title{position:absolute;left:0;right:0;top:100px;text-align:center;font-family:var(--serif);font-size:28px;color:var(--ink)}
+.pl-prog{position:absolute;left:70px;right:70px;top:160px;height:5px;background:var(--rule);border-radius:3px;overflow:hidden}
+.pl-prog i{position:absolute;left:0;top:0;bottom:0;background:var(--accent);border-radius:3px}
+.pl-card{position:absolute;left:70px;right:70px;top:196px;bottom:40px;background:var(--surface);border-radius:16px;box-shadow:0 8px 26px rgba(0,0,0,.07),0 0 0 1px var(--rule);overflow:hidden}
+.pc{position:absolute;inset:0;padding:40px 46px}
+.pc .lbl{font-weight:700;font-size:17px;letter-spacing:.14em;color:var(--ink-soft);text-transform:uppercase}
+.pc .num{position:absolute;right:46px;top:40px;font-family:var(--mono);font-size:19px;color:var(--ink-soft)}
+.pc .q{margin-top:30px;font-size:40px;line-height:1.3;font-weight:500;letter-spacing:-.01em}
+:lang(ko) .pc .q{letter-spacing:-.03em;font-size:38px}
+.btn{position:absolute;display:flex;align-items:center;justify-content:center;border-radius:12px;font-size:25px;font-weight:600}
+.btn.dark{background:var(--ink);color:var(--paper)}
+.btn.line{background:transparent;border:1.5px solid var(--rule-strong);color:var(--ink);font-weight:500}
+.kbd{font-family:var(--mono);font-size:16px;background:#eaebee;color:var(--ink);padding:1px 7px;border-radius:5px;margin-left:12px}
+.ans-l{font-size:18px;font-weight:700;color:var(--ink-soft)}
+.ans{font-size:30px;line-height:1.45;margin-top:10px}
+:lang(ko) .ans{letter-spacing:-.02em}
+.opt{position:absolute;left:46px;right:46px;height:70px;border:1.5px solid var(--rule-strong);border-radius:12px;display:flex;align-items:center;padding:0 24px;gap:20px;font-family:var(--mono);font-size:26px;background:var(--surface)}
+.radio{width:26px;height:26px;border-radius:50%;border:2px solid var(--rule-strong);position:relative;flex:none}
+.radio i{position:absolute;inset:4px;border-radius:50%;background:var(--ink);transform:scale(0)}
+.mark{margin-left:auto;font-family:var(--sans);font-size:22px;font-weight:700;opacity:0}
+.blank{display:inline-block;min-width:170px;border-bottom:3px solid var(--ink-soft);text-align:center;font-family:var(--mono);font-weight:600;padding:0 10px;margin:0 6px;position:relative;height:1.2em;vertical-align:-.12em}
+.fb{position:absolute;left:46px;font-size:24px;font-weight:600}
+
+.cursor{position:absolute;left:0;top:0;width:44px;height:44px;z-index:50}
+.ripple{position:absolute;left:0;top:0;width:90px;height:90px;border-radius:50%;border:3px solid var(--accent);opacity:0}
+
+.chip{position:absolute;display:flex;align-items:center;gap:16px;background:var(--surface);border-radius:999px;padding:18px 30px 18px 22px;font-size:30px;font-weight:600;box-shadow:0 14px 34px rgba(0,0,0,.25);white-space:nowrap}
+.chip svg{width:38px;height:38px}
+.file{position:absolute;width:300px;height:380px}
+.file svg{width:100%;height:100%;overflow:visible}
+.cap-l{position:absolute;left:140px;top:0}
+
+:root{ --serif:"Inter Tight","Pretendard",sans-serif; }
+.h1{font-family:"Inter Tight","Pretendard",sans-serif;font-weight:700;letter-spacing:-.035em;word-spacing:.16em;font-variation-settings:normal}
+:lang(ko) .h1{font-family:"Pretendard",sans-serif;word-spacing:0}
+/* The Cram player inside the browser window keeps the product's own look. */
+.win{--paper:#f4efe4;--ink:#1f1c18;--ink-soft:#6a6357;--rule:#ddd5c4;--rule-strong:#c4baa4;--accent:#b5342b;--positive:#356b4a;--surface:#fdfbf7;--canvas:#e9e5dc;--serif:"Fraunces","Noto Serif KR",serif;color:#1f1c18;box-shadow:0 40px 90px rgba(60,40,20,.22),0 10px 24px rgba(60,40,20,.12),0 0 0 1px rgba(60,40,20,.08)}
+:lang(ko) .win{--serif:"Pretendard","Fraunces",sans-serif}
+.win .chrome{background:#e2dccf;border-bottom-color:#d4ccbb} .win .dot{background:#c9c0ad} .win .addr{background:#f4efe4;color:#6a6357} .win .kbd{background:#ece5d8;color:#1f1c18}
+.win .pl-card{box-shadow:0 8px 26px rgba(0,0,0,.07),0 0 0 1px #ddd5c4}
+#grain{display:none} #vig{background:radial-gradient(ellipse at center, transparent 60%, rgba(10,12,16,.10) 100%)}
+#bg{background:#f6f6f4}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="bg"></div>
+  <div id="night"></div>
+  <div id="cam"></div>
+  <div id="wipes"></div>
+  <div id="grain"></div>
+  <div id="vig"></div>
+  <div id="flash"></div>
+</div>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <filter id="inky" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="3" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="3.2" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.16" numOctaves="3" seed="3" result="speck"/>
+      <feColorMatrix in="speck" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -6 4.8" result="specka"/>
+      <feComposite in="d" in2="specka" operator="in"/>
+    </filter>
+    <filter id="rough"><feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="2"/><feDisplacementMap in="SourceGraphic" scale="5"/></filter>
+  </defs>
+</svg>
+<script>
+"use strict";
+// ───────────────────────────── core ─────────────────────────────
+const W = 1920, H = 1080, DUR = 59.0;
+const LANG = new URLSearchParams(location.search).get("lang") || "en";
+document.documentElement.lang = LANG;
+const clamp = (v, a = 0, b = 1) => v < a ? a : v > b ? b : v;
+const lerp = (a, b, t) => a + (b - a) * t;
+const P = (t, a, b) => clamp((t - a) / (b - a));
+const E = {
+  lin: x => x,
+  inC: x => x * x * x,
+  outC: x => 1 - Math.pow(1 - x, 3),
+  ioC: x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2,
+  outQ: x => 1 - Math.pow(1 - x, 5),
+  ioQ: x => x < .5 ? 16 * x ** 5 : 1 - Math.pow(-2 * x + 2, 5) / 2,
+  outE: x => x >= 1 ? 1 : 1 - Math.pow(2, -10 * x),
+  inE: x => x <= 0 ? 0 : Math.pow(2, 10 * x - 10),
+  ioE: x => x <= 0 ? 0 : x >= 1 ? 1 : x < .5 ? Math.pow(2, 20 * x - 10) / 2 : (2 - Math.pow(2, -20 * x + 10)) / 2,
+  outB: x => { const c = 1.9; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); },
+  inB: x => { const c = 1.7; return (c + 1) * x * x * x - c * x * x; },
+};
+const A = (t, t0, d, a, b, e = E.outC) => lerp(a, b, e(P(t, t0, t0 + d)));
+// damped spring, time-based
+function S(t, t0, a, b, f = 2.2, z = .42) {
+  if (t <= t0) return a;
+  const x = t - t0, w = 2 * Math.PI * f, wd = w * Math.sqrt(1 - z * z), env = Math.exp(-z * w * x);
+  return lerp(a, b, 1 - env * (Math.cos(wd * x) + (z * w / wd) * Math.sin(wd * x)));
+}
+let seed = 1234567;
+const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+const noise1 = (x, k = 0) => { // smooth value noise
+  const h = n => { const s = Math.sin(n * 127.1 + k * 311.7) * 43758.5453; return s - Math.floor(s); };
+  const i = Math.floor(x), f = x - i, u = f * f * (3 - 2 * f);
+  return lerp(h(i), h(i + 1), u) * 2 - 1;
+};
+function h(tag, cls, parent, html) {
+  const el = document.createElement(tag);
+  if (cls) el.className = cls;
+  if (html !== undefined) el.innerHTML = html;
+  if (parent) parent.appendChild(el);
+  return el;
+}
+function css(el, o) { Object.assign(el.style, o); return el; }
+// transform setter. elements with .ctr are positioned by their center at (x,y).
+function st(el, o) {
+  const { x = 0, y = 0, s = 1, sx, sy, r = 0, o: op, blur, rx = 0, ry = 0 } = o;
+  const c = el.classList.contains("ctr") ? "translate(-50%,-50%) " : "";
+  const persp = (rx || ry) ? `perspective(1600px) rotateX(${rx}deg) rotateY(${ry}deg) ` : "";
+  el.style.transform = `translate3d(${x}px,${y}px,0) ${c}${persp}rotate(${r}deg) scale(${sx ?? s},${sy ?? s})`;
+  if (op !== undefined) el.style.opacity = op;
+  if (blur !== undefined) el.style.filter = blur > .05 ? `blur(${blur.toFixed(2)}px)` : "none";
+}
+// word splitting for masked reveals. `**x**` = accent, `_x_` = italic
+function words(parent, text, cls = "") {
+  const out = [];
+  const tokens = text.split(/(\s+)/);
+  let acc = false, itl = false;
+  for (const tok of tokens) {
+    if (/^\s+$/.test(tok)) { parent.appendChild(document.createTextNode(" ")); continue; }
+    if (!tok) continue;
+    let w = tok;
+    const startAcc = w.startsWith("**"), startIt = w.startsWith("_");
+    if (startAcc) { acc = true; w = w.slice(2); }
+    if (startIt) { itl = true; w = w.slice(1); }
+    const endAcc = w.endsWith("**") || /\*\*[.,?!。]?$/.test(w), endIt = /_[.,?!]?$/.test(w);
+    w = w.replace(/\*\*/g, "").replace(/_/g, "");
+    const o = h("span", "w " + cls, parent);
+    const i = h("i", (acc ? "acc " : "") + (itl ? "it" : ""), o);
+    i.textContent = w;
+    out.push(i);
+    if (endAcc) acc = false;
+    if (endIt) itl = false;
+  }
+  return out;
+}
+function revealWords(ws, t, t0, stagger = .07, d = .75, dy = 1.35) {
+  ws.forEach((w, i) => {
+    const p = E.outE(P(t, t0 + i * stagger, t0 + i * stagger + d));
+    w.style.transform = `translateY(${(1 - p) * dy * 100}%) rotate(${(1 - p) * 4}deg)`;
+  });
+}
+function exitWords(ws, t, t0, stagger = .04, d = .5) {
+  ws.forEach((w, i) => {
+    const p = E.inC(P(t, t0 + i * stagger, t0 + i * stagger + d));
+    if (p > 0) w.style.transform = `translateY(${-p * 110}%)`;
+  });
+}
+function typeText(el, text, t, t0, cps, caret) {
+  const n = Math.floor(clamp((t - t0) * cps, 0, text.length));
+  el.textContent = text.slice(0, n);
+  if (caret) caret.style.opacity = (t < t0 - .3) ? 0 : ((n < text.length) ? 1 : (Math.floor(t * 2.2) % 2 ? 0 : 1));
+  return n;
+}
+// cue list for the audio track
+const CUES = [];
+const cue = (t, type, extra = {}) => CUES.push({ t: +t.toFixed(3), type, ...extra });
+
+// ───────────────────────────── copy ─────────────────────────────
+const STR = {
+  en: {
+    a1: "You read it.", a2: "You _highlighted_ it.", a2hl: "highlighted", a3: "But can you **explain** **it?**",
+    a4: "Reading isn’t knowing.", a4acc: "isn’t",
+    wordmark: "Cram",
+    tagline: "Turn **anything** into a quiz.",
+    c_eye: "01 — Create", c_h: "Give it anything.", c_sub: "Notes, docs, or a link.<br>One prompt to your AI agent.",
+    notes: "notes.md", notesHand: ["HTTP caching", "max-age = fresh", "ETag → revalidate", "no-store vs no-cache?"],
+    pdf: "lecture.pdf", link: "rfc-editor.org/rfc/rfc9111",
+    termTitle: "~/study — your agent",
+    prompt1: "/cram:cram ./notes.md", prompt2: " Make 10 flashcards.",
+    out: ["Reading notes.md", "✓ Wrote 10 cards  basic · mcq · cloze", "✓ Deck validated", "✓ Saved study.html"],
+    d_h: "A full deck, **written** **for** **you.**",
+    deckTitle: "HTTP caching essentials",
+    minis: [
+      ["basic", "What does <span class=code>max-age=60</span> permit?"],
+      ["mcq", "Which directive prevents storage?"],
+      ["cloze", "Each version is labeled with an ____ header."],
+      ["basic", "What does <span class=code>no-cache</span> mean?"],
+      ["mcq", "Revalidated and unchanged: which status?"],
+      ["basic", "What does <span class=code>Vary</span> tell a shared cache?"],
+      ["basic", "When is a response <span class=code>private</span>?"],
+      ["basic", "What does stale-while-revalidate allow?"],
+      ["mcq", "Which directive applies only to shared caches?"],
+      ["cloze", "The date-based validator is ____."],
+    ],
+    typeLabel: { basic: "Basic", mcq: "MCQ", cloze: "Cloze" },
+    e_eye: "02 — Study",
+    rrg: ["Recall.", "Reveal.", "Grade."],
+    e_sub: "Answer from memory first.<br>Then check yourself.",
+    kinds_h: "Three ways<br>to test yourself.", kinds: ["Flashcards", "Multiple choice", "Fill in the blank"],
+    q1: "What does <span class=code>Cache-Control: max-age=60</span> permit a cache to do?",
+    showAnswer: "Show answer", showHint: "Show hint", answerL: "Answer:",
+    a1text: "Treat a stored response as fresh for 60 seconds, so it can be reused without revalidation.",
+    missedIt: "Missed it", knewIt: "Knew it",
+    q2: "Which <span class=code>Cache-Control</span> directive prevents a cache from storing a response?",
+    opts: ["no-cache", "no-store", "private", "max-age=60"],
+    check: "Check answer", wrongFb: "Incorrect. The correct answer is: <span class=code>no-store</span>",
+    q3a: "To let clients revalidate cheaply, a server labels each version of a response with the", q3b: "header.",
+    clozeAns: "ETag", correctFb: "✓ Correct.",
+    f_eye: "03 — Review", f_h1: "Know it? Skip it.", f_h2: "Missed it? **Drill** **it.**",
+    done: "Session complete", scoreLine: "12 correct · 3 to review", retry: "Retry 3 missed cards",
+    all: "All 15", missed: "Missed 3", correctTag: "Correct", missedTag: "Missed",
+    g_eye: "04 — Share", g_h: "One file. **Study** **anywhere.**",
+    badges: ["Works offline", "No sign-up", "No install", "Any browser"],
+    g_h2: "Send it to **anyone.**", g_sub: "They just open it in a browser.",
+    h_eye: "05 — Works with", h_h: "The agent you<br>already use.",
+    agents: ["Claude Code", "Codex", "Cursor", "GitHub Copilot", "Kiro", "Grok", "Antigravity"],
+    h_h2: "A player in<br>six languages.",
+    langs: [["English", "Show answer"], ["한국어", "정답 보기"], ["日本語", "答えを見る"], ["简体中文", "显示答案"], ["Español", "Mostrar respuesta"], ["Français", "Afficher la réponse"]],
+    i_foot: "Free &amp; open source · MIT",
+    i_or: "Other agents:",
+  },
+  ko: {
+    a1: "읽었어요", a2: "_밑줄도_ 그었고요", a2hl: "밑줄도", a3: "그런데, **설명할** **수** **있나요?**",
+    a4: "읽는 것과 아는 것은 달라요", a4acc: "달라요",
+    wordmark: "Cram",
+    tagline: "**무엇이든** 퀴즈로 바꿔보세요",
+    c_eye: "01 — 만들기", c_h: "자료만 주세요", c_sub: "노트, 문서, 웹 링크까지.<br>AI 에이전트에게 한 줄이면 돼요.",
+    notes: "notes.md", notesHand: ["HTTP 캐싱", "max-age = fresh", "ETag → 재검증", "no-store vs no-cache?"],
+    pdf: "lecture.pdf", link: "rfc-editor.org/rfc/rfc9111",
+    termTitle: "~/study — AI 에이전트",
+    prompt1: "/cram:cram ./notes.md를 읽고", prompt2: " 플래시카드 10개를 만들어줘",
+    out: ["notes.md 읽는 중", "✓ 카드 10장 작성  기본 · 객관식 · 빈칸", "✓ 덱 형식 검사 완료", "✓ study.html 저장"],
+    d_h: "문제는 **알아서** **만들어져요**",
+    deckTitle: "HTTP 캐싱 핵심",
+    minis: [
+      ["basic", "<span class=code>max-age=60</span>은 무엇을 허용할까요?"],
+      ["mcq", "저장을 막는 지시어는?"],
+      ["cloze", "응답 버전마다 ____ 헤더를 붙여요."],
+      ["basic", "<span class=code>no-cache</span>는 무슨 뜻일까요?"],
+      ["mcq", "변경이 없을 때 응답 상태 코드는?"],
+      ["basic", "<span class=code>Vary</span> 헤더의 역할은?"],
+      ["basic", "<span class=code>private</span>은 언제 쓰나요?"],
+      ["basic", "stale-while-revalidate의 의미는?"],
+      ["mcq", "공유 캐시에만 적용되는 지시어는?"],
+      ["cloze", "날짜 기반 검증자는 ____ 헤더예요."],
+    ],
+    typeLabel: { basic: "기본", mcq: "객관식", cloze: "빈칸 채우기" },
+    e_eye: "02 — 풀기",
+    rrg: ["떠올리고", "확인하고", "채점하고"],
+    e_sub: "먼저 기억에서 답을 꺼내고,<br>정답을 보고 스스로 채점해요.",
+    kinds_h: "세 가지 방식으로<br>확인해요", kinds: ["플래시카드", "객관식", "빈칸 채우기"],
+    q1: "<span class=code>Cache-Control: max-age=60</span>은 캐시에 무엇을 허용하나요?",
+    showAnswer: "정답 보기", showHint: "힌트 보기", answerL: "정답:",
+    a1text: "저장된 응답을 60초 동안 fresh로 보고, 재검증 없이 재사용할 수 있어요.",
+    missedIt: "몰랐어요", knewIt: "알았어요",
+    q2: "캐시가 응답을 저장하지 못하게 막는 <span class=code>Cache-Control</span> 지시어는?",
+    opts: ["no-cache", "no-store", "private", "max-age=60"],
+    check: "정답 확인", wrongFb: "오답입니다. 정답: <span class=code>no-store</span>",
+    q3a: "클라이언트가 저렴하게 재검증할 수 있도록, 서버는 응답의 각 버전에", q3b: "헤더를 붙여요.",
+    clozeAns: "ETag", correctFb: "✓ 정답입니다.",
+    f_eye: "03 — 복습", f_h1: "아는 건 넘기고", f_h2: "**틀린** **것만** 다시",
+    done: "학습 완료", scoreLine: "정답 12개 · 복습 3개", retry: "틀린 카드 3개 다시 풀기",
+    all: "전체 15", missed: "틀린 카드 3", correctTag: "정답", missedTag: "오답",
+    g_eye: "04 — 공유", g_h: "파일 하나로 **어디서든**",
+    badges: ["인터넷 없이", "회원가입 없이", "설치 없이", "브라우저만 있으면"],
+    g_h2: "**누구에게나** 보내세요", g_sub: "받은 사람은 브라우저로 열기만 하면 돼요.",
+    h_eye: "05 — 어디서나", h_h: "지금 쓰는<br>에이전트 그대로",
+    agents: ["Claude Code", "Codex", "Cursor", "GitHub Copilot", "Kiro", "Grok", "Antigravity"],
+    h_h2: "퀴즈 화면은<br>6개 언어로",
+    langs: [["한국어", "정답 보기"], ["English", "Show answer"], ["日本語", "答えを見る"], ["简体中文", "显示答案"], ["Español", "Mostrar respuesta"], ["Français", "Afficher la réponse"]],
+    i_foot: "무료 오픈소스 · MIT 라이선스",
+    i_or: "다른 에이전트:",
+  },
+};
+const T = STR[LANG];
+
+// ───────────────────────────── assets ─────────────────────────────
+const SEAL_SVG = (filter = true) => `<svg viewBox="0 0 128 128"><g ${filter ? 'filter="url(#inky)"' : ""} transform="rotate(-4 64 64)">
+  <path fill="${filter ? "#e0231b" : "#b5342b"}" d="M20,17 L64,13 L108,18 L112,63 L109,110 L64,114 L19,109 L16,64 Z"/>
+  <path fill="${filter ? "#f6f6f4" : "#f4efe4"}" d="M38,40 H92 V56 H54 V72 H92 V88 H38 Z"/></g></svg>`;
+const FILE_SVG = (dark) => `<svg viewBox="0 0 300 380">
+  <defs><linearGradient id="fg${dark ? 1 : 0}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#f1f2f4"/></linearGradient></defs>
+  <path d="M18 0 H214 L300 86 V362 Q300 380 282 380 H18 Q0 380 0 362 V18 Q0 0 18 0Z" fill="url(#fg${dark ? 1 : 0})" stroke="${dark ? "none" : "#d6d8dc"}" stroke-width="2"/>
+  <path d="M214 0 V68 Q214 86 232 86 H300Z" fill="#d9dbdf"/>
+  <g transform="translate(40 120) scale(.42)"><path fill="#e0231b" d="M20,17 L64,13 L108,18 L112,63 L109,110 L64,114 L19,109 L16,64 Z"/><path fill="#ffffff" d="M38,40 H92 V56 H54 V72 H92 V88 H38 Z"/></g>
+  <text x="40" y="250" font-family="JetBrains Mono" font-weight="700" font-size="38" fill="#121316">study</text>
+  <text x="40" y="292" font-family="JetBrains Mono" font-weight="500" font-size="30" fill="#e0231b">.html</text>
+  <rect x="40" y="322" width="150" height="10" rx="5" fill="#e3e5e8"/></svg>`;
+const CURSOR_SVG = `<svg viewBox="0 0 44 44" width="44" height="44"><path d="M8 4 L8 36 L16 28.5 L21.5 40 L27 37.5 L21.5 26.5 L32 26 Z" fill="#121316" stroke="#fff" stroke-width="2.6" stroke-linejoin="round"/></svg>`;
+const ICON = {
+  offline: `<svg viewBox="0 0 40 40" fill="none" stroke="#e0231b" stroke-width="3" stroke-linecap="round"><path d="M6 15a20 20 0 0 1 28 0M11 21a13 13 0 0 1 18 0M16 27a6 6 0 0 1 8 0"/><circle cx="20" cy="32" r="1.8" fill="#e0231b"/><path d="M6 6l28 28" stroke="#121316"/></svg>`,
+  nosignup: `<svg viewBox="0 0 40 40" fill="none" stroke="#e0231b" stroke-width="3" stroke-linecap="round"><circle cx="20" cy="14" r="6"/><path d="M8 34c1.5-7 6.5-10 12-10s10.5 3 12 10"/><path d="M6 6l28 28" stroke="#121316"/></svg>`,
+  noinstall: `<svg viewBox="0 0 40 40" fill="none" stroke="#e0231b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6v18M13 17l7 7 7-7M8 30v4h24v-4"/><path d="M6 6l28 28" stroke="#121316"/></svg>`,
+  browser: `<svg viewBox="0 0 40 40" fill="none" stroke="#e0231b" stroke-width="3" stroke-linecap="round"><circle cx="20" cy="20" r="14"/><path d="M6 20h28M20 6c5 5 5 23 0 28M20 6c-5 5-5 23 0 28"/></svg>`,
+  globe: `<svg viewBox="0 0 40 40" fill="none" stroke="#5f636b" stroke-width="3" stroke-linecap="round"><circle cx="20" cy="20" r="14"/><path d="M6 20h28M20 6c5 5 5 23 0 28M20 6c-5 5-5 23 0 28"/></svg>`,
+};
+
+// grain texture
+(() => {
+  const c = document.createElement("canvas"); c.width = c.height = 420;
+  const g = c.getContext("2d"), im = g.createImageData(420, 420);
+  for (let i = 0; i < im.data.length; i += 4) { const v = 128 + (rnd() - .5) * 255; im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = 255; }
+  g.putImageData(im, 0, 0);
+  document.getElementById("grain").style.backgroundImage = `url(${c.toDataURL()})`;
+})();
+
+const cam = document.getElementById("cam");
+const scenes = [];
+function scene(t0, t1, build) {
+  const el = h("div", "scene", cam);
+  const sc = { t0, t1, el, render: build(el) };
+  scenes.push(sc);
+  return sc;
+}
+// shared cursor helper: keyframes [t, x, y], clicks [t]
+function makeCursor(parent) {
+  const c = h("div", "cursor", parent, CURSOR_SVG);
+  const r = h("div", "ripple", parent);
+  return (t, keys, clicks, show = [0, 1e9]) => {
+    let x = keys[0][1], y = keys[0][2];
+    for (let i = 0; i < keys.length - 1; i++) {
+      const [ta, xa, ya] = keys[i], [tb, xb, yb] = keys[i + 1];
+      if (t >= ta && t <= tb) {
+        const p = E.ioC(P(t, ta, tb));
+        // gentle arc
+        const mx = (xa + xb) / 2, my = (ya + yb) / 2 - Math.hypot(xb - xa, yb - ya) * .12;
+        x = (1 - p) * (1 - p) * xa + 2 * (1 - p) * p * mx + p * p * xb;
+        y = (1 - p) * (1 - p) * ya + 2 * (1 - p) * p * my + p * p * yb;
+      } else if (t > tb) { x = xb; y = yb; }
+    }
+    let press = 0, rip = -1;
+    for (const ct of clicks) { if (t >= ct - .08 && t < ct + .16) press = Math.sin(P(t, ct - .08, ct + .16) * Math.PI); if (t >= ct && t < ct + .5) rip = P(t, ct, ct + .5); }
+    const vis = A(t, show[0], .25, 0, 1) * (1 - A(t, show[1], .25, 0, 1));
+    st(c, { x: x - 8, y: y - 4, s: 1 - press * .16, o: vis });
+    if (rip >= 0) st(r, { x: x - 45, y: y - 45, s: .2 + E.outC(rip) * .9, o: (1 - rip) * vis }); else r.style.opacity = 0;
+    return { x, y };
+  };
+}
+
+// ═════════════════════ SCENE A — the problem (0 → 7.05) ═════════════════════
+scene(0, 7.05, el => {
+  const box = h("div", "abs", el); css(box, { left: "210px", top: "0", width: "1600px" });
+  const mk = (txt, y) => { const d = h("div", "h1 serif abs", box); css(d, { top: y + "px", fontSize: LANG === "ko" ? "118px" : "132px", whiteSpace: "nowrap" }); return { d, ws: words(d, txt) }; };
+  const l1 = mk(T.a1, 380), l2 = mk(T.a2, 380), l3 = mk(T.a3, 380);
+  // highlighter behind the key word of line 2
+  const hlWord = l2.ws.find(w => w.textContent.includes(T.a2hl)).parentElement;
+  hlWord.style.padding = "0 .12em .12em"; hlWord.style.margin = "0 -.12em -.12em";
+  const hl = h("div", "", hlWord); css(hl, { position: "absolute", left: "2px", right: "2px", top: "38%", height: "58%", zIndex: -1, transformOrigin: "left center" });
+  hl.innerHTML = `<svg viewBox="0 0 400 100" preserveAspectRatio="none" style="width:100%;height:100%;filter:url(#rough)"><path d="M6 18 Q120 6 250 12 T396 10 L392 88 Q260 96 140 90 T4 92 Z" fill="#ffd400" opacity=".85"/></svg>`;
+  hlWord.style.position = "relative"; hlWord.style.zIndex = 0; hlWord.firstChild.style.position = "relative";
+  const big = h("div", "h1 serif ctr", el); css(big, { fontSize: LANG === "ko" ? "128px" : "156px", whiteSpace: "nowrap", fontWeight: LANG === "ko" ? 800 : 700 });
+  const bw = words(big, T.a4.replace(T.a4acc, "**" + T.a4acc + "**"));
+  const shadow = h("div", "ctr", el); css(shadow, { width: "520px", height: "520px", borderRadius: "50%", background: "radial-gradient(circle, rgba(10,12,16,.55) 0%, rgba(10,12,16,.25) 40%, transparent 70%)" });
+  cue(.5, "tick"); cue(2.0, "tick"); cue(2.5, "marker"); cue(3.5, "tick"); cue(5.05, "whoosh"); cue(5.5, "hit-soft"); cue(6.0, "riser");
+  return t => {
+    revealWords(l1.ws, t, .5); revealWords(l2.ws, t, 2.0); revealWords(l3.ws, t, 3.5);
+    // stack pushes upward
+    const up2 = A(t, 1.82, .6, 0, 1, E.outQ), up3 = A(t, 3.32, .6, 0, 1, E.outQ);
+    const ex = A(t, 5.0, .45, 0, 1, E.inC);
+    st(l1.d, { y: -150 * up2 - 150 * up3 - 300 * ex, o: lerp(1, .28, up2) * (1 - ex), blur: ex * 10 });
+    st(l2.d, { y: -150 * up3 - 300 * ex, o: lerp(1, .5, up3) * (1 - ex), blur: ex * 10 });
+    st(l3.d, { y: -300 * ex, o: 1 - ex, blur: ex * 10 });
+    l2.d.style.visibility = t < 1.98 ? "hidden" : "visible"; l3.d.style.visibility = t < 3.48 ? "hidden" : "visible";
+    st(hl, { sx: A(t, 2.5, .45, 0, 1, E.ioC) });
+    // big statement
+    revealWords(bw, t, 5.5, .09, .8);
+    const ant = A(t, 6.2, .8, 0, 1, E.inC);
+    st(big, { x: 960, y: 540, s: 1 - ant * .06, o: t < 5.45 ? 0 : 1 - A(t, 6.95, .08, 0, 1) });
+    st(shadow, { x: 960, y: 560, s: lerp(2.4, .7, E.inC(P(t, 6.1, 7.0))), o: A(t, 6.1, .9, 0, .55, E.inC) });
+  };
+});
+
+// ═════════════════════ SCENE B — the stamp (6.3 → 12.9) ═════════════════════
+const IMPACT = 7.0;
+scene(6.3, 12.9, el => {
+  const specks = [];
+  for (let i = 0; i < 26; i++) {
+    const d = h("div", "abs", el); const s = 6 + rnd() * 16;
+    css(d, { width: s + "px", height: s * (0.7 + rnd() * .6) + "px", borderRadius: "50%", background: "#e0231b", left: "0", top: "0" });
+    const a = rnd() * Math.PI * 2, r = 190 + rnd() * 170;
+    specks.push({ d, a, r, s });
+  }
+  const ring = h("div", "ctr", el); css(ring, { width: "300px", height: "300px", borderRadius: "50%", border: "6px solid #e0231b" });
+  const seal = h("div", "seal ctr", el, SEAL_SVG());
+  const word = h("div", "ctr serif", el); css(word, { fontSize: "250px", fontWeight: 800, letterSpacing: "-.02em", whiteSpace: "nowrap", fontVariationSettings: '"opsz" 144, "SOFT" 0, "WONK" 1', fontFamily: '"Inter Tight", sans-serif', letterSpacing: '-.06em', lineHeight: 1 });
+  const letters = [...T.wordmark].map(ch => { const s = h("span", "", word); s.textContent = ch; s.style.display = "inline-block"; return s; });
+  const tag = h("div", "ctr serif", el); css(tag, { fontSize: LANG === "ko" ? "84px" : "96px", fontWeight: LANG === "ko" ? 700 : 500, whiteSpace: "nowrap", letterSpacing: LANG === "ko" ? "-.03em" : "-.01em" });
+  const tw = words(tag, T.tagline);
+  const squig = h("div", "abs", el); squig.innerHTML = `<svg width="420" height="60" viewBox="0 0 420 60"><path d="M8 38 C60 20 90 50 140 32 S220 18 260 34 S350 46 412 22" fill="none" stroke="#ffd400" stroke-width="12" stroke-linecap="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/></svg>`;
+  const sqp = squig.querySelector("path");
+  cue(IMPACT, "stamp");
+  [0, 1, 2, 3].forEach(i => cue(8.05 + i * .085, "letter"));
+  cue(9.0, "swish-soft"); cue(9.75, "marker");
+  cue(12.2, "whoosh-big");
+  return t => {
+    // descent
+    const d = P(t, 6.45, IMPACT);
+    const hit = t >= IMPACT;
+    const squash = hit ? Math.exp(-(t - IMPACT) * 9) * Math.cos((t - IMPACT) * 38) : 0;
+    // lockup move
+    const mv = A(t, 7.85, .75, 0, 1, E.ioQ);
+    const sx = lerp(960, 645, mv), sy = lerp(540, 400, mv), ss = lerp(1, .74, mv);
+    const exitP = A(t, 12.15, .7, 0, 1, E.ioQ);
+    const exY = -exitP * 1080;
+    st(seal, { x: sx, y: sy + exY, s: hit ? ss * (1 + squash * .06) : lerp(2.8, 1, E.inC(d)), sy: hit ? ss * (1 - squash * .06) : undefined, r: hit ? 0 : (1 - d) * -8, o: hit ? 1 : E.outC(P(t, 6.45, 6.75)), blur: hit ? 0 : (1 - d) * 14 });
+    // ring & specks
+    const rp = P(t, IMPACT, IMPACT + .6);
+    st(ring, { x: 960, y: 540 + exY, s: .9 + E.outE(rp) * 1.5, o: hit ? (1 - rp) * .7 : 0 });
+    ring.style.borderWidth = (6 * (1 - rp) + 1) + "px";
+    for (const s of specks) {
+      const p = E.outE(P(t, IMPACT, IMPACT + .45));
+      const fade = 1 - A(t, 7.7, .5, 0, 1);
+      st(s.d, { x: 960 + Math.cos(s.a) * s.r * p - s.s / 2, y: 540 + Math.sin(s.a) * s.r * p + exY, s: hit ? 1 : 0, o: hit ? fade : 0 });
+    }
+    // wordmark letters stamp in
+    const wx = 1090;
+    st(word, { x: wx, y: 400 + exY, o: 1 });
+    letters.forEach((l, i) => { const tt = 8.05 + i * .085; const p = P(t, tt, tt + .35); l.style.transform = `scale(${lerp(1.7, 1, E.outE(p))})`; l.style.opacity = E.outC(P(t, tt, tt + .12)); l.style.filter = p < 1 ? `blur(${(1 - E.outE(p)) * 8}px)` : "none"; });
+    // tagline
+    revealWords(tw, t, 9.0, .08, .8);
+    st(tag, { x: 960, y: 700 + exY, o: 1 });
+    // squiggle under "anything"
+    const acc = tw.find(w => w.classList.contains("acc"));
+    if (acc) {
+      // layout offsets inside the tagline, so the underline never depends on the previous frame's transforms
+      if (squig.parentElement !== tag) tag.appendChild(squig);
+      css(squig, { left: (acc.offsetLeft - 6) + "px", top: (acc.offsetTop + acc.offsetHeight - 22) + "px" });
+      squig.firstChild.setAttribute("width", acc.offsetWidth + 20);
+      sqp.style.strokeDashoffset = 1 - A(t, 9.75, .55, 0, 1, E.ioC);
+      squig.style.opacity = t > 9.7 ? 1 : 0;
+    }
+  };
+});
+
+// ═════════════════════ SCENE C — create (12.2 → 19.6) ═════════════════════
+scene(12.2, 19.6, el => {
+  const enter = t => (1 - A(t, 12.15, .7, 0, 1, E.ioQ)) * 1080;
+  const cap = h("div", "cap-l", el); css(cap, { top: "190px", width: "760px" });
+  const eye = h("div", "", cap); const sub = h("div", "", cap);
+  const hd = h("div", "h1", cap); if (LANG !== "ko") hd.style.fontSize = "92px"; const hw = words(hd, T.c_h);
+  // sources
+  const notes = h("div", "ctr", el); css(notes, { width: "300px", height: "360px", background: "#ffffff", borderRadius: "10px", boxShadow: "0 22px 50px rgba(18,20,26,.18),0 0 0 1px rgba(18,20,26,.08)", padding: "26px 28px", backgroundImage: "repeating-linear-gradient(transparent 0 47px, #e6e8eb 47px 49px)", backgroundPosition: "0 58px" });
+  notes.innerHTML = `<div style="font-family:var(--mono);font-size:18px;color:var(--ink-soft);margin-bottom:18px">${T.notes}</div>` +
+    T.notesHand.map((l, i) => `<div style="font-family:var(--hand);font-size:34px;line-height:48px;color:#2b2a5a;${i === 2 ? "background:linear-gradient(transparent 45%, rgba(255,212,0,.8) 45%, rgba(255,212,0,.8) 88%, transparent 88%);display:inline-block" : ""}">${l}</div>`).join("");
+  const pdf = h("div", "ctr", el); css(pdf, { width: "270px", height: "340px", background: "#ffffff", borderRadius: "10px", boxShadow: "0 22px 50px rgba(18,20,26,.18),0 0 0 1px rgba(18,20,26,.08)", padding: "30px 28px" });
+  pdf.innerHTML = `<div style="display:inline-block;background:#e0231b;color:#fff;font-weight:800;font-size:18px;padding:5px 12px;border-radius:6px;letter-spacing:.08em">PDF</div>
+   <div style="font-family:var(--mono);font-size:18px;color:var(--ink-soft);margin:14px 0 20px">${T.pdf}</div>` + [92, 80, 88, 60, 84, 72, 90, 50].map(w => `<div style="height:10px;border-radius:5px;background:#e4e6e9;margin:0 0 15px;width:${w}%"></div>`).join("");
+  const link = h("div", "chip ctr", el, `${ICON.globe}<span style="font-family:var(--mono);font-size:24px;font-weight:500;color:var(--ink)">${T.link}</span>`);
+  link.style.boxShadow = "0 18px 40px rgba(18,20,26,.18),0 0 0 1px rgba(18,20,26,.08)";
+  // terminal
+  const term = h("div", "term ctr", el); css(term, { width: "900px", height: "470px" });
+  term.innerHTML = `<div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="ttl">${T.termTitle}</div></div><div class="tbody"></div>`;
+  const tb = term.querySelector(".tbody");
+  const pl = h("div", "", tb); pl.innerHTML = `<span style="color:#ff4d42">›</span> <span class="p1" style="color:#f6f6f4"></span><span class="p2" style="color:#b8bcc3"></span><span class="caret"></span>`;
+  const p1 = pl.querySelector(".p1"), p2 = pl.querySelector(".p2"), caret = pl.querySelector(".caret");
+  const outs = T.out.map((o, i) => { const d = h("div", "", tb); d.style.marginTop = i === 0 ? "26px" : "6px"; d.innerHTML = o.replace(/^✓/, '<span style="color:#86d4a0">✓</span>').replace("study.html", '<span style="color:#ff4d42">study.html</span>'); if (i === 0) d.style.color = "#8b8f97"; return d; });
+  const spin = h("span", "", outs[0]); spin.style.color = "#ff4d42";
+  const glow = h("div", "ctr", el); css(glow, { width: "900px", height: "470px", borderRadius: "22px", boxShadow: "0 0 0 3px #ff4d42, 0 0 60px rgba(255,77,66,.5)" });
+  const T1 = 14.0, cps = LANG === "ko" ? 14 : 20;
+  const T2 = T1 + T.prompt1.length / cps + .15;
+  const TE = T2 + T.prompt2.length / cps;
+  for (let i = 0; i < T.prompt1.length; i++) cue(T1 + i / cps, "key");
+  for (let i = 0; i < T.prompt2.length; i++) cue(T2 + i / cps, "key");
+  const ENTER = 16.95;
+  cue(12.95, "pop"); cue(13.1, "pop"); cue(13.25, "pop"); cue(13.35, "whoosh");
+  cue(16.25, "swoosh-in"); cue(ENTER, "enter"); cue(17.75, "ding-soft"); cue(18.15, "ding-soft"); cue(18.55, "ding");
+  const srcs = [
+    { el: notes, x: 330, y: 760, r: -7, t: 12.9, fx: 1000, fy: 380 },
+    { el: pdf, x: 610, y: 800, r: 5, t: 13.05, fx: 1000, fy: 380 },
+    { el: link, x: 470, y: 975, r: -2, t: 13.2, fx: 1000, fy: 380 },
+  ];
+  return t => {
+    const ey = enter(t);
+    const ex = A(t, 19.0, .5, 0, 1, E.inC);
+    st(cap, { y: ey, o: 1 - ex });
+    revealWords(hw, t, 12.55, .07);
+    eye.style.opacity = A(t, 12.45, .4, 0, 1);
+    st(sub, { y: A(t, 12.9, .6, 30, 0, E.outE), o: A(t, 12.9, .6, 0, 1) });
+    srcs.forEach((s, i) => {
+      const fly = E.ioC(P(t, 16.2 + i * .08, 16.75 + i * .08));
+      const bx = s.x, by = S(t, s.t, 1300, s.y, 1.6, .5) + ey;
+      const x = lerp(bx, s.fx, fly), y = lerp(by, s.fy, fly) - Math.sin(fly * Math.PI) * 180;
+      st(s.el, { x, y, r: S(t, s.t, s.r + 20, s.r) * (1 - fly), s: lerp(1, .12, fly), o: 1 - P(fly, .75, 1) });
+    });
+    const tIn = S(t, 13.35, 700, 0, 1.4, .55);
+    const tx = 1340 + tIn, ty = 560 + ey;
+    const tz = A(t, 19.0, .55, 0, 1, E.inC);
+    st(term, { x: tx, y: ty, s: 1 - tz * .5 + (t > 16.6 && t < 17.1 ? Math.sin(P(t, 16.6, 17.1) * Math.PI) * .012 : 0), o: 1 - tz });
+    st(glow, { x: tx, y: ty, s: 1 - tz * .5, o: (Math.sin(P(t, 16.5, 17.3) * Math.PI)) * .9 });
+    typeText(p1, T.prompt1, t, T1, cps, null);
+    const n2 = typeText(p2, T.prompt2, t, T2, cps, null);
+    caret.style.opacity = t < 13.8 || t > ENTER ? 0 : (t < TE ? 1 : (Math.floor(t * 2.4) % 2 ? 0 : 1));
+    outs.forEach((o, i) => { const tt = [17.25, 17.75, 18.15, 18.55][i]; st(o, { y: A(t, tt, .35, 14, 0, E.outE), o: A(t, tt, .25, 0, 1) }); });
+    const fr = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏";
+    spin.textContent = t < 17.75 ? " " + fr[Math.floor(t * 14) % fr.length] : " ✓";
+    spin.style.color = t < 17.75 ? "#ff4d42" : "#86d4a0";
+  };
+});
+
+// ═════════════════════ SCENE D — deck generation (19.0 → 23.4) ═════════════════════
+scene(19.0, 23.4, el => {
+  const title = h("div", "h1 ctr", el); css(title, { whiteSpace: "nowrap", fontSize: LANG === "ko" ? "88px" : "96px" });
+  const tw = words(title, T.d_h);
+  const cards = T.minis.map(([type, pr], i) => {
+    const c = h("div", "mini", el);
+    c.innerHTML = `<div class="lbl">${T.typeLabel[type]}</div><div class="num">${String(i + 1).padStart(2, "0")}/10</div><div class="pr">${pr}</div>`;
+    if (type === "mcq") c.querySelector(".lbl").style.color = "#e0231b";
+    if (type === "cloze") c.querySelector(".lbl").style.color = "#15803d";
+    return c;
+  });
+  // fan layout
+  const lay = cards.map((c, i) => {
+    const n = cards.length, a = (i - (n - 1) / 2);
+    const row = i % 2;
+    return { x: 960 + a * 172, y: 610 + row * 150 + Math.abs(a) * 22 - 40, r: a * 3.2 + (row ? 2 : -2) };
+  });
+  const morph = h("div", "ctr", el); css(morph, { background: "#eceef1", zIndex: 30, boxShadow: "0 40px 90px rgba(18,20,26,.22)" });
+  const file = h("div", "file ctr", el, FILE_SVG());
+  cards.forEach((_, i) => cue(19.25 + i * .055, "card"));
+  cue(21.2, "gather"); cue(21.9, "thump"); cue(22.45, "zoom");
+  return t => {
+    revealWords(tw, t, 19.35, .08);
+    const tex = A(t, 22.45, .4, 0, 1, E.inC);
+    st(title, { x: 960, y: 190, o: 1 - tex });
+    cards.forEach((c, i) => {
+      const t0 = 19.2 + i * .055, L = lay[i];
+      const gather = E.inB(P(t, 21.0 + (9 - i) * .025, 21.55 + (9 - i) * .025));
+      const x0 = 1340, y0 = 560;
+      const x = S(t, t0, x0, L.x, 1.3, .6), y = S(t, t0, y0, L.y, 1.3, .6);
+      const r = S(t, t0, 0, L.r, 1.3, .5);
+      const s = S(t, t0, .3, 1, 1.5, .5);
+      st(c, { x: lerp(x, 960, gather) - 150, y: lerp(y, 620, gather) - 98, r: r * (1 - gather), s: s * lerp(1, .5, gather), o: t < t0 ? 0 : 1 - P(gather, .85, 1) });
+      c.style.zIndex = 10 - Math.abs(i - 4.5) | 0;
+    });
+    const fp = P(t, 21.45, 21.85);
+    const bump = t > 21.9 ? 1 + Math.exp(-(t - 21.9) * 7) * Math.sin((t - 21.9) * 26) * .06 : lerp(.6, 1, E.outB(fp));
+    const m = E.ioQ(P(t, 22.45, 23.0));
+    st(file, { x: lerp(960, 1250, m), y: lerp(620, 555, m), s: bump * lerp(1, 1.6, m), o: fp > 0 ? Math.min(1, fp * 2) * (1 - P(t, 22.45, 22.7)) : 0 });
+    file.style.zIndex = 20;
+    css(morph, { width: lerp(300, 1060, m) + "px", height: lerp(380, 920, m) + "px", borderRadius: lerp(18, 22, m) + "px", display: t > 22.45 ? "block" : "none" });
+    st(morph, { x: lerp(960, 1250, m), y: lerp(620, 555, m), o: 1 - P(t, 23.05, 23.3) });
+  };
+});
+
+// ═════════════════════ SCENE E/F — the player (23.0 → 39.4) ═════════════════════
+scene(22.8, 39.5, el => {
+  // left column captions
+  const cap = h("div", "cap-l", el); css(cap, { top: "330px", width: "620px" });
+  const eye = h("div", "", cap);
+  const rrg = T.rrg.map(s => { const d = h("div", "h1", cap); d.textContent = s; d.style.fontSize = LANG === "ko" ? "92px" : "112px"; return d; });
+  const sub = h("div", "", cap);
+  const cap2 = h("div", "cap-l", el); css(cap2, { top: "290px", width: "640px" });
+  const kh = h("div", "h1", cap2, T.kinds_h); kh.style.fontSize = LANG === "ko" ? "80px" : "78px";
+  const chipsBox = h("div", "", cap2); chipsBox.style.marginTop = "44px";
+  const kchips = T.kinds.map(k => { const d = h("div", "", chipsBox); css(d, { display: "flex", alignItems: "center", gap: "18px", fontSize: "38px", fontWeight: 600, margin: "0 0 22px", color: "var(--ink)" }); d.innerHTML = `<span style="width:16px;height:16px;border-radius:50%;background:var(--accent);display:inline-block"></span>${k}`; return d; });
+  const cap3 = h("div", "cap-l", el); css(cap3, { top: "380px", width: "660px" });
+  const eye3 = h("div", "", cap3);
+  const fh1 = h("div", "h1", cap3); const fw1 = words(fh1, T.f_h1);
+  const fh2 = h("div", "h1", cap3); const fw2 = words(fh2, T.f_h2);
+  [fh1, fh2].forEach(d => { d.style.fontSize = LANG === "ko" ? "88px" : "70px"; d.style.whiteSpace = "nowrap"; });
+
+  // browser window
+  const win = h("div", "win ctr", el); css(win, { width: "1060px", height: "920px" });
+  win.innerHTML = `<div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    <div class="addr"><svg width="18" height="22" viewBox="0 0 18 22"><path d="M2 1h9l6 6v13H2z" fill="none" stroke="#5f636b" stroke-width="2"/></svg>file:///…/study.html</div></div>`;
+  const pl = h("div", "pl", win);
+  pl.innerHTML = `<div class="pl-head"><div style="width:34px;height:34px">${SEAL_SVG(false)}</div>Cram</div>
+    <div class="pl-title">${T.deckTitle}</div><div class="pl-prog"><i></i></div>`;
+  const prog = pl.querySelector(".pl-prog i");
+  const card = h("div", "pl-card", pl);
+  // card 1 — basic
+  const c1 = h("div", "pc", card);
+  c1.innerHTML = `<div class="lbl">${T.typeLabel.basic}</div><div class="num">01/15</div><div class="q">${T.q1}</div>`;
+  const hint = h("div", "", c1, `${T.showHint}<span class="kbd">H</span>`); css(hint, { position: "absolute", left: "46px", top: "300px", fontSize: "22px", color: "var(--ink-soft)" });
+  const show = h("div", "btn dark", c1, `${T.showAnswer}<span class="kbd">A</span>`); css(show, { right: "46px", top: "370px", width: LANG === "ko" ? "250px" : "290px", height: "72px" });
+  const rule = h("div", "abs", c1); css(rule, { left: "46px", right: "46px", top: "282px", height: "1.5px", background: "var(--rule)", transformOrigin: "left" });
+  const ansBox = h("div", "abs", c1); css(ansBox, { left: "46px", right: "46px", top: "312px" });
+  ansBox.innerHTML = `<div class="ans-l">${T.answerL}</div><div class="ans">${T.a1text}</div>`;
+  const bMiss = h("div", "btn line", c1, T.missedIt), bKnew = h("div", "btn line", c1, T.knewIt);
+  css(bMiss, { left: "46px", top: "478px", width: "412px", height: "74px" }); css(bKnew, { left: "474px", top: "478px", width: "412px", height: "74px" });
+  const knewFill = h("div", "abs", bKnew); css(knewFill, { inset: "-1.5px", borderRadius: "12px", background: "var(--positive)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "25px", fontWeight: 600 });
+  knewFill.innerHTML = "✓&nbsp; " + T.knewIt;
+  // card 2 — mcq
+  const c2 = h("div", "pc", card);
+  c2.innerHTML = `<div class="lbl" style="color:var(--accent)">${T.typeLabel.mcq}</div><div class="num">02/15</div><div class="q">${T.q2}</div>`;
+  const opts = T.opts.map((o, i) => { const d = h("div", "opt", c2); d.style.top = (236 + i * 80) + "px"; d.style.height = "64px"; d.innerHTML = `<div class="radio"><i></i></div><span>${o}</span><span class="mark"></span>`; return d; });
+  const chk = h("div", "btn dark", c2, T.check); css(chk, { right: "46px", top: "540px", width: "250px", height: "66px", fontSize: "23px" });
+  const fb2 = h("div", "fb", c2, T.wrongFb); css(fb2, { top: "560px", color: "var(--accent)", fontSize: "22px" });
+  // card 3 — cloze
+  const c3 = h("div", "pc", card);
+  c3.innerHTML = `<div class="lbl" style="color:var(--positive)">${T.typeLabel.cloze}</div><div class="num">03/15</div>`;
+  const q3 = h("div", "q", c3); q3.innerHTML = `${T.q3a} <span class="blank"><span class="bt"></span><span class="caret" style="height:1em;width:3px;background:var(--ink)"></span></span> ${T.q3b}`;
+  const blank = q3.querySelector(".blank"), bt = q3.querySelector(".bt"), bcaret = q3.querySelector(".caret");
+  const chk3 = h("div", "btn dark", c3, T.check); css(chk3, { right: "46px", top: "420px", width: "250px", height: "66px", fontSize: "23px" });
+  const fb3 = h("div", "fb", c3, T.correctFb); css(fb3, { top: "438px", color: "var(--positive)", fontSize: "26px" });
+  // results view
+  const res = h("div", "pc", card);
+  res.innerHTML = `<div style="text-align:center;font-family:var(--serif);font-size:44px;font-weight:600;margin-top:10px">${T.done}</div>`;
+  const ringWrap = h("div", "abs", res); css(ringWrap, { left: "50%", top: "110px", width: "220px", height: "220px", marginLeft: "-110px" });
+  ringWrap.innerHTML = `<svg viewBox="0 0 220 220" width="220" height="220"><circle cx="110" cy="110" r="94" fill="none" stroke="#ddd5c4" stroke-width="16"/><circle class="arc" cx="110" cy="110" r="94" fill="none" stroke="#356b4a" stroke-width="16" stroke-linecap="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" transform="rotate(-90 110 110)"/></svg><div class="sc" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:64px;font-weight:700"></div>`;
+  const arc = ringWrap.querySelector(".arc"), sc = ringWrap.querySelector(".sc");
+  const sline = h("div", "abs", res, T.scoreLine); css(sline, { left: 0, right: 0, top: "350px", textAlign: "center", fontSize: "26px", color: "var(--ink-soft)" });
+  const tabs = h("div", "abs", res); css(tabs, { left: "46px", top: "412px", display: "flex", gap: "12px" });
+  const tAll = h("div", "", tabs, T.all), tMiss = h("div", "", tabs, T.missed);
+  [tAll, tMiss].forEach(d => css(d, { padding: "8px 20px", borderRadius: "999px", fontSize: "20px", fontWeight: 600, border: "1.5px solid var(--rule-strong)" }));
+  const grid = h("div", "abs", res); css(grid, { left: "46px", right: "46px", top: "470px", height: "150px" });
+  const miss = new Set([1, 6, 10]);
+  const gcards = Array.from({ length: 15 }, (_, i) => {
+    const g = h("div", "abs", grid); css(g, { width: "164px", height: "40px", borderRadius: "8px", background: "#fff", border: "1.5px solid " + (miss.has(i) ? "#e3b3ad" : "#bfd6c6"), fontSize: "15px", display: "flex", alignItems: "center", gap: "8px", padding: "0 12px", fontWeight: 600, color: miss.has(i) ? "var(--accent)" : "var(--positive)" });
+    g.innerHTML = `<span style="font-family:var(--mono);color:var(--ink-soft);font-weight:500">${String(i + 1).padStart(2, "0")}</span>${miss.has(i) ? "✕ " + T.missedTag : "✓ " + T.correctTag}`;
+    return g;
+  });
+  const retry = h("div", "btn dark", res, T.retry); css(retry, { left: "50%", marginLeft: LANG === "ko" ? "-190px" : "-180px", top: "640px", width: LANG === "ko" ? "380px" : "360px", height: "66px", fontSize: "23px" });
+  const cursor = makeCursor(el);
+
+  // timeline
+  const WX = 1250, WY = 555, OX = WX - 530, OY = WY - 460; // window origin (top-left)
+  const cardOX = OX + 70, cardOY = OY + 64 + 196;
+  cue(23.05, "whoosh-rev");
+  const clicks = [25.0, 26.3, 28.4, 29.3, 31.15, 32.55, 37.0, 38.2];
+  clicks.forEach(c => cue(c, "click"));
+  cue(26.35, "correct"); cue(29.35, "wrong"); cue(32.6, "correct");
+  cue(26.95, "slide"); cue(30.45, "slide"); cue(33.55, "slide");
+  "ETag".split("").forEach((_, i) => cue(31.45 + i * .11, "key"));
+  cue(34.2, "count"); cue(35.4, "chime");
+  cue(38.25, "whoosh-big");
+  for (let i = 0; i < 15; i++) cue(35.6 + i * .03, "tick-soft");
+  const keys = [
+    [23.6, WX + 460, WY + 520], [24.9, cardOX + 790, cardOY + 406], [25.3, cardOX + 790, cardOY + 420], [26.2, cardOX + 680, cardOY + 515], [26.8, cardOX + 690, cardOY + 530],
+    [27.9, cardOX + 690, cardOY + 560], [28.35, cardOX + 180, cardOY + 270], [28.75, cardOX + 200, cardOY + 290], [29.25, cardOX + 790, cardOY + 573],
+    [30.6, cardOX + 790, cardOY + 590], [31.1, cardOX + 470, cardOY + 150], [32.1, cardOX + 470, cardOY + 170], [32.5, cardOX + 790, cardOY + 453],
+    [33.6, cardOX + 790, cardOY + 480], [36.95, cardOX + 262, cardOY + 432], [37.4, cardOX + 262, cardOY + 440], [38.15, cardOX + 460, cardOY + 673], [39, cardOX + 470, cardOY + 690],
+  ];
+  return t => {
+    // window entrance (from the zoom-through) and exit
+    const wIn = E.outC(P(t, 22.85, 23.1));
+    const wOut = A(t, 38.6, .7, 0, 1, E.inC);
+    st(win, { x: WX, y: WY + wOut * 60, s: 1 - wOut * .08, o: wIn * (1 - wOut) });
+    // captions: RRG (23.3 → 27.3), kinds (27.4 → 33.4), review (33.6 →)
+    const capA = A(t, 23.3, .5, 0, 1) * (1 - A(t, 27.1, .35, 0, 1));
+    st(cap, { x: A(t, 23.3, .7, -40, 0, E.outE), o: capA });
+    eye.style.opacity = 1;
+    const lit = [23.5, 25.0, 26.3];
+    rrg.forEach((d, i) => { const on = A(t, lit[i], .3, 0, 1); d.style.color = `rgba(31,28,24,${.14 + on * .86})`; if (i === 2 && t > 26.3) d.style.color = "var(--positive)"; if (i === 1 && on > 0) d.style.color = `rgba(31,28,24,${.14 + on * .86})`; st(d, { x: (1 - E.outE(P(t, lit[i], lit[i] + .5))) * -16 }); });
+    st(sub, { o: A(t, 23.8, .6, 0, 1) });
+    const capB = A(t, 27.35, .5, 0, 1) * (1 - A(t, 33.4, .35, 0, 1));
+    st(cap2, { x: A(t, 27.35, .7, -40, 0, E.outE), o: capB });
+    const act = t < 30.5 ? 1 : 2;
+    kchips.forEach((k, i) => { const on = i === act || (i === 0 && t < 27.3); const a = (i <= act) ? 1 : .25; k.style.color = on ? "var(--ink)" : "rgba(31,28,24,.25)"; st(k, { x: on ? 18 : 0, o: A(t, 27.5 + i * .1, .4, 0, 1) }); });
+    const capC = A(t, 33.7, .5, 0, 1) * (1 - A(t, 38.6, .5, 0, 1));
+    st(cap3, { o: capC });
+    revealWords(fw1, t, 33.75, .07); revealWords(fw2, t, 36.9, .07);
+    eye3.style.opacity = A(t, 33.7, .4, 0, 1);
+    // progress
+    const pv = t < 26.4 ? 1 : t < 29.4 ? 2 : t < 32.6 ? 3 : 15;
+    prog.style.width = (pv / 15 * 100) + "%";
+    // card slides
+    const slide = (c, tin, tout) => { const i = E.outE(P(t, tin, tin + .5)), o = E.inC(P(t, tout, tout + .35)); st(c, { x: (1 - i) * 90 - o * 90, o: (t < tin ? 0 : i) * (1 - o) }); c.style.visibility = (t < tin || t > tout + .4) ? "hidden" : "visible"; };
+    slide(c1, 22.0, 26.95); slide(c2, 27.0, 30.45); slide(c3, 30.5, 33.55); slide(res, 33.85, 99);
+    // card 1
+    const pr1 = t > 25.0 && t < 25.2 ? .96 : 1;
+    const rev = E.outE(P(t, 25.05, 25.55));
+    st(show, { s: pr1, o: 1 - P(t, 25.05, 25.2) }); show.style.visibility = t > 25.25 ? "hidden" : "visible";
+    st(hint, { o: 1 - P(t, 25.05, 25.2) });
+    st(rule, { sx: rev, o: rev > 0 ? 1 : 0 });
+    st(ansBox, { y: (1 - rev) * 18, o: rev });
+    st(bMiss, { y: (1 - E.outE(P(t, 25.2, 25.7))) * 18, o: P(t, 25.2, 25.5) });
+    st(bKnew, { y: (1 - E.outE(P(t, 25.25, 25.75))) * 18, o: P(t, 25.25, 25.55), s: t > 26.3 && t < 26.45 ? .97 : 1 });
+    st(knewFill, { o: A(t, 26.32, .15, 0, 1) });
+    // card 2
+    opts.forEach((o, i) => {
+      st(o, { y: (1 - E.outE(P(t, 27.2 + i * .06, 27.7 + i * .06))) * 20, o: P(t, 27.2 + i * .06, 27.5 + i * .06) });
+      const dot = o.querySelector(".radio i"), mark = o.querySelector(".mark");
+      o.style.borderColor = ""; o.style.background = ""; dot.style.background = ""; mark.textContent = ""; mark.style.opacity = 0;
+      if (i === 0) { dot.style.transform = `scale(${S(t, 28.42, 0, 1, 3, .4)})`; o.style.borderColor = t > 28.42 ? "var(--ink)" : ""; }
+      if (i === 0 && t > 29.35) { o.style.borderColor = "var(--accent)"; o.style.background = "#fbeeec"; dot.style.background = "var(--accent)"; mark.textContent = "✕ " + (LANG === "ko" ? "오답" : "Incorrect"); mark.style.color = "var(--accent)"; mark.style.opacity = A(t, 29.35, .2, 0, 1); }
+      if (i === 1 && t > 29.4) { o.style.borderColor = "var(--positive)"; o.style.background = "#eef5f0"; mark.textContent = "✓ " + (LANG === "ko" ? "정답" : "Correct"); mark.style.color = "var(--positive)"; mark.style.opacity = A(t, 29.4, .2, 0, 1); }
+      if (i === 0 || i === 1) { const pop = t > 29.35 ? 1 + Math.exp(-(t - 29.35) * 8) * Math.sin((t - 29.35) * 30) * .02 : 1; st(o, { y: 0, s: pop, o: 1, x: i === 0 && t > 29.35 ? Math.exp(-(t - 29.35) * 7) * Math.sin((t - 29.35) * 60) * 8 : 0 }); if (t < 27.8) st(o, { y: (1 - E.outE(P(t, 27.2 + i * .06, 27.7 + i * .06))) * 20, o: P(t, 27.2 + i * .06, 27.5 + i * .06) }); }
+    });
+    st(chk, { o: A(t, 28.5, .3, 0, 1) * (1 - P(t, 29.35, 29.5)), s: t > 29.3 && t < 29.42 ? .96 : 1 });
+    st(fb2, { o: A(t, 29.5, .3, 0, 1), y: A(t, 29.5, .4, 10, 0, E.outE) });
+    // card 3
+    const typed = typeText(bt, "ETag", t, 31.45, 9, null);
+    bcaret.style.opacity = t > 31.15 && t < 32.55 ? (Math.floor(t * 2.6) % 2 ? 0 : 1) : 0;
+    blank.style.borderColor = t > 31.15 ? (t > 32.6 ? "var(--positive)" : "var(--ink)") : "";
+    blank.style.color = t > 32.6 ? "var(--positive)" : "var(--ink)";
+    blank.style.background = t > 32.6 ? "#eef5f0" : "transparent";
+    st(chk3, { o: A(t, 31.9, .3, 0, 1) * (1 - P(t, 32.6, 32.75)), s: t > 32.55 && t < 32.67 ? .96 : 1 });
+    st(fb3, { o: A(t, 32.7, .3, 0, 1), y: A(t, 32.7, .4, 10, 0, E.outE) });
+    // results
+    const cnt = E.outC(P(t, 34.2, 35.4));
+    arc.style.strokeDashoffset = 1 - cnt * .8;
+    sc.innerHTML = `${Math.round(cnt * 12)}<span style="font-size:34px;color:var(--ink-soft);font-weight:500">/15</span>`;
+    st(ringWrap, { s: t > 35.4 ? 1 + Math.exp(-(t - 35.4) * 8) * Math.sin((t - 35.4) * 28) * .04 : 1 });
+    st(sline, { o: A(t, 35.3, .4, 0, 1) });
+    st(tabs, { o: A(t, 35.5, .4, 0, 1) });
+    const filt = E.ioC(P(t, 37.05, 37.6));
+    tAll.style.background = filt > .5 ? "transparent" : "var(--ink)"; tAll.style.color = filt > .5 ? "var(--ink)" : "var(--paper)";
+    tMiss.style.background = filt > .5 ? "var(--accent)" : "transparent"; tMiss.style.color = filt > .5 ? "#fff" : "var(--ink)"; tMiss.style.borderColor = filt > .5 ? "var(--accent)" : "var(--rule-strong)";
+    let mi = 0;
+    gcards.forEach((g, i) => {
+      const col = i % 5, row = Math.floor(i / 5);
+      const x0 = col * 176, y0 = row * 50;
+      const isM = miss.has(i);
+      const k = isM ? mi++ : 0;
+      const x1 = k * 176, y1 = 0;
+      const appear = E.outE(P(t, 35.6 + i * .03, 36.0 + i * .03));
+      st(g, { x: isM ? lerp(x0, x1, filt) : x0, y: (isM ? lerp(y0, y1, filt) : y0) + (1 - appear) * 14, o: appear * (isM ? 1 : 1 - filt), s: isM ? 1 + Math.sin(filt * Math.PI) * .06 : 1 - filt * .2 });
+    });
+    st(retry, { o: A(t, 37.5, .4, 0, 1), y: A(t, 37.5, .5, 14, 0, E.outE), s: t > 38.2 && t < 38.33 ? .96 : 1 });
+    // the blank flows with the prompt text, so aim at its laid-out position (independent of transforms)
+    const bx = cardOX + blank.offsetLeft + blank.offsetWidth * .5, by = cardOY + blank.offsetTop + blank.offsetHeight * .55;
+    const ck = keys.map(k => k[0] === 31.1 ? [31.1, bx, by] : k[0] === 32.1 ? [32.1, bx + 30, by + 26] : k);
+    cursor(t, ck, clicks, [23.6, 38.5]);
+  };
+});
+
+// ═════════════════════ SCENE G — one file (38.9 → 46.4) ═════════════════════
+const wipes = document.getElementById("wipes");
+const w1 = h("div", "wipe", wipes), w2 = h("div", "wipe", wipes), w3 = h("div", "wipe", wipes), w4 = h("div", "wipe", wipes);
+css(w1, { background: "#e0231b" }); css(w2, { background: "#0e0f11" }); css(w3, { background: "#e0231b" }); css(w4, { background: "#f6f6f4" });
+scene(38.9, 46.4, el => {
+  const eye = h("div", "ctr", el);
+  const hd = h("div", "h1 ctr", el); css(hd, { color: "#f6f6f4", whiteSpace: "nowrap", fontSize: LANG === "ko" ? "92px" : "100px" });
+  const hw = words(hd, T.g_h);
+  hw.forEach(w => { if (w.classList.contains("acc")) w.style.color = "#ff4d42"; });
+  const hd2 = h("div", "h1 ctr", el); css(hd2, { color: "#f6f6f4", whiteSpace: "nowrap", fontSize: LANG === "ko" ? "92px" : "100px" });
+  const hw2 = words(hd2, T.g_h2);
+  hw2.forEach(w => { if (w.classList.contains("acc")) w.style.color = "#ff4d42"; });
+  const sub2 = h("div", "ctr", el);
+  const lines = h("div", "abs", el); lines.innerHTML = `<svg width="1920" height="1080" style="position:absolute;left:0;top:0"></svg>`;
+  const svg = lines.firstChild;
+  const file = h("div", "file ctr", el, FILE_SVG(true));
+  const glowF = h("div", "ctr", el); css(glowF, { width: "620px", height: "620px", borderRadius: "50%", background: "radial-gradient(circle, rgba(255,77,66,.28), transparent 65%)" });
+  el.insertBefore(glowF, file);
+  const ic = [ICON.offline, ICON.nosignup, ICON.noinstall, ICON.browser];
+  const pos = [[560, 470], [1360, 470], [560, 800], [1360, 800]];
+  const badges = T.badges.map((b, i) => h("div", "chip ctr", el, `${ic[i]}<span>${b}</span>`));
+  const paths = pos.map(([x, y]) => { const p = document.createElementNS("http://www.w3.org/2000/svg", "path"); p.setAttribute("d", `M960 ${y < 600 ? 560 : 720} Q ${(x + 960) / 2} ${y} ${x} ${y}`); p.setAttribute("fill", "none"); p.setAttribute("stroke", "#4a4d55"); p.setAttribute("stroke-width", "2.5"); p.setAttribute("stroke-dasharray", "6 10"); svg.appendChild(p); return p; });
+  // devices
+  const dev = [
+    { w: 330, h: 210, x: 1480, y: 470, r: 18, kind: "laptop" },
+    { w: 150, h: 290, x: 1260, y: 760, r: 26, kind: "phone" },
+    { w: 260, h: 340, x: 1600, y: 800, r: 24, kind: "tablet" },
+  ];
+  const devs = dev.map(d => {
+    const e = h("div", "ctr", el); css(e, { width: d.w + "px", height: d.h + "px", borderRadius: d.r + "px", border: "5px solid #3a3c43", background: "#18191c", overflow: "hidden" });
+    const scr = h("div", "", e); css(scr, { position: "absolute", inset: "8px", borderRadius: (d.r - 8) + "px", background: "#eceef1", opacity: 0, padding: "12%" });
+    scr.innerHTML = `<div style="height:14%;width:40%;background:#e0231b;border-radius:3px;margin-bottom:10%"></div><div style="background:#ffffff;border-radius:6px;height:62%;padding:10%"><div style="height:12%;width:80%;background:#d3d5da;border-radius:3px;margin-bottom:8%"></div><div style="height:12%;width:60%;background:#d3d5da;border-radius:3px;margin-bottom:14%"></div><div style="height:18%;width:46%;margin-left:auto;background:#121316;border-radius:4px"></div></div>`;
+    if (d.kind === "laptop") { const base = h("div", "ctr", el); css(base, { width: (d.w + 80) + "px", height: "16px", borderRadius: "0 0 14px 14px", background: "#3a3c43" }); d.base = base; }
+    d.scr = scr; return e;
+  });
+  const copies = dev.map(() => h("div", "file ctr", el, FILE_SVG(true)));
+  cue(38.95, "wipe"); cue(39.8, "thump"); badges.forEach((_, i) => cue(40.75 + i * .25, "pop"));
+  cue(43.0, "whoosh"); dev.forEach((_, i) => cue(43.5 + i * .25, "swoosh-in")); dev.forEach((_, i) => cue(44.0 + i * .25, "ding-soft"));
+  cue(45.75, "wipe");
+  return t => {
+    const on = t > 39.5;
+    el.style.visibility = on ? "visible" : "hidden";
+    // headline 1
+    const x1 = A(t, 42.8, .45, 0, 1, E.inC);
+    st(eye, { x: 960, y: 150, o: A(t, 39.7, .4, 0, 1) });
+    revealWords(hw, t, 39.75, .08); st(hd, { x: 960, y: 200, o: 1 - x1 });
+    revealWords(hw2, t, 43.05, .08); st(hd2, { x: 700, y: 260, o: 1 });
+    st(sub2, { x: 700, y: 340, o: A(t, 43.4, .5, 0, 1) });
+    hd2.style.visibility = t > 43 ? "visible" : "hidden";
+    // file
+    const fIn = S(t, 39.8, 0, 1, 1.6, .45);
+    const fMove = E.ioQ(P(t, 42.9, 43.6));
+    const fx = lerp(960, 560, fMove), fy = lerp(640, 700, fMove);
+    st(file, { x: fx, y: fy, s: fIn * lerp(1, .9, fMove), r: (1 - fIn) * -10 + noise1(t * .6) * 1.2, o: P(t, 39.8, 39.95) });
+    st(glowF, { x: fx, y: fy, s: .9 + Math.sin(t * 2.4) * .04, o: P(t, 39.9, 40.5) });
+    // badges
+    badges.forEach((bd, i) => { const bt = 40.75 + i * .25; const sp = S(t, bt, 0, 1, 2, .45); const out = E.inB(P(t, 42.6 + i * .04, 43.0 + i * .04)); st(bd, { x: lerp(960, pos[i][0], sp) + noise1(t * .5, i) * 6, y: lerp(640, pos[i][1], sp) + noise1(t * .5, i + 9) * 6, s: sp * (1 - out), o: t < bt ? 0 : 1 - out }); });
+    paths.forEach((p, i) => { const len = p.getTotalLength(); p.setAttribute("stroke-dashoffset", 0); p.style.opacity = A(t, 40.85 + i * .25, .4, 0, 1) * (1 - A(t, 42.6, .4, 0, 1)); });
+    // devices and copies
+    dev.forEach((d, i) => {
+      const din = S(t, 43.1 + i * .12, 0, 1, 1.8, .55);
+      st(devs[i], { x: d.x, y: d.y + (1 - din) * 60, o: P(t, 43.1 + i * .12, 43.4 + i * .12) });
+      if (d.base) st(d.base, { x: d.x, y: d.y + d.h / 2 + 8 + (1 - din) * 60, o: P(t, 43.1, 43.4) });
+      const ft = P(t, 43.5 + i * .25, 44.0 + i * .25), fe = E.ioC(ft);
+      st(copies[i], { x: lerp(fx, d.x, fe), y: lerp(fy, d.y, fe) - Math.sin(fe * Math.PI) * 220, s: lerp(.8, .22, fe), r: fe * 20 - 10, o: ft > 0 && ft < 1 ? 1 : 0 });
+      d.scr.style.opacity = A(t, 44.0 + i * .25, .3, 0, 1);
+    });
+  };
+});
+
+// ═════════════════════ SCENE H — agents & languages (45.9 → 51.6) ═════════════════════
+scene(46.0, 51.6, el => {
+  const cap = h("div", "cap-l", el); css(cap, { top: "400px", width: "760px" });
+  const eye = h("div", "", cap);
+  const hd = h("div", "h1", cap, T.h_h); if (LANG === "ko") { hd.style.fontSize = "84px"; }
+  const hd2 = h("div", "h1", cap, T.h_h2); css(hd2, { position: "absolute", top: "0px", left: 0, fontSize: LANG === "ko" ? "84px" : "" });
+  // slot machine window
+  const slot = h("div", "abs", el); css(slot, { left: "1000px", top: "300px", width: "800px", height: "480px", overflow: "hidden", WebkitMaskImage: "linear-gradient(transparent, #000 30%, #000 70%, transparent)" });
+  const reel = h("div", "abs", slot); css(reel, { left: 0, width: "800px" });
+  const names = [...T.agents, T.agents[0]];
+  names.forEach(n => { const d = h("div", "", reel); css(d, { height: "160px", display: "flex", alignItems: "center", fontFamily: "\"Inter Tight\", sans-serif", letterSpacing: "-.06em", fontWeight: 600, fontSize: "96px", letterSpacing: "-.02em", whiteSpace: "nowrap" }); d.textContent = n; });
+  const bracket = h("div", "abs", el); css(bracket, { left: "960px", top: "458px", width: "8px", height: "164px", background: "var(--accent)", borderRadius: "4px" });
+  // language buttons
+  const lb = h("div", "abs", el); css(lb, { left: "1060px", top: "250px", width: "700px", height: "580px" });
+  const lbs = T.langs.map(([ln, s], i) => {
+    const r = h("div", "abs", lb); css(r, { left: 0, top: (i * 96) + "px", display: "flex", alignItems: "center", gap: "28px", width: "700px" });
+    r.innerHTML = `<span style="width:180px;font-family:var(--mono);font-size:22px;color:var(--ink-soft);text-align:right">${ln}</span><span style="background:var(--ink);color:var(--paper);border-radius:12px;padding:14px 30px;font-size:30px;font-weight:600;font-family:Inter,'Noto Sans KR','Noto Sans KR',sans-serif">${s}</span>`;
+    return r;
+  });
+  const step = .25;
+  T.agents.forEach((_, i) => cue(46.5 + i * step, "tick"));
+  cue(46.5 + T.agents.length * step, "tick");
+  cue(48.85, "whoosh"); T.langs.forEach((_, i) => cue(49.0 + i * .12, "pop-soft"));
+  cue(51.25, "riser-short");
+  return t => {
+    const inP = E.outE(P(t, 46.05, 46.8));
+    st(cap, { x: (1 - inP) * -40, o: inP * (1 - A(t, 51.2, .35, 0, 1)) });
+    const swap = E.ioQ(P(t, 48.75, 49.2));
+    st(hd, { y: -swap * 30, o: 1 - swap }); st(hd2, { y: (1 - swap) * 30, o: swap });
+    // reel
+    const k = (t - 46.5) / step;
+    let pos = 0;
+    for (let i = 0; i < T.agents.length; i++) { pos += E.ioQ(clamp(k - i, 0, 1)); }
+    const reelOut = A(t, 48.7, .4, 0, 1, E.inC);
+    st(reel, { y: 160 - pos * 160, o: 1 });
+    // stop at last with a settle; after the loop we hold on names[len] which equals first
+    st(slot, { o: A(t, 46.2, .4, 0, 1) * (1 - reelOut), x: -reelOut * 40 });
+    st(bracket, { sy: A(t, 46.3, .5, 0, 1, E.outE) * (1 - reelOut), o: 1 });
+    lbs.forEach((r, i) => { const tt = 49.0 + i * .12; const p = E.outE(P(t, tt, tt + .6)); st(r, { x: (1 - p) * 60, o: p * (1 - A(t, 51.2, .35, 0, 1)) }); });
+  };
+});
+
+// ═════════════════════ SCENE I — call to action (51.4 → 59) ═════════════════════
+const CTA = 52.0;
+scene(51.4, 59.1, el => {
+  const shadow = h("div", "ctr", el); css(shadow, { width: "360px", height: "360px", borderRadius: "50%", background: "radial-gradient(circle, rgba(10,12,16,.5) 0%, rgba(10,12,16,.2) 40%, transparent 70%)" });
+  const seal = h("div", "seal ctr", el, SEAL_SVG()); css(seal, { width: "220px", height: "220px" });
+  const word = h("div", "ctr serif", el); css(word, { fontSize: "190px", fontWeight: 800, letterSpacing: "-.02em", lineHeight: 1, fontVariationSettings: '"opsz" 144, "SOFT" 0, "WONK" 1', fontFamily: '"Inter Tight", sans-serif', letterSpacing: '-.06em' });
+  word.textContent = T.wordmark;
+  const tag = h("div", "ctr serif", el); css(tag, { fontSize: LANG === "ko" ? "64px" : "70px", fontWeight: LANG === "ko" ? 700 : 500, whiteSpace: "nowrap", letterSpacing: LANG === "ko" ? "-.03em" : "-.01em" });
+  const tw = words(tag, T.tagline);
+  const box = h("div", "term ctr", el); css(box, { width: "940px", borderRadius: "18px", padding: "28px 40px", fontFamily: "var(--mono)", fontSize: "30px", lineHeight: 1.7 });
+  box.innerHTML = `<div><span style="color:#ff4d42">›</span> <span class="l1"></span></div><div><span style="color:#ff4d42">›</span> <span class="l2"></span><span class="caret"></span></div>`;
+  const l1 = box.querySelector(".l1"), l2 = box.querySelector(".l2"), caret = box.querySelector(".caret");
+  const alt = h("div", "ctr", el); css(alt, { fontFamily: "var(--mono)", fontSize: "23px", color: "var(--ink-soft)", whiteSpace: "nowrap" });
+  alt.innerHTML = `${T.i_or} <span style="color:var(--ink)">npx skills add sjquant/cram --skill cram</span>`;
+  const url = h("div", "ctr", el); css(url, { fontFamily: "Inter, sans-serif", fontWeight: 700, fontSize: "46px", whiteSpace: "nowrap", letterSpacing: "-.01em" });
+  url.innerHTML = `<span style="display:inline-flex;align-items:center;gap:18px"><svg width="46" height="46" viewBox="0 0 16 16"><path fill="#121316" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg><span>github.com/<span style="color:var(--accent)">sjquant/cram</span></span></span>`;
+  const foot = h("div", "ctr", el, T.i_foot); css(foot, { fontSize: "24px", color: "var(--ink-soft)", fontWeight: 500, whiteSpace: "nowrap", letterSpacing: ".02em" });
+  const s1 = "/plugin marketplace add sjquant/cram", s2 = "/plugin install cram@cram";
+  cue(CTA, "stamp-final"); cue(52.45, "swish-soft");
+  for (let i = 0; i < s1.length; i += 2) cue(53.6 + i / 44, "key");
+  for (let i = 0; i < s2.length; i += 2) cue(53.6 + s1.length / 44 + .1 + i / 44, "key");
+  cue(55.0, "ding"); cue(58.2, "end");
+  return t => {
+    const d = P(t, 51.45, CTA), hit = t >= CTA;
+    const sq = hit ? Math.exp(-(t - CTA) * 9) * Math.cos((t - CTA) * 38) : 0;
+    const fade = 1 - A(t, 58.25, .75, 0, 1, E.ioC);
+    const lift = A(t, 53.0, .8, 0, 1, E.ioQ);
+    const sealX = lerp(640, 745, lift), wordX = lerp(1080, 1050, lift);
+    st(seal, { x: sealX, y: lerp(360, 250, lift), s: hit ? (1 + sq * .06) * lerp(1, .8, lift) : lerp(2.8, 1, E.inC(d)), sy: hit ? (1 - sq * .06) * lerp(1, .8, lift) : undefined, o: (hit ? 1 : E.outC(P(t, 51.45, 51.7))) * fade, blur: hit ? 0 : (1 - d) * 14, r: hit ? 0 : (1 - d) * 8 });
+    st(shadow, { x: sealX, y: 370, s: lerp(2.2, .7, E.inC(d)), o: hit ? 0 : A(t, 51.45, .45, 0, .5, E.inC) });
+    st(word, { x: lerp(wordX + 30, wordX, E.outE(P(t, 52.15, 52.7))) , y: lerp(360, 250, lift) + 6, s: lerp(1, .8, lift), o: A(t, 52.15, .3, 0, 1) * fade });
+    revealWords(tw, t, 52.45, .07); st(tag, { x: 960, y: lerp(545, 420, lift), o: fade });
+    st(box, { x: 960, y: 610 + A(t, 53.4, .6, 30, 0, E.outE), o: A(t, 53.4, .4, 0, 1) * fade });
+    typeText(l1, s1, t, 53.6, 44); typeText(l2, s2, t, 53.6 + s1.length / 44 + .1, 44);
+    caret.style.opacity = t < 53.6 ? 0 : (Math.floor(t * 2.2) % 2 ? 0 : 1);
+    alt.style.display = "none";
+    st(url, { x: 960, y: 820 + A(t, 54.9, .7, 24, 0, E.outE), o: A(t, 54.9, .5, 0, 1) * fade });
+    st(foot, { x: 960, y: 900, o: A(t, 55.3, .5, 0, 1) * fade });
+  };
+});
+
+// ───────────────────────────── camera + frame ─────────────────────────────
+const grain = document.getElementById("grain"), flash = document.getElementById("flash");
+function camera(t) {
+  let x = 0, y = 0, s = 1, r = 0;
+  // slow drift
+  x += noise1(t * .25, 1) * 5; y += noise1(t * .25, 2) * 4; r += noise1(t * .2, 3) * .12;
+  // push-in on the opening statement
+  s *= 1 + A(t, 5.3, 1.7, 0, .05, E.inC) - (t >= IMPACT ? .05 : 0);
+  // impact shakes
+  for (const [ti, amp] of [[IMPACT, 26], [CTA, 16], [21.9, 5], [39.8, 5]]) {
+    if (t >= ti && t < ti + .6) { const k = Math.exp(-(t - ti) * 9); x += noise1(t * 60, ti) * amp * k; y += noise1(t * 60, ti + 5) * amp * k; r += noise1(t * 40, ti + 9) * amp * .02 * k; }
+  }
+  // gentle scale settle after impact
+  if (t >= IMPACT && t < IMPACT + 1) s *= 1 + .025 * Math.exp(-(t - IMPACT) * 5);
+  // breathe with the music: a tiny push on each bar's downbeat while the groove plays
+  if (t >= IMPACT + 2 && t < 38.9) s *= 1 + .004 * Math.exp(-(((t - IMPACT) % 2) * 9));
+  cam.style.transform = `translate(${x}px,${y}px) rotate(${r}deg) scale(${s})`;
+  flash.style.opacity = Math.max(t >= IMPACT ? .55 * Math.exp(-(t - IMPACT) * 14) : 0, t >= CTA ? .35 * Math.exp(-(t - CTA) * 14) : 0);
+}
+function wipesAt(t) {
+  const a = E.ioQ(P(t, 38.9, 39.45)), b = E.ioQ(P(t, 39.05, 39.6));
+  st(w1, { x: lerp(-2500, 0, a) - 2500 * E.ioQ(P(t, 39.45, 39.8)) * 0 });
+  st(w2, { x: lerp(-2500, 0, b) });
+  const c = E.ioQ(P(t, 45.7, 46.2)), d = E.ioQ(P(t, 45.82, 46.35));
+  st(w3, { x: lerp(1920, -240, c) }); st(w4, { x: lerp(1920, -240, d) });
+  w3.style.display = w4.style.display = t > 45.6 && t < 46.4 ? "block" : "none";
+  w1.style.display = w2.style.display = t > 38.85 && t < 39.62 ? "block" : "none";
+  document.getElementById("night").style.opacity = t > 39.55 && t < 46.2 ? 1 : 0;
+}
+window.render = function (t) {
+  wipesAt(t);
+  for (const sc of scenes) {
+    const on = t >= sc.t0 && t < sc.t1;
+    sc.el.style.display = on ? "block" : "none";
+    if (on) sc.render(t);
+  }
+  camera(t);
+
+  const dark = t > 39.55 && t < 46.2;
+  grain.style.mixBlendMode = dark ? "screen" : "multiply"; grain.style.opacity = dark ? .04 : .055;
+};
+window.DUR = DUR;
+window.CUES = CUES.sort((a, b) => a.t - b.t);
+window.ready = (async () => {
+  for (let t = 0; t < DUR; t += .5) window.render(t);
+  await document.fonts.ready;
+  window.render(0);
+  return true;
+})();
+</script>
+</body>
+</html>
