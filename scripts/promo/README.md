@@ -27,14 +27,13 @@ and synced to cue points the page exports.
   - save stills (`--stills=1.5,7.0`),
   - pipe a frame range into ffmpeg (`--video`, `--f0`, `--f1`).
 - `audio.py` synthesizes the soundtrack into a WAV file:
-  - a bright 120 BPM indie-pop track on the Canon-style "money chord"
+  - a light 120 BPM indie-pop track on the Canon-style "money chord"
     progression in C (C–G/B–Am7–Em7/G–Fmaj7–C/E–Dm7–G, two chords per bar,
-    descending bass): bouncy upright piano on the off-beats, ensemble
-    handclaps on 2 and 4, tambourine, a round electric bass, a glockenspiel
-    hook, whistling and ukulele strums in the second half, and a short outro
-    under the call to action,
-  - impacts on the stamp hits,
-  - the sound effects. Once the beat is running they snap to the 16th-note
+    descending bass): a quiet piano arpeggio on the same tempo climbs from Am7
+    to G so the first stamp lands on C, then airy off-beat piano, a soft kick,
+    finger snaps on 2 and 4, a shaker, a simple bass, and a sparse
+    glockenspiel hook, with a short outro under the call to action,
+  - the sound effects. They snap to the music's 16th-note
     grid (at most 30 ms early, otherwise up to one 16th late), pitched ones use
     the chord playing at that moment, and busy ones such as typing are thinned
     out.

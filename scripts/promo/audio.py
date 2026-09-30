@@ -87,33 +87,6 @@ def glock(m, d=1.2, vel=1.0):
         + .1 * np.sin(2 * np.pi * f * 5.4 * t) * np.exp(-t * 20)
     return x * adsr(d, .001, .05) * vel * .7
 
-def whistle(m, d=.4, vel=1.0):
-    t = tt(d); vib = 1 + .008 * np.sin(2 * np.pi * 5.8 * t) * np.clip(t * 5, 0, 1)
-    ph = 2 * np.pi * np.cumsum(midi(m) * vib) / SR
-    x = np.sin(ph) + .04 * np.sin(2 * ph) + .05 * bp(noise(d), midi(m) * .9, midi(m) * 1.3)
-    return x * adsr(d, .025, .08) * vel * .55
-
-_ks = {}
-def string(m, d, bright=4000):   # Karplus-Strong plucked nylon string
-    key = (m, round(d, 3), bright)
-    if key not in _ks:
-        n = int(d * SR); p = max(2, int(round(SR / midi(m)))); y = np.zeros(n + p + 1)
-        y[:p + 1] = lp(np.random.default_rng(m).uniform(-1, 1, p + 1), bright)
-        for a in range(p + 1, n + p + 1, p):
-            b = min(a + p, n + p + 1)
-            y[a:b] = .995 * .5 * (y[a - p:b - p] + y[a - p - 1:b - p - 1])
-        _ks[key] = y[p + 1:p + 1 + n] * adsr(d, .001, .04)
-    return _ks[key]
-
-def uke_strum(tones, d, up=False, vel=1.0):
-    # re-entrant ukulele voicing: chord tones folded into G4..A5
-    notes = sorted({67 + ((m - 67) % 12) for m in tones})[:4]
-    if up: notes = notes[::-1]
-    out = np.zeros(int(d * SR))
-    for i, m in enumerate(notes):
-        x = string(m, d - i * .011) * (vel * (1 - .08 * i)); i0 = int(i * .011 * SR); out[i0:i0 + len(x)] += x
-    return out / len(notes) * 1.5
-
 def kick_soft(g=1.0):
     d = .35; t = tt(d); f = 55 + 70 * np.exp(-t * 30)
     return (np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t * 9) + lp(noise(d), 600) * np.exp(-t * 60) * .2) * g
@@ -127,19 +100,10 @@ def handclap(g=1.0, seed=0):
         x += bp(noise(d), lo, hi) * e * r.uniform(.7, 1.0)
     return x * g * .55
 
-def tambourine(g=1.0):
-    d = .12; t = tt(d)
-    jingle = hp(noise(d), 7000) * (np.exp(-t * 40) + .4 * np.exp(-np.maximum(t - .015, 0) * 30) * (t > .015))
-    return jingle * .22 * g
-
 def ebass(m, d, g=1.0):   # round finger bass
     t = tt(d); f = midi(m)
     x = np.sin(2 * np.pi * f * t) + .3 * np.sin(2 * np.pi * 2 * f * t) * np.exp(-t * 8) + .1 * np.sin(2 * np.pi * 3 * f * t) * np.exp(-t * 12)
     return sat(x * np.exp(-t * 2.5), 1.2) * adsr(d, .004, .04) * g
-
-def sub_drop(d=1.2):
-    t = tt(d); f = 34 + 50 * np.exp(-t * 4)
-    return np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t * 3.2)
 
 def reverse_swell(d=.9):
     t = tt(d); x = hp(noise(d), 1500) * (t / d) ** 3 * .4
@@ -180,56 +144,67 @@ def grid_origin(t):
 
 def chord_at(t):
     """Chord tones sounding at time t, for tuning pitched sound effects."""
-    if t < DROP: return [57, 60, 64]
+    if t < DROP:   # follow the intro arpeggio's chords
+        k = int((t - (DROP - len(INTRO_PROG) * BAR / 2)) / (BAR / 2))
+        return INTRO_PROG[min(max(k, 0), len(INTRO_PROG) - 1)]
     if t >= CTA or t >= BUILD_END: return [60, 64, 67]
     return PROG[int((t - DROP) / (BAR / 2)) % len(PROG)][1]
 
 def on_grid(t):
-    """Snap a cue onto the 16th-note grid once the beat is running.
+    """Snap a cue onto the 16th-note grid (the intro shares the groove's grid).
 
     Sound that arrives before its picture is easy to notice, so a cue moves at most
     30 ms earlier; otherwise it waits for the next 16th (at most ~95 ms later).
     """
-    if t < DROP - .03 or BUILD_END <= t < CTA - .03: return t
+    if BUILD_END <= t < CTA - .03: return t
     o = CTA if t >= CTA - .03 else DROP
     prev = o + np.floor((t - o) / STEP + 1e-9) * STEP
     return prev if t - prev <= .03 else prev + STEP
 
-# ── intro: solo piano phrases (the felt-piano notes) over a soft Am pad ──
-INTRO = MC.get("intro", [(.35, 69, .7), (1.75, 72, .6), (2.3, 76, .5), (3.45, 74, .65), (4.2, 71, .45), (5.35, 69, .7), (5.37, 57, .5), (5.4, 64, .45)])
-for t0, m, v in INTRO:
-    x = piano(m, 2.4, v); music.add(t0, x, 1.3, pan=(m - 66) / 30); verb_send.add(t0, x, .5)
-music.add(0, pad([45, 52, 57, 60], DROP, 700), .16)
-music.add(DROP - .9, reverse_swell(.9), .45)
+def snap(g=1.0):   # finger snap
+    d = .12; t = tt(d)
+    return (bp(noise(d), 2200, 7500) * np.exp(-t * 60) + .3 * np.sin(2 * np.pi * 1900 * t) * np.exp(-t * 120)) * .5 * g
 
-def impact(t0, g=1.0):
-    low.add(t0, sub_drop(), .6 * g)
-    drums.add(t0, kick_soft(1.2), .9 * g)
-    x = handclap(1.2, 99); drums.add(t0, x, .6 * g); verb_send.add(t0, x, .35 * g)
-impact(DROP)
+def shaker(g=1.0):
+    d = .07; t = tt(d); e = (1 - np.exp(-t * 300)) * np.exp(-t * 60)
+    return hp(noise(d), 5500) * e * .16 * g
 
-bar_t, bi, clap_seed = DROP, 0, 1
+# ── intro: a quiet piano arpeggio on the same tempo, climbing Am7 → G so the stamp lands on C ──
+INTRO_PROG = [[57, 60, 64, 67], [55, 59, 64, 67], [57, 60, 64, 65], [55, 60, 64, 67], [57, 60, 62, 65], [55, 57, 60, 65], [55, 59, 62, 67]]
+#               Am7               Em7               Fmaj7             C/E               Dm7               Fmaj7/C           G
+ARP = [0, 1, 2, 3, 2, 1, 3, 2]            # 8th notes through the chord
+for k, tones in enumerate(INTRO_PROG):
+    th = DROP - (len(INTRO_PROG) - k) * BAR / 2
+    for i, j in enumerate(ARP):
+        ts = th + i * 2 * STEP
+        if ts < .25 or ts > DROP - .3: continue
+        grow = .35 + .45 * (ts / DROP)
+        x = piano(tones[j] + 12, .9, grow); music.add(ts, x, .5, pan=(j - 1.5) / 6); verb_send.add(ts, x, .25)
+    if th >= .25: low.add(th, ebass(tones[0] - 24, BAR / 2 * .95), .1 + .12 * (th / DROP))
+music.add(DROP - .9, reverse_swell(.9), .3)
+
+def downbeat(t0, g=1.0):   # the stamp carries the impact; the music just starts cleanly
+    drums.add(t0, kick_soft(1.0), .75 * g)
+downbeat(DROP)
+
+bar_t, bi = DROP, 0
 while bar_t < BUILD_END - 1e-6:
     sec = section(bar_t)
     d = min(BAR, BUILD_END - bar_t)
     nsteps = int(round(d / STEP))
     for s in range(nsteps):
         ts = bar_t + s * STEP
-        if sec in ("A", "B"):
-            if s in (0, 8) or (sec == "B" and s == 10):
-                drums.add(ts, kick_soft(1 if s != 10 else .6), .8)
+        if sec in ("A", "B", "build"):
+            if s in (0, 8) or (sec == "build" and s in (4, 12)):
+                drums.add(ts, kick_soft(.8), .7)
             if s in (4, 12):
-                clap_seed += 1; x = handclap(1, clap_seed); drums.add(ts, x, .75); verb_send.add(ts, x, .22)
-            if s % 2 == 0 or sec == "B":
-                drums.add(ts, tambourine(1 if s % 4 == 2 else .55), .9, pan=.35)
+                drums.add(ts, snap(), .6, pan=-.1); verb_send.add(ts, snap(), .15)
+                if sec == "B":
+                    x = handclap(.5, bi * 16 + s); drums.add(ts, x, .3); verb_send.add(ts, x, .1)
+            if s % 4 == 2:
+                drums.add(ts, shaker(), .8, pan=.3)
         elif sec == "break":
-            if s == 0 and bi % 2 == 0: drums.add(ts, kick_soft(.6), .5)
-        elif sec == "build":
-            prog = (ts - BREAK_B) / max(.01, BUILD_END - BREAK_B)
-            if s % 4 == 0:
-                drums.add(ts, kick_soft(.9), .85)
-                clap_seed += 1; x = handclap(.6 + .5 * prog, clap_seed); drums.add(ts, x, .7); verb_send.add(ts, x, .2)
-            drums.add(ts, tambourine(.5 + .5 * prog), .9, pan=.35)
+            if s == 0 and bi % 2 == 0: drums.add(ts, kick_soft(.5), .45)
     for half in range(2):
         hs = half * 8
         if hs >= nsteps: break
@@ -237,57 +212,40 @@ while bar_t < BUILD_END - 1e-6:
         th = bar_t + hs * STEP
         hd = min(8, nsteps - hs) * STEP
         if sec in ("A", "B", "build"):
-            # bass: dum . . dum . dum . .
-            for s, ln in ((0, 3), (3, 2), (6, 2)):
-                if hs + s < nsteps: low.add(th + s * STEP, ebass(root, ln * STEP * .95), .55)
-            # piano: bouncy off-beat chords (right hand an octave up)
-            for s in (2, 6):
+            low.add(th, ebass(root, 5 * STEP), .45)
+            if hs + 6 < nsteps: low.add(th + 6 * STEP, ebass(root, 2 * STEP * .9), .3)
+            for s in (2, 6):   # light off-beat piano, high and airy
                 if hs + s < nsteps:
-                    x = piano_chord([m + 12 for m in tones], .22, .9); music.add(th + s * STEP, x, .5, pan=-.15); verb_send.add(th + s * STEP, x, .12)
-            if sec == "B":   # ukulele down-up strums on the beat
-                for s in (0, 4):
-                    if hs + s < nsteps:
-                        synths.add(th + s * STEP, uke_strum(tones, .35), None, .5)
-                        synths.add(th + (s + 2) * STEP, uke_strum(tones, .25, up=True, vel=.6), None, .45)
+                    x = piano_chord([m + 12 for m in tones], .2, .7); music.add(th + s * STEP, x, .38, pan=-.15); verb_send.add(th + s * STEP, x, .14)
         elif sec == "break":
-            low.add(th, ebass(root, hd), .35)
-            x = piano_chord(tones, hd, .7); music.add(th, x, .5); verb_send.add(th, x, .3)
-    # topline: glockenspiel hook on the first bar of each phrase; whistle joins in the second half
-    if sec in ("A", "B", "break") and bi % 2 == 0:
+            low.add(th, ebass(root, hd), .25)
+            x = piano_chord(tones, hd, .6); music.add(th, x, .42); verb_send.add(th, x, .3)
+    # glockenspiel hook: every other phrase at first, every phrase in the second half
+    if (sec == "A" and bi % 4 == 0) or (sec in ("B", "break") and bi % 2 == 0):
         hook = HOOK_B if sec == "B" and bi % 4 == 2 else HOOK
         for s, m in hook:
             if s < nsteps:
-                ts = bar_t + s * STEP
-                if sec == "break":
-                    x = whistle(m, .45, .6); music.add(ts, x, .45, pan=.1); verb_send.add(ts, x, .3)
-                    continue
-                x = glock(m + (12 if sec == "B" else 0), 1.0, .8); music.add(ts, x, .3, pan=.2); verb_send.add(ts, x, .15)
-                if sec == "B":
-                    x = whistle(m, .32, .7); music.add(ts, x, .4, pan=-.1); verb_send.add(ts, x, .2)
+                x = glock(m, 1.0, .7 if sec != "break" else .5); music.add(bar_t + s * STEP, x, .26, pan=.2); verb_send.add(bar_t + s * STEP, x, .18)
     bar_t += BAR; bi += 1
 
-# breath, then the final hit, two light bars under the call to action, and a last C that rings out
-music.add(BUILD_END - .9, reverse_swell(.9), .45)
-impact(CTA, .85)
-synths.add(CTA, uke_strum([60, 64, 67], 1.2), None, .55)
+# a breath, then the last stamp: two light bars under the call to action and a C that rings out
+music.add(BUILD_END - .9, reverse_swell(.9), .3)
+downbeat(CTA, .9)
 OUTRO = [(36, [60, 64, 67]), (35, [59, 62, 67]), (33, [57, 60, 64, 67]), (29, [57, 60, 64, 65])]  # C G/B Am7 Fmaj7
 N_OUT = min(len(OUTRO), int(max(0.0, END - CTA - 1.8) / (BAR / 2)))   # leave ~2 s for the last chord to ring
 for k, (root, tones) in enumerate(OUTRO[:N_OUT]):
     th = CTA + k * BAR / 2
-    for s_, ln in ((0, 3), (3, 2), (6, 2)): low.add(th + s_ * STEP, ebass(root, ln * STEP * .95), .45)
+    low.add(th, ebass(root, 5 * STEP), .38)
     for s_ in (2, 6):
-        x = piano_chord([m + 12 for m in tones], .22, .75); music.add(th + s_ * STEP, x, .45, pan=-.15); verb_send.add(th + s_ * STEP, x, .15)
-    if k % 2 == 1:
-        x = handclap(.7, 300 + k); drums.add(th, x, .55); verb_send.add(th, x, .25)
-    drums.add(th + 4 * STEP, tambourine(.6), .8, pan=.35)
+        x = piano_chord([m + 12 for m in tones], .2, .65); music.add(th + s_ * STEP, x, .36, pan=-.15); verb_send.add(th + s_ * STEP, x, .15)
+    drums.add(th + 4 * STEP, snap(.8), .5); verb_send.add(th + 4 * STEP, snap(.8), .15)
 for s_, m in (HOOK if N_OUT >= 2 else []):
-    x = glock(m + 12, 1.0, .65); music.add(CTA + s_ * STEP, x, .26, pan=.2); verb_send.add(CTA + s_ * STEP, x, .2)
+    x = glock(m, 1.0, .6); music.add(CTA + s_ * STEP, x, .24, pan=.2); verb_send.add(CTA + s_ * STEP, x, .2)
 FIN = CTA + N_OUT * BAR / 2
-x = piano_chord([48, 55, 60, 64, 67, 72], END - FIN + 1.0, 1.0); music.add(FIN, x, .6); verb_send.add(FIN, x, .45)
-low.add(FIN, ebass(36, END - FIN + .8), .45)
-drums.add(FIN, kick_soft(.7), .6)
-for s_, m in [(0, 84), (2, 88), (4, 91), (6, 96)]:
-    x = glock(m, 1.6, .55); music.add(FIN + s_ * STEP, x, .22); verb_send.add(FIN + s_ * STEP, x, .3)
+x = piano_chord([48, 55, 60, 64, 67, 72], END - FIN + 1.0, .9); music.add(FIN, x, .55); verb_send.add(FIN, x, .45)
+low.add(FIN, ebass(36, END - FIN + .8), .35)
+for s_, m in [(0, 84), (2, 88), (4, 91)]:
+    x = glock(m, 1.6, .5); music.add(FIN + s_ * STEP, x, .18); verb_send.add(FIN + s_ * STEP, x, .3)
 
 # ───────── SFX ─────────
 def sweep_noise(d, f0, f1, q=1.0, shape="up"):
@@ -341,7 +299,7 @@ for c in data["cues"]:
         key_n += 1
         if key_n % 2: sfx.add(t0, keyclick(), .16 * G, pan)
     elif ty == "enter": sfx.add(t0, keyclick(), .35 * G); sfx.add(t0, thump(140, 70, .15, 30), .25 * G)
-    elif ty == "tick": x = glock(top(tones)[0], .5, .6); sfx.add(t0, x, .14 * G, pan); verb_send.add(t0, x, .08)
+    elif ty == "tick": x = glock(top(tones)[0], .5, .5); sfx.add(t0, x, .08 * G, pan); verb_send.add(t0, x, .05)
     elif ty == "tick-soft": sfx.add(t0, tick(2600, .03), .05 * G, pan)
     elif ty == "marker": sfx.add(t0, sweep_noise(.45, 2500, 5000, .6) * adsr(.45, .05, .12), .2 * G, .2)
     elif ty in ("whoosh", "swoosh-in", "slide", "swish-soft", "zoom", "whoosh-rev"):
@@ -351,7 +309,7 @@ for c in data["cues"]:
         sfx.add(t0 - d * .5, x, g * G, pan); verb_send.add(t0 - d * .5, x, g * .2)
     elif ty in ("whoosh-big", "wipe"):
         x = whoosh(.8, 250, 4500, .55); sfx.add(t0 - .4, x, .3 * G); verb_send.add(t0 - .4, x, .1)
-    elif ty == "hit-soft": sfx.add(t0, thump(80, 45, .9, 5), .35 * G); verb_send.add(t0, thump(80, 45, .9, 5), .15)
+    elif ty == "hit-soft": sfx.add(t0, thump(80, 45, .7, 6), .2 * G); verb_send.add(t0, thump(80, 45, .7, 6), .08)
     elif ty in ("riser", "riser-short"):
         d = .95 if ty == "riser" else .72
         t = tt(d); e = (t / d) ** 2.4
